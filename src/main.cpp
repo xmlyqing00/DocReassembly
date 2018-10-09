@@ -23,6 +23,7 @@ int main()
     // delete [] outText;
 
     api->Recognize(0);
+    int b;
     tesseract::ResultIterator* ri = api->GetIterator();
     tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;
     if (ri != 0) {
