@@ -1,6 +1,4 @@
-#include <string>
-#include <tesseract/baseapi.h>
-#include <opencv2/opencv.hpp>
+#include <main.h>
 
 int main(int argc, char ** argv) {
 
