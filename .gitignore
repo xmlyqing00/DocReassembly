@@ -1,3 +1,5 @@
 *.o
 *.d
 StripeReassembly
+
+.DS_Store

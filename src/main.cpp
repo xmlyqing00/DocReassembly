@@ -2,27 +2,37 @@
 
 int main(int argc, char ** argv) {
 
-    std::string img_path = argv[1];
-    std::cout << argc << std::endl;
-    std::cout << img_path << std::endl;
+    string img_path = "data/test0.png";
+    int stripes_n = 4;
 
-    tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
-    
-    printf("at\n");
-    // Initialize tesseract-ocr with English, without specifying tessdata path
-    if (api->Init(NULL, "eng")) {
-        fprintf(stderr, "Could not initialize tesseract.\n");
-        return 1;
+    switch (argc) {
+        case 3:
+            stripes_n = atoi(argv[2]);
+        case 2:
+            img_path = argv[1];
     }
 
     cv::Mat img = cv::imread(img_path);
-    api->SetImage(img.data, img.cols, img.rows, 3, img.step);
+    
+    tesseract::TessBaseAPI *ocr = new tesseract::TessBaseAPI();
+    if (ocr->Init(NULL, "eng")) {
+        fprintf(stderr, "Could not initialize tesseract.\n");
+        return 1;
+    }
+    ocr->SetImage(img.data, img.cols, img.rows, 3, img.step);
 
-    std::string out_text(api->GetUTF8Text());
+    std::string out_text(ocr->GetUTF8Text());
 
     std::cout<< out_text << std::endl;
 
-    api->End();
+    ocr->End();
+
+    GenerateStripes generate_stripes = GenerateStripes(img_path, stripes_n);
+    cv::imshow("whole", generate_stripes.ori_img);
+    for (int i = 0; i < generate_stripes.stripes.size(); i++) {
+        cv::imshow("stripe", generate_stripes.stripes[i]);
+        cv::waitKey(0);
+    }
 
     // printf("start\n");
 

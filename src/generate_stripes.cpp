@@ -12,10 +12,21 @@ GenerateStripes::GenerateStripes(string img_path, int _stripes_n) {
 
 bool GenerateStripes::seg_stripes() {
 
-    double seg_step = (double)ori_img_size.width / stripes_n;
+    int seg_step = int((double)ori_img_size.width / stripes_n);
 
+    int seg_st = 0;
     for (int i = 0; i < stripes_n; i++) {
 
+        int seg_ed = seg_st + seg_step;
+        if (i == stripes_n - 1) {
+            seg_ed = ori_img_size.width;
+        }
+
+        cv::Mat stripe = ori_img(cv::Rect(seg_st, 0, seg_ed - seg_st, ori_img_size.height));
+        stripes.push_back(stripe.clone());
+
+        seg_st = seg_ed;
+        
     }
 
     return true;

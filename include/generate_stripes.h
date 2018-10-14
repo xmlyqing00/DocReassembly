@@ -14,7 +14,7 @@ public:
     int stripes_n {0};
     cv::Size ori_img_size;
 
-    vector<Mat> stripes;    
+    vector<cv::Mat> stripes;    
 
     GenerateStripes(string img_path, int stripes_n);
 
