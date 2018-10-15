@@ -3,6 +3,9 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <random>
+#include <ctime>
 #include <opencv2/opencv.hpp>
 
 using namespace std;
@@ -17,6 +20,8 @@ public:
     vector<cv::Mat> stripes;    
 
     GenerateStripes(string img_path, int stripes_n);
+
+    void show_whole_stripes(bool rearrange=false);
 
 private:
 

@@ -29,10 +29,11 @@ int main(int argc, char ** argv) {
 
     GenerateStripes generate_stripes = GenerateStripes(img_path, stripes_n);
     cv::imshow("whole", generate_stripes.ori_img);
-    for (int i = 0; i < generate_stripes.stripes.size(); i++) {
-        cv::imshow("stripe", generate_stripes.stripes[i]);
-        cv::waitKey(0);
-    }
+    generate_stripes.show_whole_stripes(true);
+    // for (int i = 0; i < generate_stripes.stripes.size(); i++) {
+        // cv::imshow("stripe", generate_stripes.stripes[i]);
+        // cv::waitKey(0);
+    // }
 
     // printf("start\n");
 

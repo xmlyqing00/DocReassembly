@@ -10,6 +10,31 @@ GenerateStripes::GenerateStripes(string img_path, int _stripes_n) {
 
 }
 
+void GenerateStripes::show_whole_stripes(bool rearrange) {
+
+    int gap = 5;
+    cv::Mat whole_stripes = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + stripes_n * gap, CV_8UC3);
+    vector<int> access_idx(stripes_n);
+    iota(access_idx.begin(), access_idx.end(), 0);
+
+    if (rearrange) {
+        default_random_engine rand_engine(time(0));
+        shuffle(access_idx.begin(), access_idx.end(), rand_engine);
+    }
+    
+    int whole_stripes_x = 0;
+    for (const int idx: access_idx) {
+        cv::Rect roi(whole_stripes_x, 0, stripes[idx].cols, stripes[idx].rows);
+        stripes[idx].copyTo(whole_stripes(roi));
+        whole_stripes_x += stripes[idx].cols + gap;
+    }
+
+    cv::imwrite("tmp/whole_stripes.png", whole_stripes);
+    // cv::imshow("whole_stripes", whole_stripes);
+    // cv::waitKey();
+
+}
+
 bool GenerateStripes::seg_stripes() {
 
     int seg_step = int((double)ori_img_size.width / stripes_n);
