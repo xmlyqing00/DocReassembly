@@ -25,5 +25,5 @@ StripeReassembly: $(obj)
 	$(CXX) $^ $(TESSARACT_LIBS) $(OPENCV_LIBS) -o $(dst_dir)$@
 
 clean:
-	rm $(dst)StripeReassembly $(obj) $(dep)
+	rm $(dst)StripeReassembly $(src_dir)*.o $(src_dir)*.d
 

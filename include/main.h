@@ -5,7 +5,7 @@
 #include <tesseract/baseapi.h>
 #include <opencv2/opencv.hpp>
 
-#include <generate_stripes.h>
+#include <stripes_generator.h>
 
 using namespace std;
 

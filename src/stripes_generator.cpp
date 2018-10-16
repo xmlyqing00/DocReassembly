@@ -1,6 +1,6 @@
-#include <generate_stripes.h>
+#include <stripes_generator.h>
 
-GenerateStripes::GenerateStripes(string img_path, int _stripes_n) {
+StripesGenerator::StripesGenerator(string img_path, int _stripes_n) {
     
     ori_img = cv::imread(img_path);
     ori_img_size = ori_img.size();
@@ -10,7 +10,7 @@ GenerateStripes::GenerateStripes(string img_path, int _stripes_n) {
 
 }
 
-void GenerateStripes::show_whole_stripes(bool rearrange) {
+void StripesGenerator::show_whole_stripes(bool rearrange) {
 
     int gap = 5;
     cv::Mat whole_stripes = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + (stripes_n - 1) * gap, CV_8UC3);
@@ -35,7 +35,7 @@ void GenerateStripes::show_whole_stripes(bool rearrange) {
 
 }
 
-bool GenerateStripes::seg_stripes() {
+bool StripesGenerator::seg_stripes() {
 
     int seg_step = int((double)ori_img_size.width / stripes_n);
 
@@ -53,6 +53,44 @@ bool GenerateStripes::seg_stripes() {
         seg_st = seg_ed;
         
     }
+
+    return true;
+
+}
+
+bool StripesGenerator::save_stripes(const string & output_folder) {
+
+    string output_path = "data/stripes/";
+    if (access(output_path.c_str(), 0) == -1) {
+        int create_flag = mkdir(output_path.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+        if (create_flag != 0) {
+            cerr << "Create Stripes folder failed." << endl;
+            return false;
+        }
+    }
+    
+    output_path += output_folder;
+    if (output_path.back() != '/') output_path += '/';
+
+    if (access(output_path.c_str(), 0) == -1) {
+
+        cout << "Stripes folder does not exist." << endl;
+
+        int create_flag = mkdir(output_path.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+        if (create_flag == 0) {
+            cout << "Create stripes folder." << endl;
+        } else {
+            cerr << "Create Stripes folder failed." << endl;
+            return false;
+        }
+
+    }
+
+    for (int i = 0; i < stripes_n; i++) {
+        cv::imwrite(output_path + to_string(i) + ".png", stripes[i]);
+    }
+
+    cout << "Save tripes to " << output_path << endl;
 
     return true;
 

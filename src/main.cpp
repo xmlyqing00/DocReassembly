@@ -2,7 +2,7 @@
 
 int main(int argc, char ** argv) {
 
-    string img_path = "data/test0.png";
+    string img_path = "data/gt/test0.png";
     int stripes_n = 4;
 
     switch (argc) {
@@ -27,9 +27,11 @@ int main(int argc, char ** argv) {
 
     ocr->End();
 
-    GenerateStripes generate_stripes = GenerateStripes(img_path, stripes_n);
-    cv::imshow("whole", generate_stripes.ori_img);
-    generate_stripes.show_whole_stripes(true);
+    StripesGenerator stripes_generator(img_path, stripes_n);
+    stripes_generator.save_stripes("test0/");
+
+    cv::imshow("whole", stripes_generator.ori_img);
+    stripes_generator.show_whole_stripes(true);
     // for (int i = 0; i < generate_stripes.stripes.size(); i++) {
         // cv::imshow("stripe", generate_stripes.stripes[i]);
         // cv::waitKey(0);
