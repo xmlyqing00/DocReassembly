@@ -13,7 +13,7 @@ GenerateStripes::GenerateStripes(string img_path, int _stripes_n) {
 void GenerateStripes::show_whole_stripes(bool rearrange) {
 
     int gap = 5;
-    cv::Mat whole_stripes = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + stripes_n * gap, CV_8UC3);
+    cv::Mat whole_stripes = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + (stripes_n - 1) * gap, CV_8UC3);
     vector<int> access_idx(stripes_n);
     iota(access_idx.begin(), access_idx.end(), 0);
 
