@@ -29,7 +29,7 @@ void StripesGenerator::show_whole_stripes(bool rearrange) {
         whole_stripes_x += stripes[idx].cols + gap;
     }
 
-    cv::imwrite("tmp/whole_stripes.png", whole_stripes);
+    // cv::imwrite("tmp/whole_stripes.png", whole_stripes);
     // cv::imshow("whole_stripes", whole_stripes);
     // cv::waitKey();
 
