@@ -53,14 +53,14 @@ int main(int argc, char ** argv) {
         stripes.push(stripe_img);
     }
 
-    cout << stripes.reassemble(comp_mod);
+    stripes.reassemble(comp_mod);
+    for (const int idx: stripes.comp_idx) {
+        cout << idx << endl;
+    }
+    cv::imshow("comp_img", stripes.comp_img);
+    cv::waitKey();
     
     
-    // tesseract::TessBaseAPI *ocr = new tesseract::TessBaseAPI();
-    // if (ocr->Init(NULL, "eng")) {
-    //     fprintf(stderr, "Could not initialize tesseract.\n");
-    //     return 1;
-    // }
     // ocr->SetImage(img.data, img.cols, img.rows, 3, img.step);
 
     // std::string out_text(ocr->GetUTF8Text());

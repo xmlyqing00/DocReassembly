@@ -63,20 +63,20 @@ bool StripesGenerator::save_stripes(const string & output_folder) {
     if (access(root_folder.c_str(), 0) == -1) {
         int create_flag = mkdir(root_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
         if (create_flag != 0) {
-            cerr << "Create Stripes folder failed." << endl;
+            cerr << "[ERRO] Create Stripes folder failed." << endl;
             return false;
         }
     }
     
     if (access(output_folder.c_str(), 0) == -1) {
 
-        cout << "Stripes folder does not exist." << endl;
+        cout << "[INFO] Stripes folder does not exist." << endl;
 
         int create_flag = mkdir(output_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
         if (create_flag == 0) {
-            cout << "Create stripes folder." << endl;
+            cout << "[INFO] Create stripes folder." << endl;
         } else {
-            cerr << "Create Stripes folder failed." << endl;
+            cerr << "[ERRO] Create Stripes folder failed." << endl;
             return false;
         }
 
@@ -93,7 +93,7 @@ bool StripesGenerator::save_stripes(const string & output_folder) {
     }
     fout.close();
 
-    cout << "Save tripes to " << output_folder << endl;
+    cout << "Stripes saved path:\t" << output_folder << endl;
 
     return true;
 
