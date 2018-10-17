@@ -22,5 +22,13 @@ bool Stripes::reassemble(Composition comp_mode) {
 }
 
 bool Stripes::reassemble_greedy() {
+
+    for (int i = 0; i < stripes_n; i++) {
+        for (int j = 0; j < stripes_n; j++) {
+            if (i == j) continue;
+        }
+    }
+
     return true;
+
 }

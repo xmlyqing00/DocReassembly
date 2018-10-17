@@ -10,17 +10,10 @@ StripesGenerator::StripesGenerator(string img_path, int _stripes_n) {
 
 }
 
-void StripesGenerator::show_whole_stripes(bool rearrange) {
+void StripesGenerator::show_whole_stripes() {
 
     int gap = 5;
     cv::Mat whole_stripes = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + (stripes_n - 1) * gap, CV_8UC3);
-    vector<int> access_idx(stripes_n);
-    iota(access_idx.begin(), access_idx.end(), 0);
-
-    if (rearrange) {
-        default_random_engine rand_engine(time(0));
-        shuffle(access_idx.begin(), access_idx.end(), rand_engine);
-    }
     
     int whole_stripes_x = 0;
     for (const int idx: access_idx) {
@@ -54,29 +47,32 @@ bool StripesGenerator::seg_stripes() {
         
     }
 
+    access_idx = vector<int>(stripes_n);
+    default_random_engine rand_engine(time(0));
+
+    iota(access_idx.begin(), access_idx.end(), 0);
+    shuffle(access_idx.begin(), access_idx.end(), rand_engine);
+
     return true;
 
 }
 
 bool StripesGenerator::save_stripes(const string & output_folder) {
 
-    string output_path = "data/stripes/";
-    if (access(output_path.c_str(), 0) == -1) {
-        int create_flag = mkdir(output_path.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+    const string root_folder = "data/stripes/";
+    if (access(root_folder.c_str(), 0) == -1) {
+        int create_flag = mkdir(root_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
         if (create_flag != 0) {
             cerr << "Create Stripes folder failed." << endl;
             return false;
         }
     }
     
-    output_path += output_folder;
-    if (output_path.back() != '/') output_path += '/';
-
-    if (access(output_path.c_str(), 0) == -1) {
+    if (access(output_folder.c_str(), 0) == -1) {
 
         cout << "Stripes folder does not exist." << endl;
 
-        int create_flag = mkdir(output_path.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+        int create_flag = mkdir(output_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
         if (create_flag == 0) {
             cout << "Create stripes folder." << endl;
         } else {
@@ -87,10 +83,17 @@ bool StripesGenerator::save_stripes(const string & output_folder) {
     }
 
     for (int i = 0; i < stripes_n; i++) {
-        cv::imwrite(output_path + to_string(i) + ".png", stripes[i]);
+        cv::imwrite(output_folder + to_string(i) + ".png", stripes[access_idx[i]]);
     }
 
-    cout << "Save tripes to " << output_path << endl;
+    const string order_file_path = output_folder + "order.txt";
+    ofstream fout(order_file_path, ios::out);
+    for (const int & i: access_idx) {
+        fout << i << endl;
+    }
+    fout.close();
+
+    cout << "Save tripes to " << output_folder << endl;
 
     return true;
 

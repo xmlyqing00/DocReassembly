@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -21,11 +22,12 @@ public:
     int stripes_n {0};
     cv::Size ori_img_size;
 
-    vector<cv::Mat> stripes;    
+    vector<cv::Mat> stripes;
+    vector<int> access_idx;
 
     StripesGenerator(string img_path, int stripes_n);
 
-    void show_whole_stripes(bool rearrange=false);
+    void show_whole_stripes();
 
     bool save_stripes(const string & output_folder);
 

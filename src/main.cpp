@@ -6,6 +6,7 @@ int main(int argc, char ** argv) {
     string case_name = "test0";
     int stripes_n = 4;
     bool generate_flag = false;
+    Stripes::Composition comp_mod = Stripes::GREEDY;
 
     // Parse command line parameters
     const string opt_str = "t:T:n:N:gG";
@@ -32,26 +33,27 @@ int main(int argc, char ** argv) {
     cout << "Generate stripes:\t" << boolalpha << generate_flag << endl;
 
     // Generate new stripes
-    if (generate_flag) {
+    const string stripes_folder = "data/stripes/" + case_name + "_" + to_string(stripes_n) + "/";
+
+    if (generate_flag || access(stripes_folder.c_str(), 0) == -1) {
         const string gt_folder = "data/gt/";
         const string gt_img_path = gt_folder + case_name + ".png";
         cv::Mat gt_img = cv::imread(gt_img_path);
 
         StripesGenerator stripes_generator(gt_img_path, stripes_n);
-        stripes_generator.save_stripes(case_name);
+        stripes_generator.save_stripes(stripes_folder);
     }
 
     // Import stripes
-    const string stripes_folder = "data/stripes/";
     Stripes stripes;
 
     for (int i = 0; i < stripes_n; i++) {
-        const string stripe_img_path = stripes_folder + case_name + to_string(i) + ".png";
+        const string stripe_img_path = stripes_folder + to_string(i) + ".png";
         cv::Mat stripe_img = cv::imread(stripe_img_path);
         stripes.push(stripe_img);
     }
 
-    cout << stripes.reassemble(Stripes::GREEDY);
+    cout << stripes.reassemble(comp_mod);
     
     
     // tesseract::TessBaseAPI *ocr = new tesseract::TessBaseAPI();
