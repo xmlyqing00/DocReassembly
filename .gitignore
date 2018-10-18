@@ -1,6 +1,7 @@
 *.o
 *.d
 StripeReassembly
+StripeReassembly-debug
 
 /data/stripes/
 tmp/

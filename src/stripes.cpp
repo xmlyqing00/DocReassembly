@@ -74,11 +74,13 @@ double Stripes::m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1) {
         } while (word_iter->Next(level));
     }
 
+#ifdef DEBUG
     cout << "m_metric_score " << m_metric_score << endl << endl;
     cv::rectangle(merged_frag, cv::Rect(ocr_left, 0, word_m_width, frag0.rows), cv::Scalar(200, 0, 0));
     cv::line(merged_frag, cv::Point(seam_x, 0), cv::Point(seam_x, frag0.rows), cv::Scalar(200, 0, 0));
     cv::imshow("Merged", merged_frag);
     cv::waitKey();
+#endif
 
     return m_metric_score;
 

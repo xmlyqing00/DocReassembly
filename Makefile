@@ -11,19 +11,28 @@ src_dir = ./src/
 dst_dir = ./
 src = $(wildcard $(src_dir)*.cpp)
 obj = $(src:.cpp=.o)
+obj_debug = $(src:.cpp=.debug.o)
 dep = $(src:.cpp=.d)
 
+all: StripeReassembly StripeReassembly-debug
 default: StripeReassembly
+debug: StripeReassembly-debug
 .PHONY: clean
+
+%.debug.o: %.cpp
+	$(CXX) -c $< -o $@ -MMD -DDEBUG $(CXX_FLAGS) $(INCLUDES) 
 
 %.o: %.cpp
 	$(CXX) -c $< -o $@ -MMD $(CXX_FLAGS) $(INCLUDES) 
 
 -include $(dep)
 
+StripeReassembly-debug: $(obj_debug)
+	$(CXX) $^ $(TESSARACT_LIBS) $(OPENCV_LIBS) -DDEBUG -o $(dst_dir)$@
+
 StripeReassembly: $(obj)
 	$(CXX) $^ $(TESSARACT_LIBS) $(OPENCV_LIBS) -o $(dst_dir)$@
 
 clean:
-	rm $(dst)StripeReassembly $(src_dir)*.o $(src_dir)*.d
+	rm $(dst)StripeReassembly $(dst)StripeReassembly-debug $(src_dir)*.o $(src_dir)*.d
 

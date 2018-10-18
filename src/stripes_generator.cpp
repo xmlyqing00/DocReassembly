@@ -86,9 +86,13 @@ bool StripesGenerator::save_stripes(const string & output_folder) {
         cv::imwrite(output_folder + to_string(i) + ".png", stripes[access_idx[i]]);
     }
 
+    vector<int> gt_order(stripes_n);
+    for (int i = 0; i < stripes_n; i++) {
+        gt_order[access_idx[i]] = i;
+    }
     const string order_file_path = output_folder + "order.txt";
     ofstream fout(order_file_path, ios::out);
-    for (const int & i: access_idx) {
+    for (const int & i: gt_order) {
         fout << i << endl;
     }
     fout.close();
