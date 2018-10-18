@@ -38,32 +38,49 @@ double Stripes::m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1) {
     cv::Mat merged_frag;
     merge_frags(frag0, frag1, merged_frag);
 
-    int left = frag0.cols - word_m_width / 2;
+    int seam_x = frag0.cols;
+    int ocr_left = seam_x - word_m_width / 2;
+
+    cout << "Seam X " << seam_x << endl;
 
     ocr->SetImage(merged_frag.data, merged_frag.cols, merged_frag.rows, 3, merged_frag.step);
-    ocr->SetRectangle(left, 0, word_m_width, frag0.rows);
+    ocr->SetRectangle(ocr_left, 0, word_m_width, frag0.rows);
     ocr->Recognize(0);
-    tesseract::ResultIterator* ri = ocr->GetIterator();
+    tesseract::ResultIterator* word_iter = ocr->GetIterator();
     tesseract::PageIteratorLevel level = tesseract::RIL_WORD;
 
-    cv::rectangle(merged_frag, cv::Rect(left, 0, word_m_width, frag0.rows), cv::Scalar(255, 0, 0), 2);
+    double m_metric_score = 0;
 
-    if (ri != 0) {
+    if (word_iter != 0) {
         do {
-        const char* word = ri->GetUTF8Text(level);
-        float conf = ri->Confidence(level);
-        int x1, y1, x2, y2;
-        ri->BoundingBox(level, &x1, &y1, &x2, &y2);
-        printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d;\n",
-                   word, conf, x1, y1, x2, y2);
-        delete[] word;
-        } while (ri->Next(level));
+            const string word = word_iter->GetUTF8Text(level);
+            float conf = word_iter->Confidence(level);
+            
+            // Constraint
+            if (conf < conf_thres) continue;
+            if (!word_iter->WordIsFromDictionary()) continue;
+            int x0, y0, x1, y1;
+            word_iter->BoundingBox(level, &x0, &y0, &x1, &y1);
+            if (!(x0 < seam_x && x1 > seam_x)) continue;
+
+            // m_metric_score += conf * word.length();
+            m_metric_score ++;
+
+            cv::rectangle(merged_frag, cv::Rect(x0, y0, x1-x0+1, y1-y0+1), cv::Scalar(0, 0, 200));
+
+            printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
+                    word.c_str(), conf, word_iter->WordIsFromDictionary(), x0, y0, x1, y1);
+
+        } while (word_iter->Next(level));
     }
 
-    cv::imshow("Merged", merged_frag);
-    cv::waitKey();
+    cout << "m_metric_score " << m_metric_score << endl;
+    // cv::rectangle(merged_frag, cv::Rect(ocr_left, 0, word_m_width, frag0.rows), cv::Scalar(200, 0, 0));
+    // cv::line(merged_frag, cv::Point(seam_x, 0), cv::Point(seam_x, frag0.rows), cv::Scalar(200, 0, 0));
+    // cv::imshow("Merged", merged_frag);
+    // cv::waitKey();
 
-    return 1;
+    return m_metric_score;
 
 }
 
@@ -105,7 +122,7 @@ bool Stripes::reassemble_greedy() {
 
                 if (inclusion_flag[j] > -1) continue;
                 
-                double m_score = m_metric_word(frag, stripes[i]);
+                double m_score = m_metric_word(frag, stripes[j]);
                 if (max_m_score < m_score) {
                     max_m_score = m_score;
                     max_m_score_idx = j;
@@ -127,6 +144,8 @@ bool Stripes::reassemble_greedy() {
             }
             comp_img = frag.clone();
         }
+
+        cout << "avg_m_score: " << avg_m_score << endl;
 
     }
 
