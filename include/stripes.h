@@ -18,7 +18,7 @@ public:
     };
 
     const int word_m_width {100};
-    const double conf_thres {90};
+    const double conf_thres {80};
 
     int stripes_n {0};
     vector<cv::Mat> stripes;

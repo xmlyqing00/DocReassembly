@@ -5,7 +5,7 @@ Stripes::Stripes() {
     stripes.clear();
     
     ocr = new tesseract::TessBaseAPI();
-    if (ocr->Init(NULL, "eng")) {
+    if (ocr->Init(NULL, "eng", tesseract::OEM_LSTM_ONLY)) {
         cerr << "Could not initialize tesseract." << endl;
         exit(-1);
     }
@@ -63,8 +63,8 @@ double Stripes::m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1) {
             word_iter->BoundingBox(level, &x0, &y0, &x1, &y1);
             if (!(x0 < seam_x && x1 > seam_x)) continue;
 
-            // m_metric_score += conf * word.length();
-            m_metric_score ++;
+            m_metric_score += conf * word.length();
+            // m_metric_score ++;
 
             cv::rectangle(merged_frag, cv::Rect(x0, y0, x1-x0+1, y1-y0+1), cv::Scalar(0, 0, 200));
 
@@ -74,11 +74,11 @@ double Stripes::m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1) {
         } while (word_iter->Next(level));
     }
 
-    cout << "m_metric_score " << m_metric_score << endl;
-    // cv::rectangle(merged_frag, cv::Rect(ocr_left, 0, word_m_width, frag0.rows), cv::Scalar(200, 0, 0));
-    // cv::line(merged_frag, cv::Point(seam_x, 0), cv::Point(seam_x, frag0.rows), cv::Scalar(200, 0, 0));
-    // cv::imshow("Merged", merged_frag);
-    // cv::waitKey();
+    cout << "m_metric_score " << m_metric_score << endl << endl;
+    cv::rectangle(merged_frag, cv::Rect(ocr_left, 0, word_m_width, frag0.rows), cv::Scalar(200, 0, 0));
+    cv::line(merged_frag, cv::Point(seam_x, 0), cv::Point(seam_x, frag0.rows), cv::Scalar(200, 0, 0));
+    cv::imshow("Merged", merged_frag);
+    cv::waitKey();
 
     return m_metric_score;
 
