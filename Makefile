@@ -14,10 +14,9 @@ obj = $(src:.cpp=.o)
 obj_debug = $(src:.cpp=.debug.o)
 dep = $(src:.cpp=.d)
 
-all: StripeReassembly StripeReassembly-debug
+.PHONY: clean default debug
 default: StripeReassembly
 debug: StripeReassembly-debug
-.PHONY: clean
 
 %.debug.o: %.cpp
 	$(CXX) -c $< -o $@ -MMD -DDEBUG $(CXX_FLAGS) $(INCLUDES) 

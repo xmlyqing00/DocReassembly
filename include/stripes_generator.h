@@ -8,6 +8,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <numeric>
 #include <algorithm>
 #include <random>
 

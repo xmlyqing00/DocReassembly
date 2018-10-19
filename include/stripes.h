@@ -1,10 +1,13 @@
 #ifndef STRIPES_H
 #define STRIPES_H
 
+#include <numeric>
 #include <vector>
-
+#include <deque>
 #include <tesseract/baseapi.h>
 #include <opencv2/opencv.hpp>
+
+#include <stripe_pair.h>
 
 using namespace std;
 
