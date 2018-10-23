@@ -20,7 +20,7 @@ public:
         TSP,
     };
 
-    const int word_m_width {100};
+    const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
     const double conf_thres {80};
 
     int stripes_n {0};
@@ -45,6 +45,13 @@ private:
 
     bool reassemble_greedy();
 
+    const int extend_p {3};
+    cv::Rect extend_bbox(const cv::Rect & o_bbox, const cv::Size & frag_size);
+
+    cv::Rect correct_bbox(  tesseract::TessBaseAPI * correct_bbox, 
+                            const cv::Rect & o_bbox,
+                            const cv::Rect & e_bbox, 
+                            const string & word);
 
 };
 
