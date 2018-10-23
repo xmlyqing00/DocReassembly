@@ -1,13 +1,21 @@
 #include <stripes.h>
 
-Stripes::Stripes() {
+Stripes::Stripes(const string & _model_path) {
+
     stripes_n = 0;
+    model_path = _model_path;
     
     ocr = new tesseract::TessBaseAPI();
-    if (ocr->Init(NULL, "eng", tesseract::OEM_LSTM_ONLY)) {
+    if (ocr->Init(model_path.c_str(), "eng", tesseract::OEM_LSTM_ONLY)) {
         cerr << "Could not initialize tesseract." << endl;
         exit(-1);
     }
+
+    // string white_chars = "";
+    // for (int i = 0; i < 10; i++) white_chars += to_string(i);
+    // for (int i = 0; i < 26; i++) white_chars += char(int('A') + i);
+    // for (int i = 0; i < 26; i++) white_chars += char(int('a') + i);
+    // ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
 
 }
 
@@ -50,8 +58,8 @@ double Stripes::m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1) {
     word_iter->SetBoundingBoxComponents(true, true);
 
     tesseract::TessBaseAPI * correct_bbox_ocr = new tesseract::TessBaseAPI();
-    correct_bbox_ocr->Init(NULL, "eng", tesseract::OEM_LSTM_ONLY);
-    correct_bbox_ocr->SetImage(merged_frag.data, merged_frag.cols, merged_frag.rows, 3, merged_frag.step);
+    correct_bbox_ocr->Init(model_path.c_str(), "eng", tesseract::OEM_LSTM_ONLY);
+    // correct_bbox_ocr->SetImage(merged_frag.data, merged_frag.cols, merged_frag.rows, 3, merged_frag.step);
 
     double m_metric_score = 0;
 
@@ -71,17 +79,24 @@ double Stripes::m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1) {
             word_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
             cv::Rect && e_bbox = extend_bbox(o_bbox, merged_frag.size());
-            cv::Rect && c_bbox = correct_bbox(correct_bbox_ocr, o_bbox, e_bbox, word);
+            
+            if (!cross_seam(e_bbox, seam_x)) continue;
 
-            if (!(x0 < seam_x && x1 > seam_x)) continue;
-
+            cv::Rect && c_bbox = correct_bbox(correct_bbox_ocr, merged_frag, o_bbox, e_bbox, word);
+            
+            
             m_metric_score += conf * word.length();
             // m_metric_score ++;
 
-            cv::rectangle(merged_frag, cv::Rect(x0, y0, x1-x0, y1-y0), cv::Scalar(0, 0, 200));
+            cv::rectangle(merged_frag, o_bbox, cv::Scalar(0, 0, 200));
+            cv::rectangle(merged_frag, e_bbox, cv::Scalar(0, 200, 0));
+            cv::rectangle(merged_frag, c_bbox, cv::Scalar(200, 0, 0));
 
             printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
                     word.c_str(), conf, word_iter->WordIsFromDictionary(), x0, y0, x1, y1);
+
+            cv::imshow("Merged", merged_frag);
+            cv::waitKey();
 
         } while (word_iter->Next(tesseract_level));
     }
@@ -120,38 +135,71 @@ void Stripes::merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1, cv
 cv::Rect Stripes::extend_bbox(const cv::Rect & o_bbox, const cv::Size & frag_size) {
 
     int x = max(0, o_bbox.x - extend_p);
-    int y = max(0, o_bbox.y - extend_p);
-    int w = min(frag_size.width, x + o_bbox.width + extend_p * 2);
-    int h = min(frag_size.height, y + o_bbox.height + extend_p * 2);
+    int y = max(0, o_bbox.y - extend_p / 2);
+    int w = min(frag_size.width, o_bbox.width + extend_p * 2);
+    int h = min(frag_size.height, o_bbox.height + extend_p);
 
     return cv::Rect(x, y, w, h);
 
 }
 
 cv::Rect Stripes::correct_bbox( tesseract::TessBaseAPI * correct_bbox_ocr, 
+                                const cv::Mat & frag,
                                 const cv::Rect & o_bbox,
                                 const cv::Rect & e_bbox, 
                                 const string & o_word) {
+    
+    cout << o_bbox << endl;
+    cout << e_bbox << endl;
 
     int x_l = e_bbox.x;
-    int x_r = o_bbox.x;
+    int x_r = o_bbox.x + o_bbox.width / 4;
 
     while (x_l < x_r) {
 
         int x_m = (x_l + x_r + 1) >> 1;
-        int w_m = o_bbox.width - (x_m - x_l) * 2;
+
+        cout << x_l << " " << x_m << " " << x_r << endl;
         
-        correct_bbox_ocr->SetRectangle(x_m, e_bbox.y, w_m, e_bbox.height);
+        const cv::Rect roi_rect(x_m, e_bbox.y, e_bbox.width + e_bbox.x - x_m, e_bbox.height);
+        cout << "roi_rect " << roi_rect << "frag size " << frag.size() << endl;
+        const cv::Mat roi = frag(roi_rect);
+        correct_bbox_ocr->SetImage(roi.data, roi.cols, roi.rows, 3, roi.step);
         correct_bbox_ocr->Recognize(0);
         tesseract::ResultIterator * correct_bbox_iter = correct_bbox_ocr->GetIterator();
 
-        const string word = correct_bbox_iter->GetUTF8Text(tesseract_level);
-        const float conf = correct_bbox_iter->Confidence(tesseract_level);
+        bool match_flag = false;
+        do {
+            const string word = correct_bbox_iter->GetUTF8Text(tesseract_level);
+            cout << word << endl;
 
-        if (word != o_word || conf < conf_thres) {
+            if (word == o_word) {
+                match_flag = true;
+                break;
+            }
+        } while (correct_bbox_iter->Next(tesseract_level));
 
+        if (match_flag) {
+            x_l = x_m;
+        } else{           
+            x_r = x_m - 1;
         }
 
+        cv::imshow("roi", roi);
+        cv::waitKey();
+
+    }
+
+    return cv::Rect(x_l, e_bbox.y, e_bbox.width + e_bbox.x - x_l, e_bbox.height);
+
+}
+
+bool Stripes::cross_seam(const cv::Rect & bbox, int seam_x) {
+
+    if (bbox.x < seam_x && bbox.x + bbox.width >= seam_x) {
+        return true;
+    } else {
+        return false;
     }
 
 }
@@ -162,6 +210,7 @@ bool Stripes::reassemble_greedy() {
     vector<StripePair> stripe_pairs;
     for (int i = 0; i < stripes_n; i++) {
         for (int j = 0; j < stripes_n; j++) {
+            if (i == j) continue;
             StripePair sp(i, j, m_metric_word(stripes[i], stripes[j]));
             stripe_pairs.push_back(sp);
         }
