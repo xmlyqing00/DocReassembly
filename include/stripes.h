@@ -48,15 +48,6 @@ private:
 
     bool reassemble_greedy();
 
-    const int extend_p {6};
-    cv::Rect extend_bbox(const cv::Rect & o_bbox, const cv::Size & frag_size);
-
-    cv::Rect correct_bbox(  tesseract::TessBaseAPI * correct_bbox, 
-                            const cv::Mat & frag,
-                            const cv::Rect & o_bbox,
-                            const cv::Rect & e_bbox, 
-                            const string & word);
-    
     bool cross_seam(const cv::Rect & bbox, int seam_x);
 
     bool detect_new_word(   const string & word, 

@@ -7,9 +7,10 @@ int main(int argc, char ** argv) {
     int stripes_n = 4;
     bool generate_flag = false;
     Stripes::Composition comp_mod = Stripes::GREEDY;
+    string model_path = "data/models/";
 
     // Parse command line parameters
-    const string opt_str = "t:T:n:N:gG";
+    const string opt_str = "t:T:n:N:m:M:gG";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -19,6 +20,9 @@ int main(int argc, char ** argv) {
                 break;
             case 'n': case 'N':
                 stripes_n = atoi(optarg);
+                break;
+            case 'm': case 'M':
+                model_path = string(optarg);
                 break;
             case 'g': case 'G':
                 generate_flag = true;
@@ -31,6 +35,8 @@ int main(int argc, char ** argv) {
     cout << "Case name:\t\t" << case_name << endl;
     cout << "Stripes num:\t\t" << stripes_n << endl;
     cout << "Generate stripes:\t" << boolalpha << generate_flag << endl;
+    cout << "OCR model path:\t\t" << model_path << endl;
+    cout << endl;
 
     // Generate new stripes
     const string stripes_folder = "data/stripes/" + case_name + "_" + to_string(stripes_n) + "/";
@@ -45,8 +51,6 @@ int main(int argc, char ** argv) {
     }
 
     // Import stripes
-    // const string model_path = "data/models/";
-    const string model_path = "";
     Stripes stripes(model_path);
 
     for (int i = 0; i < stripes_n; i++) {

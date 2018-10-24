@@ -97,7 +97,8 @@ bool StripesGenerator::save_stripes(const string & output_folder) {
     }
     fout.close();
 
-    cout << "Stripes saved path:\t" << output_folder << endl;
+    cout << "[INFO] Stripes saved path:\t" << output_folder << endl;
+    cout << endl;
 
     return true;
 
