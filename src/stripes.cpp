@@ -4,7 +4,7 @@ Stripes::Stripes(const string & _model_path) {
 
     stripes_n = 0;
     model_path = _model_path;
-    
+
     ocr = new tesseract::TessBaseAPI();
     if (ocr->Init(model_path.c_str(), "eng", tesseract::OEM_LSTM_ONLY)) {
         cerr << "Could not initialize tesseract." << endl;
@@ -15,7 +15,10 @@ Stripes::Stripes(const string & _model_path) {
     // for (int i = 0; i < 10; i++) white_chars += to_string(i);
     // for (int i = 0; i < 26; i++) white_chars += char(int('A') + i);
     // for (int i = 0; i < 26; i++) white_chars += char(int('a') + i);
-    // ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
+    // bool x = ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
+    // cout << "set white: " <<  x << endl;
+    // string black_chars = ",<.>/?;:\'\"[{]}\\|";
+    // ocr->SetVariable("tessedit_char_blacklist", black_chars.c_str());
 
 }
 
@@ -75,8 +78,8 @@ double Stripes::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
             if (!cross_seam(o_bbox, seam_x)) continue;
 
             const string word = word_iter->GetUTF8Text(tesseract_level);
-            if (!detect_new_word(word, o_bbox, frag0) || 
-                !detect_new_word(word, o_bbox, frag1)) continue;
+            if (!detect_new_word(word, o_bbox, frag0, 0) || 
+                !detect_new_word(word, o_bbox, frag1, seam_x)) continue;
 
 
             // cv::Rect && c_bbox = correct_bbox(correct_bbox_ocr, merged_img, o_bbox, e_bbox, word);
@@ -203,25 +206,50 @@ bool Stripes::cross_seam(const cv::Rect & bbox, int seam_x) {
 
 bool Stripes::detect_new_word(  const string & word, 
                                 const cv::Rect & bbox, 
-                                const Fragment & frag) {
+                                const Fragment & frag,
+                                const int offset_x) {
 
     for (int i = 0; i < frag.word_cnt; i++) {
+        
         if (word != frag.words[i]) continue;
-        if (overlap(bbox, frag.bboxs[i]) < 0.5) continue;
+        if (overlap(bbox, frag.bboxs[i], offset_x) < overlap_thres) continue;
+        
+#ifdef DEBUG
+        cout << "frag_word: " << frag.words[i] << endl;
+        cout << "frag_bbox: " << frag.bboxs[i] << endl;
+        cout << "bbox: " << bbox << endl; 
+        cout << "offset: " << offset_x << endl;
+#endif
+        return false;
+
     }
 
     return true;
 
 }
 
-double Stripes::overlap(const cv::Rect & rect0, const cv::Rect & rect1) {
+double Stripes::overlap(const cv::Rect & rect0, const cv::Rect & rect1, const int offset_x) {
 
     int area0 = rect0.width * rect0.height;
     int area1 = rect1.width * rect1.height;
 
-    int x0 = max(rect0.x, rect1.x);
+    int x0 = max(rect0.x, rect1.x + offset_x);
     int y0 = max(rect0.y, rect1.y);
-    int x1 = min(rect0.x + rect0.width, rect1.x + rect1.width);
+    int x1 = min(rect0.x + rect0.width, rect1.x + rect1.width + offset_x);
+    int y1 = min(rect0.y + rect0.height, rect1.y + rect1.height);
+
+    int area_inter;
+    if (x1 < x0 || y1 < y0) {
+        area_inter = 0;
+    } else {
+        area_inter = max(0, (x1 - x0) * (y1 - y0));
+    }
+
+#ifdef DEBUG
+    cout << "overlay: " << (double)area_inter / (area0 + area1 - area_inter) << endl; 
+#endif
+
+    return (double)area_inter / (area0 + area1 - area_inter);
     
 }
 
@@ -275,7 +303,7 @@ bool Stripes::reassemble_greedy() {
 
     while (stripe_right[order_idx] != -1) {
         order_idx = stripe_right[order_idx];
-        merge_frags(comp_img, stripes[order_idx], comp_img);
+        comp_img = merge_frags(comp_img, stripes[order_idx]);
         comp_idx.push_back(order_idx);
     }
 

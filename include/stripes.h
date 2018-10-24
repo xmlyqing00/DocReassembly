@@ -61,9 +61,11 @@ private:
 
     bool detect_new_word(   const string & word, 
                             const cv::Rect & bbox, 
-                            const Fragment & frag);
+                            const Fragment & frag,
+                            const int offset_x=0);
 
-    double overlap(const cv::Rect & rect0, const cv::Rect & rect1);
+    const double overlap_thres {0.3};
+    double overlap(const cv::Rect & rect0, const cv::Rect & rect1, const int offset_x=0);
 
 };
 

@@ -45,7 +45,8 @@ int main(int argc, char ** argv) {
     }
 
     // Import stripes
-    const string model_path = "data/models/";
+    // const string model_path = "data/models/";
+    const string model_path = "";
     Stripes stripes(model_path);
 
     for (int i = 0; i < stripes_n; i++) {
