@@ -40,62 +40,60 @@ bool Stripes::reassemble(Composition comp_mode) {
 
 }
 
-double Stripes::m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1) {
+double Stripes::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
 
-    cv::Mat merged_frag;
-    merge_frags(frag0, frag1, merged_frag);
+    cv::Mat && merged_img = merge_frags(frag0.img, frag1.img);
 
-    const int seam_x = frag0.cols;
-    const int max_m_width = min(frag0.cols, frag1.cols);
+    const int seam_x = frag0.size.width;
+    const int max_m_width = min(frag0.size.width, frag1.size.width);
 
     cout << "Seam X " << seam_x << endl;
 
-    ocr->SetImage(merged_frag.data, merged_frag.cols, merged_frag.rows, 3, merged_frag.step);
-    ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, frag0.rows);
+    ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
+    ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, frag0.size.height);
     ocr->Recognize(0);
     
     tesseract::ResultIterator * word_iter = ocr->GetIterator();
-    word_iter->SetBoundingBoxComponents(true, true);
 
     tesseract::TessBaseAPI * correct_bbox_ocr = new tesseract::TessBaseAPI();
     correct_bbox_ocr->Init(model_path.c_str(), "eng", tesseract::OEM_LSTM_ONLY);
-    // correct_bbox_ocr->SetImage(merged_frag.data, merged_frag.cols, merged_frag.rows, 3, merged_frag.step);
+    // correct_bbox_ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
 
     double m_metric_score = 0;
 
     if (word_iter != 0) {
         do {
-            const string word = word_iter->GetUTF8Text(tesseract_level);
-            const float conf = word_iter->Confidence(tesseract_level);
-            
-            // Conf constraint
-            if (conf < conf_thres) continue;
 
-            // Dict constraint
-            if (!word_iter->WordIsFromDictionary()) continue;
+            const float conf = word_iter->Confidence(tesseract_level);
+            if (conf < conf_thres || !word_iter->WordIsFromDictionary()) continue;
 
             // Boundary cross constraint
             int x0, y0, x1, y1;
             word_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
-            cv::Rect && e_bbox = extend_bbox(o_bbox, merged_frag.size());
+            // cv::Rect && e_bbox = extend_bbox(o_bbox, merged_img.size());
             
-            if (!cross_seam(e_bbox, seam_x)) continue;
+            if (!cross_seam(o_bbox, seam_x)) continue;
 
-            cv::Rect && c_bbox = correct_bbox(correct_bbox_ocr, merged_frag, o_bbox, e_bbox, word);
+            const string word = word_iter->GetUTF8Text(tesseract_level);
+
+            bool new_word_flag = detect_new_word(word, frag0, frag1);
+
+
+            // cv::Rect && c_bbox = correct_bbox(correct_bbox_ocr, merged_img, o_bbox, e_bbox, word);
             
             
             m_metric_score += conf * word.length();
             // m_metric_score ++;
 
-            cv::rectangle(merged_frag, o_bbox, cv::Scalar(0, 0, 200));
-            cv::rectangle(merged_frag, e_bbox, cv::Scalar(0, 200, 0));
-            cv::rectangle(merged_frag, c_bbox, cv::Scalar(200, 0, 0));
+            cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 200));
+            // cv::rectangle(merged_img, e_bbox, cv::Scalar(0, 200, 0));
+            // cv::rectangle(merged_img, c_bbox, cv::Scalar(200, 0, 0));
 
             printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
                     word.c_str(), conf, word_iter->WordIsFromDictionary(), x0, y0, x1, y1);
 
-            cv::imshow("Merged", merged_frag);
+            cv::imshow("Merged", merged_img);
             cv::waitKey();
 
         } while (word_iter->Next(tesseract_level));
@@ -103,9 +101,9 @@ double Stripes::m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1) {
 
 #ifdef DEBUG
     cout << "m_metric_score " << m_metric_score << endl << endl;
-    // cv::rectangle(merged_frag, cv::Rect(ocr_left, 0, word_m_width, frag0.rows), cv::Scalar(200, 0, 0));
-    // cv::line(merged_frag, cv::Point(seam_x, 0), cv::Point(seam_x, frag0.rows), cv::Scalar(200, 0, 0));
-    cv::imshow("Merged", merged_frag);
+    // cv::rectangle(merged_img, cv::Rect(ocr_left, 0, word_m_width, frag0.rows), cv::Scalar(200, 0, 0));
+    // cv::line(merged_img, cv::Point(seam_x, 0), cv::Point(seam_x, frag0.rows), cv::Scalar(200, 0, 0));
+    cv::imshow("Merged", merged_img);
     cv::waitKey();
 #endif
 
@@ -115,7 +113,7 @@ double Stripes::m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1) {
 
 }
 
-void Stripes::merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1, cv::Mat & _out_frag) {
+cv::Mat Stripes::merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1) {
 
     assert(in_frag0.rows == in_frag1.rows);
 
@@ -128,7 +126,7 @@ void Stripes::merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1, cv
     cv::Rect in_frag1_roi(in_frag0.cols, 0, in_frag1.cols, in_frag1.rows);
     in_frag1.copyTo(out_frag(in_frag1_roi));
 
-    _out_frag = out_frag;
+    return out_frag;
 
 }
 
@@ -204,14 +202,31 @@ bool Stripes::cross_seam(const cv::Rect & bbox, int seam_x) {
 
 }
 
+bool Stripes::detect_new_word(const string & word, const Fragment & frag) {
+
+    for (int i = 0; i < frag.word_cnt; i++) {
+        if (word != frag.words[i]) continue;
+        
+    }
+
+    return true;
+
+}
+
 bool Stripes::reassemble_greedy() {
+
+    // Init fragment from stripe
+    vector<Fragment> frags;
+    for (int i = 0; i < stripes_n; i++) {
+        frags.push_back(Fragment(i, stripes[i], model_path));
+    }
 
     // Computer matching score for each pair
     vector<StripePair> stripe_pairs;
     for (int i = 0; i < stripes_n; i++) {
         for (int j = 0; j < stripes_n; j++) {
             if (i == j) continue;
-            StripePair sp(i, j, m_metric_word(stripes[i], stripes[j]));
+            StripePair sp(i, j, m_metric_word(frags[i], frags[j]));
             stripe_pairs.push_back(sp);
         }
     }

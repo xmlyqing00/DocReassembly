@@ -9,6 +9,7 @@
 #include <opencv2/opencv.hpp>
 
 #include <stripe_pair.h>
+#include <fragment.h>
 
 using namespace std;
 
@@ -37,13 +38,13 @@ public:
     
     bool reassemble(Composition comp_mode);
 
-    double m_metric_word(const cv::Mat & frag0, const cv::Mat & frag1);
+    double m_metric_word(const Fragment & frag0, const Fragment & frag1);
 
 private:
 
     tesseract::TessBaseAPI * ocr;
 
-    void merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1, cv::Mat & out_frag);
+    cv::Mat merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1);
 
     bool reassemble_greedy();
 
@@ -57,6 +58,8 @@ private:
                             const string & word);
     
     bool cross_seam(const cv::Rect & bbox, int seam_x);
+
+    bool detect_new_word(const string & word, const Fragment & frag);
 
 };
 
