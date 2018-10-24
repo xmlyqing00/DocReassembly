@@ -72,12 +72,11 @@ double Stripes::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
             word_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
             // cv::Rect && e_bbox = extend_bbox(o_bbox, merged_img.size());
-            
             if (!cross_seam(o_bbox, seam_x)) continue;
 
             const string word = word_iter->GetUTF8Text(tesseract_level);
-
-            bool new_word_flag = detect_new_word(word, frag0, frag1);
+            if (!detect_new_word(word, o_bbox, frag0) || 
+                !detect_new_word(word, o_bbox, frag1)) continue;
 
 
             // cv::Rect && c_bbox = correct_bbox(correct_bbox_ocr, merged_img, o_bbox, e_bbox, word);
@@ -202,15 +201,28 @@ bool Stripes::cross_seam(const cv::Rect & bbox, int seam_x) {
 
 }
 
-bool Stripes::detect_new_word(const string & word, const Fragment & frag) {
+bool Stripes::detect_new_word(  const string & word, 
+                                const cv::Rect & bbox, 
+                                const Fragment & frag) {
 
     for (int i = 0; i < frag.word_cnt; i++) {
         if (word != frag.words[i]) continue;
-        
+        if (overlap(bbox, frag.bboxs[i]) < 0.5) continue;
     }
 
     return true;
 
+}
+
+double Stripes::overlap(const cv::Rect & rect0, const cv::Rect & rect1) {
+
+    int area0 = rect0.width * rect0.height;
+    int area1 = rect1.width * rect1.height;
+
+    int x0 = max(rect0.x, rect1.x);
+    int y0 = max(rect0.y, rect1.y);
+    int x1 = min(rect0.x + rect0.width, rect1.x + rect1.width);
+    
 }
 
 bool Stripes::reassemble_greedy() {

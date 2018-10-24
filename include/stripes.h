@@ -59,7 +59,11 @@ private:
     
     bool cross_seam(const cv::Rect & bbox, int seam_x);
 
-    bool detect_new_word(const string & word, const Fragment & frag);
+    bool detect_new_word(   const string & word, 
+                            const cv::Rect & bbox, 
+                            const Fragment & frag);
+
+    double overlap(const cv::Rect & rect0, const cv::Rect & rect1);
 
 };
 
