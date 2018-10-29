@@ -28,7 +28,7 @@ public:
 
     StripesGenerator(string img_path, int stripes_n);
 
-    void show_whole_stripes();
+    cv::Mat get_puzzle_img(int gap);
 
     bool save_stripes(const string & output_folder);
 

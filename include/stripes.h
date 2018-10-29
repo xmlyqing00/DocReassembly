@@ -1,6 +1,9 @@
 #ifndef STRIPES_H
 #define STRIPES_H
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <numeric>
 #include <vector>
 #include <deque>
@@ -39,6 +42,8 @@ public:
     bool reassemble(Composition comp_mode);
 
     double m_metric_word(const Fragment & frag0, const Fragment & frag1);
+
+    void save_result(const string & case_name);
 
 private:
 

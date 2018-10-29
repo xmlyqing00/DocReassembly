@@ -10,21 +10,22 @@ StripesGenerator::StripesGenerator(string img_path, int _stripes_n) {
 
 }
 
-void StripesGenerator::show_whole_stripes() {
+cv::Mat StripesGenerator::get_puzzle_img(int gap=5) {
 
-    int gap = 5;
-    cv::Mat whole_stripes = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + (stripes_n - 1) * gap, CV_8UC3);
+    cv::Mat puzzle_img = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + (stripes_n - 1) * gap, CV_8UC3);
     
-    int whole_stripes_x = 0;
+    int puzzle_img_x = 0;
     for (const int idx: access_idx) {
-        cv::Rect roi(whole_stripes_x, 0, stripes[idx].cols, stripes[idx].rows);
-        stripes[idx].copyTo(whole_stripes(roi));
-        whole_stripes_x += stripes[idx].cols + gap;
+        cv::Rect roi(puzzle_img_x, 0, stripes[idx].cols, stripes[idx].rows);
+        stripes[idx].copyTo(puzzle_img(roi));
+        puzzle_img_x += stripes[idx].cols + gap;
     }
 
-    // cv::imwrite("tmp/whole_stripes.png", whole_stripes);
-    // cv::imshow("whole_stripes", whole_stripes);
+    // cv::imwrite("tmp/puzzle_img.png", puzzle_img);
+    // cv::imshow("puzzle_img", puzzle_img);
     // cv::waitKey();
+
+    return puzzle_img;
 
 }
 
@@ -61,25 +62,11 @@ bool StripesGenerator::save_stripes(const string & output_folder) {
 
     const string root_folder = "data/stripes/";
     if (access(root_folder.c_str(), 0) == -1) {
-        int create_flag = mkdir(root_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
-        if (create_flag != 0) {
-            cerr << "[ERRO] Create Stripes folder failed." << endl;
-            return false;
-        }
+        mkdir(root_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
     }
     
     if (access(output_folder.c_str(), 0) == -1) {
-
-        cout << "[INFO] Stripes folder does not exist." << endl;
-
-        int create_flag = mkdir(output_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
-        if (create_flag == 0) {
-            cout << "[INFO] Create stripes folder." << endl;
-        } else {
-            cerr << "[ERRO] Create Stripes folder failed." << endl;
-            return false;
-        }
-
+        mkdir(output_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
     }
 
     for (int i = 0; i < stripes_n; i++) {
@@ -97,8 +84,10 @@ bool StripesGenerator::save_stripes(const string & output_folder) {
     }
     fout.close();
 
-    cout << "[INFO] Stripes saved path:\t" << output_folder << endl;
-    cout << endl;
+    cv::Mat && puzzle_img = get_puzzle_img(0);
+    cv::imwrite(output_folder + "puzzle_img.png", puzzle_img);
+
+    cout << "Stripes saved path:\t" << output_folder << endl;
 
     return true;
 

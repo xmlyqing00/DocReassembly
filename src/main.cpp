@@ -60,9 +60,11 @@ int main(int argc, char ** argv) {
     }
 
     stripes.reassemble(comp_mod);
+    stripes.save_result(case_name);
     for (const int idx: stripes.comp_idx) {
         cout << idx << endl;
     }
+
     cv::imshow("comp_img", stripes.comp_img);
     cv::waitKey();
     

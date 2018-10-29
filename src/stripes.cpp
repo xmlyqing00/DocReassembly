@@ -26,6 +26,18 @@ Stripes::~Stripes() {
     ocr->End();
 }
 
+void Stripes::save_result(const string & case_name) {
+
+    const string result_folder = "data/results/"; 
+    if (access(result_folder.c_str(), 0) == -1) {
+        mkdir(result_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+    }
+
+    const string output_path = result_folder + case_name + ".png";
+    cv::imwrite(output_path, comp_img);
+
+}
+
 void Stripes::push(const cv::Mat & stripe_img) {
     stripes.push_back(stripe_img.clone());
     stripes_n = stripes.size();
@@ -77,9 +89,9 @@ double Stripes::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
             m_metric_score += conf * word.length();
             // m_metric_score ++;
 
+#ifdef DEBUG
             cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 200));
 
-#ifdef DEBUG
             printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
                     word.c_str(), conf, word_iter->WordIsFromDictionary(), x0, y0, x1, y1);
 #endif

@@ -4,5 +4,7 @@ StripeReassembly
 StripeReassembly-debug
 
 /data/stripes/
+/data/results/
+
 tmp/
 .DS_Store
