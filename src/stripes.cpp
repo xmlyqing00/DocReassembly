@@ -226,6 +226,8 @@ bool Stripes::reassemble_greedy() {
         stripe_left[sp.stripe_idx1] = sp.stripe_idx0;
         avg_m_score += sp.m_score;
         merged_cnt++;
+
+        cout << merged_cnt << " " << sp.stripe_idx0 << " " << sp.stripe_idx1 << " " << sp.m_score << endl;
         
         if (merged_cnt == stripes_n - 1) break;
         
