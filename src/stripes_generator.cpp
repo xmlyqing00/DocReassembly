@@ -84,7 +84,7 @@ bool StripesGenerator::save_stripes(const string & output_folder) {
     }
     fout.close();
 
-    cv::Mat && puzzle_img = get_puzzle_img(0);
+    cv::Mat && puzzle_img = get_puzzle_img(3);
     cv::imwrite(output_folder + "puzzle_img.png", puzzle_img);
 
     cout << "Stripes saved path:\t" << output_folder << endl;

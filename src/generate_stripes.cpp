@@ -29,8 +29,7 @@ int main(int argc, char ** argv) {
 
     cout << "Case name:\t\t" << case_name << endl;
     cout << "Stripes num:\t\t" << stripes_n << endl;
-    cout << "Generate stripes:\t" << boolalpha << generate_flag << endl;
-    cout << endl;
+    cout << "Re-generate stripes:\t" << boolalpha << generate_flag << endl;
 
     // Generate new stripes
     const string stripes_folder = "data/stripes/" + case_name + "_" + to_string(stripes_n) + "/";

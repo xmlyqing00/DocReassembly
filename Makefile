@@ -20,6 +20,8 @@ s_stripes = $(src_dir)solve_stripes.o \
 			$(src_dir)stripes_solver.o \
 			$(src_dir)stripe_pair.o \
 			$(src_dir)fragment.o
+x = a b c
+y = $(src_dir)$(x)
 
 .PHONY: clean default
 default: solve-stripes generate-stripes
