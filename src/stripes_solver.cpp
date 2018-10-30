@@ -43,8 +43,10 @@ void Stripes::push(const cv::Mat & stripe_img) {
     stripes_n = stripes.size();
 }
 
-bool Stripes::reassemble(Composition comp_mode) {
+bool Stripes::reassemble(Metric _metric_mode, Composition comp_mode) {
     
+    metric_mode = _metric_mode;
+
     switch (comp_mode) {
         case Stripes::GREEDY:
             cout << "Reassemble mode: \t" << "GREEDY" << endl;
@@ -52,6 +54,29 @@ bool Stripes::reassemble(Composition comp_mode) {
         default:
             return false;
     }
+
+}
+
+double Stripes::diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
+
+    double diff = 0;
+    for (int i = 0; i < 3; i++) diff += abs(v0[i] - v1[i]);
+    return diff / 3;
+
+}
+
+double Stripes::m_metric_pixel(const Fragment & frag0, const Fragment & frag1) {
+
+    int x0 = frag0.size.width - 1;
+    int x1 = 0;
+
+    double m_score = 0;
+    for (int y = 0; y < frag0.size.height; y++) {
+        m_score += diff_vec3b(  frag0.img.at<cv::Vec3b>(x0, y), 
+                                frag0.img.at<cv::Vec3b>(x1, y));
+    }
+
+    return m_score;
 
 }
 
@@ -201,9 +226,24 @@ bool Stripes::reassemble_greedy() {
     vector<StripePair> stripe_pairs;
     for (int i = 0; i < stripes_n; i++) {
         for (int j = 0; j < stripes_n; j++) {
+            
             if (i == j) continue;
-            StripePair sp(i, j, m_metric_word(frags[i], frags[j]));
+
+            double m_score = 0;
+            switch (metric_mode) {
+                case PIXEL:
+                    m_score = m_metric_pixel(frags[i], frags[j]);
+                    break;
+                case CHAR:
+                    break;
+                case WORD:
+                    m_score = m_metric_word(frags[i], frags[j]);
+                    break;
+            }   
+            
+            StripePair sp(i, j, m_score);
             stripe_pairs.push_back(sp);
+
         }
     }
 

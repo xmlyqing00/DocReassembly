@@ -5,7 +5,8 @@ int main(int argc, char ** argv) {
     // Default parameters
     string case_name = "test0";
     int stripes_n = 4;
-    Stripes::Composition comp_mod = Stripes::GREEDY;
+    Stripes::Composition comp_mode = Stripes::GREEDY;
+    Stripes::Metric metric_mode = Stripes::PIXEL;
     string model_path = "data/models/";
 
     // Parse command line parameters
@@ -43,7 +44,7 @@ int main(int argc, char ** argv) {
         stripes.push(stripe_img);
     }
 
-    stripes.reassemble(comp_mod);
+    stripes.reassemble(metric_mode, comp_mode);
     stripes.save_result(case_name);
     for (const int idx: stripes.comp_idx) {
         cout << idx << endl;

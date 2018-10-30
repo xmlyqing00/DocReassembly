@@ -20,6 +20,12 @@ class Stripes {
 
 public:
 
+    enum Metric {
+        PIXEL,
+        CHAR,
+        WORD
+    };
+
     enum Composition {
         GREEDY,
         TSP,
@@ -39,7 +45,9 @@ public:
 
     void push(const cv::Mat & stripe_img);
     
-    bool reassemble(Composition comp_mode);
+    bool reassemble(Metric _metric_mode, Composition comp_mode);
+
+    double m_metric_pixel(const Fragment & frag0, const Fragment & frag1);
 
     double m_metric_word(const Fragment & frag0, const Fragment & frag1);
 
@@ -51,7 +59,10 @@ private:
 
     cv::Mat merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1);
 
+    Metric metric_mode;
     bool reassemble_greedy();
+
+    double diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1);
 
     bool cross_seam(const cv::Rect & bbox, int seam_x);
 
