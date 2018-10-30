@@ -1,4 +1,4 @@
-#include <stripes.h>
+#include <stripes_solver.h>
 
 Stripes::Stripes(const string & _model_path) {
 

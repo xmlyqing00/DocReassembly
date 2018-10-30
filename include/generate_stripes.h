@@ -1,5 +1,5 @@
-#ifndef CREATE_STRIPES_H
-#define CREATE_STRIPES_H
+#ifndef GENERATE_STRIPES_H
+#define GENERATE_STRIPES_H
 
 #include <unistd.h>
 #include <string>

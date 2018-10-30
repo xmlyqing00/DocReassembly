@@ -5,7 +5,7 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-#include <stripes.h>
+#include <stripes_solver.h>
 
 using namespace std;
 

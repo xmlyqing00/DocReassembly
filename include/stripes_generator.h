@@ -1,5 +1,5 @@
-#ifndef GENERATE_STRIPES_H
-#define GENERATE_STRIPES_H
+#ifndef STRIPES_GENERATOR_H
+#define STRIPES_GENERATOR_H
 
 #include <time.h>
 #include <unistd.h>

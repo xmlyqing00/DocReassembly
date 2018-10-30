@@ -1,5 +1,5 @@
-#ifndef STRIPES_H
-#define STRIPES_H
+#ifndef STRIPES_SOLVER_H
+#define STRIPES_SOLVER_H
 
 #include <unistd.h>
 #include <sys/types.h>

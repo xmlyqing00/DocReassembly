@@ -1,5 +1,4 @@
-#include <create_stripes.h>
-
+#include <generate_stripes.h>
 
 int main(int argc, char ** argv) {
 

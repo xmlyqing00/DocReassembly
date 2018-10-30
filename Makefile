@@ -13,28 +13,28 @@ src = $(wildcard $(src_dir)*.cpp)
 obj = $(src:.cpp=.o)
 dep = $(src:.cpp=.d)
 
-c_stripes = $(src_dir)create_stripes.o \
+c_stripes = $(src_dir)generate_stripes.o \
 			$(src_dir)stripes_generator.o
 			
 s_stripes = $(src_dir)solve_stripes.o \
-			$(src_dir)stripes.o \
+			$(src_dir)stripes_solver.o \
 			$(src_dir)stripe_pair.o \
 			$(src_dir)fragment.o
 
 .PHONY: clean default
-default: solve-stripes create-stripes
+default: solve-stripes generate-stripes
 
 %.o: %.cpp
 	$(CXX) -c $< -o $@ -MMD $(CXX_FLAGS) $(INCLUDES) 
 
 -include $(dep)
 
-create-stripes: $(c_stripes)
+generate-stripes: $(c_stripes)
 	$(CXX) $^ $(OPENCV_LIBS) -o $(dst_dir)$@
 
 solve-stripes: $(s_stripes)
 	$(CXX) $^ $(TESSARACT_LIBS) $(OPENCV_LIBS) -o $(dst_dir)$@
 
 clean:
-	rm $(dst)create-stripes $(dst)solve-stripes $(src_dir)*.o $(src_dir)*.d
+	rm $(dst_dir)generate-stripes $(dst_dir)solve-stripes $(src_dir)*.o $(src_dir)*.d
 
