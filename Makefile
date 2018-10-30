@@ -8,30 +8,33 @@ OPENCV_LIBS = -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_video
 TESSARACT_LIBS = -ltesseract
 
 src_dir = ./src/
-dst_dir = ./
+dst_dir = ./bin/
 src = $(wildcard $(src_dir)*.cpp)
 obj = $(src:.cpp=.o)
-obj_debug = $(src:.cpp=.debug.o)
 dep = $(src:.cpp=.d)
 
-.PHONY: clean default debug
-default: StripeReassembly
-debug: StripeReassembly-debug
+c_stripes = $(src_dir)create_stripes.o \
+			$(src_dir)stripes_generator.o
+			
+s_stripes = $(src_dir)solve_stripes.o \
+			$(src_dir)stripes.o \
+			$(src_dir)stripe_pair.o \
+			$(src_dir)fragment.o
 
-%.debug.o: %.cpp
-	$(CXX) -c $< -o $@ -MMD -DDEBUG $(CXX_FLAGS) $(INCLUDES) 
+.PHONY: clean default
+default: solve-stripes create-stripes
 
 %.o: %.cpp
 	$(CXX) -c $< -o $@ -MMD $(CXX_FLAGS) $(INCLUDES) 
 
 -include $(dep)
 
-StripeReassembly-debug: $(obj_debug)
-	$(CXX) $^ $(TESSARACT_LIBS) $(OPENCV_LIBS) -DDEBUG -o $(dst_dir)$@
+create-stripes: $(c_stripes)
+	$(CXX) $^ $(OPENCV_LIBS) -o $(dst_dir)$@
 
-StripeReassembly: $(obj)
+solve-stripes: $(s_stripes)
 	$(CXX) $^ $(TESSARACT_LIBS) $(OPENCV_LIBS) -o $(dst_dir)$@
 
 clean:
-	rm $(dst)StripeReassembly $(dst)StripeReassembly-debug $(src_dir)*.o $(src_dir)*.d
+	rm $(dst)create-stripes $(dst)solve-stripes $(src_dir)*.o $(src_dir)*.d
 
