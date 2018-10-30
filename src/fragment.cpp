@@ -7,11 +7,15 @@ Fragment::Fragment(int idx, const cv::Mat & _img, const string & _model_path) {
     img = _img;
     size = img.size();
 
+}
+
+void Fragment::ocr_words() {
+
     tesseract::TessBaseAPI * ocr = new tesseract::TessBaseAPI();
     ocr->Init(model_path.c_str(), "eng", tesseract::OEM_LSTM_ONLY);
     ocr->SetImage(img.data, img.cols, img.rows, 3, img.step);
     ocr->Recognize(0);
-    
+
     tesseract::ResultIterator * word_iter = ocr->GetIterator();
 
     if (word_iter != 0) {

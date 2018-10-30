@@ -60,7 +60,9 @@ bool Stripes::reassemble(Metric _metric_mode, Composition comp_mode) {
 double Stripes::diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
 
     double diff = 0;
-    for (int i = 0; i < 3; i++) diff += abs(v0[i] - v1[i]);
+    for (int i = 0; i < 3; i++) {
+        diff += abs(v0[i] - v1[i]);
+    }
     return diff / 3;
 
 }
@@ -72,11 +74,11 @@ double Stripes::m_metric_pixel(const Fragment & frag0, const Fragment & frag1) {
 
     double m_score = 0;
     for (int y = 0; y < frag0.size.height; y++) {
-        m_score += diff_vec3b(  frag0.img.at<cv::Vec3b>(x0, y), 
-                                frag0.img.at<cv::Vec3b>(x1, y));
+        m_score += diff_vec3b(  frag0.img.at<cv::Vec3b>(y, x0), 
+                                frag1.img.at<cv::Vec3b>(y, x1));
     }
 
-    return m_score;
+    return -m_score / frag0.size.height;
 
 }
 
@@ -217,7 +219,9 @@ bool Stripes::reassemble_greedy() {
 
     vector<Fragment> frags;
     for (int i = 0; i < stripes_n; i++) {
-        frags.push_back(Fragment(i, stripes[i], model_path));
+        Fragment frag(i, stripes[i], model_path);
+        if (metric_mode == WORD) frag.ocr_words();
+        frags.push_back(frag);
     }
 
     // Compute matching score for each pair
@@ -241,6 +245,9 @@ bool Stripes::reassemble_greedy() {
                     break;
             }   
             
+#ifdef DEBUG
+            printf("Metric i %d, j %d, m %.3lf\n", i, j, m_score);
+#endif
             StripePair sp(i, j, m_score);
             stripe_pairs.push_back(sp);
 
@@ -261,6 +268,13 @@ bool Stripes::reassemble_greedy() {
 
         if (stripe_right[sp.stripe_idx0] != -1) continue;
         if (stripe_left[sp.stripe_idx1] != -1) continue;
+
+        int left_most = sp.stripe_idx0;
+        while (stripe_left[left_most] != -1) {
+            left_most = stripe_left[left_most];
+        }
+
+        if (left_most == sp.stripe_idx1) continue;
 
         stripe_right[sp.stripe_idx0] = sp.stripe_idx1;
         stripe_left[sp.stripe_idx1] = sp.stripe_idx0;

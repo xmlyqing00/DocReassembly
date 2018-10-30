@@ -29,9 +29,11 @@ int main(int argc, char ** argv) {
         opt = getopt(argc, argv, opt_str.c_str());
     }
 
-    cout << "Case name:\t\t" << case_name << endl;
-    cout << "Stripes num:\t\t" << stripes_n << endl;
-    cout << "OCR model path:\t\t" << model_path << endl;
+    cout << "Case name:          " << case_name << endl;
+    cout << "Stripes num:        " << stripes_n << endl;
+    cout << "OCR model path:     " << model_path << endl;
+    cout << "Composition mode:   " << comp_mode << endl;
+    cout << "Metric mode:        " << metric_mode << endl;
     cout << endl;
 
     // Import stripes

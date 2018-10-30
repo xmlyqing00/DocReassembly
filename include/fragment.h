@@ -24,7 +24,8 @@ public:
     int word_cnt {0};
 
     Fragment(int idx, const cv::Mat & _img, const string & _model_path); 
-
+    void ocr_words();
+    
 };
 
 #endif

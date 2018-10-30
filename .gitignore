@@ -2,7 +2,7 @@
 *.d
 
 /bin/
-
+.vscode/
 /data/stripes/
 /data/results/
 
