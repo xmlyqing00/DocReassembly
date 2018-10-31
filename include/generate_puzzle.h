@@ -1,5 +1,5 @@
-#ifndef GENERATE_STRIPES_H
-#define GENERATE_STRIPES_H
+#ifndef GENERATE_PUZZLE_H
+#define GENERATE_PUZZLE_H
 
 #include <unistd.h>
 #include <string>
@@ -10,6 +10,11 @@
 #include <stripes_generator.h>
 
 using namespace std;
+
+enum PuzzleType {
+    STRIPES,
+    SQUARES
+};
 
 
 #endif

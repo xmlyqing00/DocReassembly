@@ -1,22 +1,13 @@
-#ifndef STRIPES_GENERATOR_H
-#define STRIPES_GENERATOR_H
+#ifndef SQUARE_GENERATOR_H
+#define SQUARE_GENERATOR_H
 
-#include <time.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fstream>
-#include <string>
 #include <vector>
-#include <numeric>
-#include <algorithm>
-#include <random>
 
 #include <opencv2/opencv.hpp>
 
 using namespace std;
 
-class StripesGenerator {
+class SquaresGenerator {
 
 public:
     cv::Mat ori_img;
@@ -26,7 +17,7 @@ public:
     vector<cv::Mat> stripes;
     vector<int> access_idx;
 
-    StripesGenerator(const string & img_path, int stripes_n);
+    SquaresGenerator(const string & img_path, int vertical_n);
 
     cv::Mat get_puzzle_img(int gap);
 
@@ -35,7 +26,6 @@ public:
 private:
 
     bool seg_stripes();
-
 };
 
 #endif

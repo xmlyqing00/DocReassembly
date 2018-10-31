@@ -1,6 +1,6 @@
 #include <stripes_generator.h>
 
-StripesGenerator::StripesGenerator(string img_path, int _stripes_n) {
+StripesGenerator::StripesGenerator(const string & img_path, int _stripes_n) {
     
     ori_img = cv::imread(img_path);
     ori_img_size = ori_img.size();
@@ -59,11 +59,6 @@ bool StripesGenerator::seg_stripes() {
 }
 
 bool StripesGenerator::save_stripes(const string & output_folder) {
-
-    const string root_folder = "data/stripes/";
-    if (access(root_folder.c_str(), 0) == -1) {
-        mkdir(root_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
-    }
     
     if (access(output_folder.c_str(), 0) == -1) {
         mkdir(output_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
