@@ -47,6 +47,7 @@ solve-stripes-debug: $(s_stripes_debug)
 	$(CXX) $^ $(TESSARACT_LIBS) $(OPENCV_LIBS) -o $(dst_dir)$@
 
 clean:
-	rm $(dst_dir)generate-stripes $(dst_dir)solve-stripes $(dst_dir)solve-stripes-debug
 	rm $(src_dir)*.o $(src_dir)*.d
+	rm $(dst_dir)generate-stripes $(dst_dir)solve-stripes $(dst_dir)solve-stripes-debug
+	
 
