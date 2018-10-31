@@ -1,16 +1,22 @@
-#include <stripes_generator.h>
+#include <squares_generator.h>
 
-StripesGenerator::StripesGenerator(const string & img_path, int _stripes_n) {
+SquaresGenerator::SquaresGenerator(const string & img_path, int vertical_n) {
     
     ori_img = cv::imread(img_path);
     ori_img_size = ori_img.size();
-    stripes_n = _stripes_n;
+    
+    square_size.width = ori_img_size.width / vertical_n;
+    square_size.height = square_size.width;
+    puzzle_size.width = vertical_n;
+    puzzle_size.height = ori_img_size.height / square_size.height;
 
-    seg_stripes();
+    squares_n = puzzle_size.width * puzzle_size.height;
+
+    seg_squares();
 
 }
 
-cv::Mat StripesGenerator::get_puzzle_img(int gap=5) {
+cv::Mat SquaresGenerator::get_puzzle_img(int gap=5) {
 
     cv::Mat puzzle_img = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + (stripes_n - 1) * gap, CV_8UC3);
     
@@ -29,26 +35,20 @@ cv::Mat StripesGenerator::get_puzzle_img(int gap=5) {
 
 }
 
-bool StripesGenerator::seg_stripes() {
+bool SquaresGenerator::seg_squares() {
 
-    int seg_step = int((double)ori_img_size.width / stripes_n);
-
-    int seg_st = 0;
-    for (int i = 0; i < stripes_n; i++) {
-
-        int seg_ed = seg_st + seg_step;
-        if (i == stripes_n - 1) {
-            seg_ed = ori_img_size.width;
+    for (int i = 0; i < puzzle_size.height; i++) {
+        for (int j = 0; j < puzzle_size.width; j++) {
+            cv::Rect ori_rect(  i * square_size.width, 
+                                j * square_size.height, 
+                                square_size.width, 
+                                square_size.height);
+            cv::Mat square_img = ori_img(ori_rect);
+            squares.push_back(square_img.clone());       
         }
-
-        cv::Mat stripe = ori_img(cv::Rect(seg_st, 0, seg_ed - seg_st, ori_img_size.height));
-        stripes.push_back(stripe.clone());
-
-        seg_st = seg_ed;
-        
     }
 
-    access_idx = vector<int>(stripes_n);
+    access_idx = vector<int>(squares_n);
     default_random_engine rand_engine(time(0));
 
     iota(access_idx.begin(), access_idx.end(), 0);
@@ -58,18 +58,18 @@ bool StripesGenerator::seg_stripes() {
 
 }
 
-bool StripesGenerator::save_puzzle(const string & output_folder) {
+bool SquaresGenerator::save_puzzle(const string & output_folder) {
     
     if (access(output_folder.c_str(), 0) == -1) {
         mkdir(output_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
     }
 
-    for (int i = 0; i < stripes_n; i++) {
-        cv::imwrite(output_folder + to_string(i) + ".png", stripes[access_idx[i]]);
+    for (int i = 0; i < squares_n; i++) {
+        cv::imwrite(output_folder + to_string(i) + ".png", squares[access_idx[i]]);
     }
 
-    vector<int> gt_order(stripes_n);
-    for (int i = 0; i < stripes_n; i++) {
+    vector<int> gt_order(squares_n);
+    for (int i = 0; i < squares_n; i++) {
         gt_order[access_idx[i]] = i;
     }
     const string order_file_path = output_folder + "order.txt";

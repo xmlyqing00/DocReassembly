@@ -61,8 +61,13 @@ int main(int argc, char ** argv) {
             exit(-1);
         }
 
-        StripesGenerator stripes_generator(gt_img_path, vertical_n);
-        stripes_generator.save_stripes(puzzle_folder);
+        if (puzzle_type == STRIPES) {
+            StripesGenerator stripes_generator(gt_img_path, vertical_n);
+            stripes_generator.save_puzzle(puzzle_folder);
+        } else {
+            SquaresGenerator squares_generator(gt_img_path, vertical_n);
+            squares_generator.save_puzzle(puzzle_folder);
+        }
         
     }
 
