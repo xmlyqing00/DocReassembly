@@ -5,6 +5,7 @@
 .vscode/
 /data/stripes/
 /data/results/
+/data/squares/
 
 tmp/
 .DS_Store

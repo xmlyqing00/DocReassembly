@@ -31,10 +31,10 @@ int main(int argc, char ** argv) {
         opt = getopt(argc, argv, opt_str.c_str());
     }
 
-    cout << "Case name:           " << case_name << endl;
-    cout << "Vertical cut num:    " << vertical_n << endl;
-    cout << "Re-generate puzzle: " << boolalpha << regenerate_flag << endl;
-    cout << "Puzzle type:         " << (puzzle_type ? "Squares": "Stripes") << endl;
+    cout << "Test case name:      \t" << case_name << endl;
+    cout << "Vertical cut num:    \t" << vertical_n << endl;
+    cout << "Re-generate puzzle:  \t" << boolalpha << regenerate_flag << endl;
+    cout << "Puzzle type:         \t" << (puzzle_type ? "Squares": "Stripes") << endl;
 
     // Generate new puzzle
     string puzzle_folder;

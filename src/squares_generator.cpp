@@ -18,16 +18,21 @@ SquaresGenerator::SquaresGenerator(const string & img_path, int vertical_n) {
 
 cv::Mat SquaresGenerator::get_puzzle_img(int gap=5) {
 
-    cv::Mat puzzle_img = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + (stripes_n - 1) * gap, CV_8UC3);
+    cv::Mat puzzle_img = cv::Mat::zeros(ori_img_size.height + (puzzle_size.height - 1) * gap, 
+                                        ori_img_size.width + (puzzle_size.width - 1) * gap, 
+                                        CV_8UC3);
     
-    int puzzle_img_x = 0;
-    for (const int idx: access_idx) {
-        cv::Rect roi(puzzle_img_x, 0, stripes[idx].cols, stripes[idx].rows);
-        stripes[idx].copyTo(puzzle_img(roi));
-        puzzle_img_x += stripes[idx].cols + gap;
+    int square_idx = 0;
+    for (int i = 0; i < puzzle_size.height; i++) {
+        for (int j = 0; j < puzzle_size.width; j++) {
+            cv::Rect roi_rect(  square_size.width * j + gap * j,
+                                square_size.height * i + gap * i,
+                                square_size.width,
+                                square_size.height);
+            squares[square_idx++].copyTo(puzzle_img(roi_rect));
+        }
     }
 
-    // cv::imwrite("tmp/puzzle_img.png", puzzle_img);
     // cv::imshow("puzzle_img", puzzle_img);
     // cv::waitKey();
 
@@ -39,10 +44,11 @@ bool SquaresGenerator::seg_squares() {
 
     for (int i = 0; i < puzzle_size.height; i++) {
         for (int j = 0; j < puzzle_size.width; j++) {
-            cv::Rect ori_rect(  i * square_size.width, 
-                                j * square_size.height, 
+            cv::Rect ori_rect(  j * square_size.width, 
+                                i * square_size.height, 
                                 square_size.width, 
                                 square_size.height);
+            // cout << ori_rect << endl;
             cv::Mat square_img = ori_img(ori_rect);
             squares.push_back(square_img.clone());       
         }
@@ -74,6 +80,8 @@ bool SquaresGenerator::save_puzzle(const string & output_folder) {
     }
     const string order_file_path = output_folder + "order.txt";
     ofstream fout(order_file_path, ios::out);
+    fout << puzzle_size.width << endl;
+    fout << puzzle_size.height << endl;
     for (const int & i: gt_order) {
         fout << i << endl;
     }
@@ -82,7 +90,7 @@ bool SquaresGenerator::save_puzzle(const string & output_folder) {
     cv::Mat && puzzle_img = get_puzzle_img(3);
     cv::imwrite(output_folder + "puzzle_img.png", puzzle_img);
 
-    cout << "Stripes saved path:\t" << output_folder << endl;
+    cout << "Stripes saved path: \t" << output_folder << endl;
 
     return true;
 
