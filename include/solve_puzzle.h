@@ -9,4 +9,9 @@
 
 using namespace std;
 
+enum PuzzleType {
+    STRIPES,
+    SQUARES
+};
+
 #endif
