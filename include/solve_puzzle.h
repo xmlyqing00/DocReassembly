@@ -1,5 +1,5 @@
-#ifndef SOLVE_STRIPES
-#define SOLVE_STRIPES
+#ifndef SOLVE_PUZZLE
+#define SOLVE_PUZZLE
 
 #include <unistd.h>
 #include <string>

@@ -1,4 +1,4 @@
-#include <solve_stripes.h>
+#include <solve_puzzle.h>
 
 int main(int argc, char ** argv) {
 

@@ -13,22 +13,22 @@ src = $(wildcard $(src_dir)*.cpp)
 obj = $(src:.cpp=.o)
 dep = $(src:.cpp=.d)
 
-c_stripes = $(src_dir)generate_puzzle.o \
+c_puzzle = $(src_dir)generate_puzzle.o \
 			$(src_dir)stripes_generator.o \
 			$(src_dir)squares_generator.o
 			
-s_stripes = $(src_dir)solve_stripes.o \
+s_puzzle = $(src_dir)solve_puzzle.o \
 			$(src_dir)stripes_solver.o \
 			$(src_dir)stripe_pair.o \
 			$(src_dir)fragment.o
-s_stripes_debug = $(s_stripes:.o=.debug.o)
+s_puzzle_debug = $(s_puzzle:.o=.debug.o)
 
 x = a b c
 y = $(src_dir)$(x)
 
 .PHONY: clean default debug all
-default: solve-stripes generate-puzzle
-debug: solve-stripes-debug
+default: solve-puzzle generate-puzzle
+debug: solve-puzzle-debug
 all: default debug
 
 %.debug.o: %.cpp
@@ -38,17 +38,17 @@ all: default debug
 
 -include $(dep)
 
-generate-puzzle: $(c_stripes)
+generate-puzzle: $(c_puzzle)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(OPENCV_LIBS)
 
-solve-stripes: $(s_stripes)
+solve-puzzle: $(s_puzzle)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(TESSARACT_LIBS) $(OPENCV_LIBS)
 
-solve-stripes-debug: $(s_stripes_debug)
+solve-puzzle-debug: $(s_puzzle_debug)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(TESSARACT_LIBS) $(OPENCV_LIBS) 
 
 clean:
 	rm $(src_dir)*.o $(src_dir)*.d
-	rm $(dst_dir)generate-puzzle $(dst_dir)solve-stripes $(dst_dir)solve-stripes-debug
+	rm $(dst_dir)generate-puzzle $(dst_dir)solve-puzzle $(dst_dir)solve-puzzle-debug
 	
 
