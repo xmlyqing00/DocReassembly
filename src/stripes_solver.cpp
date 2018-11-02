@@ -1,6 +1,6 @@
 #include <stripes_solver.h>
 
-Stripes::Stripes(const string & _model_path) {
+StripesSolver::StripesSolver(const string & _model_path) {
 
     stripes_n = 0;
     model_path = _model_path;
@@ -22,11 +22,11 @@ Stripes::Stripes(const string & _model_path) {
 
 }
 
-Stripes::~Stripes() {
+StripesSolver::~StripesSolver() {
     ocr->End();
 }
 
-void Stripes::save_result(const string & case_name) {
+void StripesSolver::save_result(const string & case_name) {
 
     const string result_folder = "data/results/"; 
     if (access(result_folder.c_str(), 0) == -1) {
@@ -38,17 +38,17 @@ void Stripes::save_result(const string & case_name) {
 
 }
 
-void Stripes::push(const cv::Mat & stripe_img) {
+void StripesSolver::push(const cv::Mat & stripe_img) {
     stripes.push_back(stripe_img.clone());
     stripes_n = stripes.size();
 }
 
-bool Stripes::reassemble(Metric _metric_mode, Composition comp_mode) {
+bool StripesSolver::reassemble(Metric _metric_mode, Composition comp_mode) {
     
     metric_mode = _metric_mode;
 
     switch (comp_mode) {
-        case Stripes::GREEDY:
+        case StripesSolver::GREEDY:
             cout << "Reassemble mode: \t" << "GREEDY" << endl;
             return reassemble_greedy();
         default:
@@ -57,7 +57,7 @@ bool Stripes::reassemble(Metric _metric_mode, Composition comp_mode) {
 
 }
 
-double Stripes::diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
+double StripesSolver::diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
 
     double diff = 0;
     for (int i = 0; i < 3; i++) {
@@ -67,7 +67,7 @@ double Stripes::diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
 
 }
 
-double Stripes::m_metric_pixel(const Fragment & frag0, const Fragment & frag1) {
+double StripesSolver::m_metric_pixel(const Fragment & frag0, const Fragment & frag1) {
 
     int x0 = frag0.size.width - 1;
     int x1 = 0;
@@ -82,7 +82,7 @@ double Stripes::m_metric_pixel(const Fragment & frag0, const Fragment & frag1) {
 
 }
 
-double Stripes::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
+double StripesSolver::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
 
     cv::Mat && merged_img = merge_frags(frag0.img, frag1.img);
 
@@ -136,7 +136,7 @@ double Stripes::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
 
 }
 
-cv::Mat Stripes::merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1) {
+cv::Mat StripesSolver::merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1) {
 
     assert(in_frag0.rows == in_frag1.rows);
 
@@ -153,7 +153,7 @@ cv::Mat Stripes::merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1)
 
 }
 
-bool Stripes::cross_seam(const cv::Rect & bbox, int seam_x) {
+bool StripesSolver::cross_seam(const cv::Rect & bbox, int seam_x) {
 
     if (bbox.x < seam_x && bbox.x + bbox.width >= seam_x) {
         return true;
@@ -163,7 +163,7 @@ bool Stripes::cross_seam(const cv::Rect & bbox, int seam_x) {
 
 }
 
-bool Stripes::detect_new_word(  const string & word, 
+bool StripesSolver::detect_new_word(  const string & word, 
                                 const cv::Rect & bbox, 
                                 const Fragment & frag,
                                 const int offset_x) {
@@ -187,7 +187,7 @@ bool Stripes::detect_new_word(  const string & word,
 
 }
 
-double Stripes::overlap(const cv::Rect & rect0, const cv::Rect & rect1, const int offset_x) {
+double StripesSolver::overlap(const cv::Rect & rect0, const cv::Rect & rect1, const int offset_x) {
 
     int area0 = rect0.width * rect0.height;
     int area1 = rect1.width * rect1.height;
@@ -212,7 +212,7 @@ double Stripes::overlap(const cv::Rect & rect0, const cv::Rect & rect1, const in
     
 }
 
-bool Stripes::reassemble_greedy() {
+bool StripesSolver::reassemble_greedy() {
 
     // Init fragment from stripe
     cout << "[INFO] Init fragment from stripe." << endl;
@@ -237,8 +237,6 @@ bool Stripes::reassemble_greedy() {
             switch (metric_mode) {
                 case PIXEL:
                     m_score = m_metric_pixel(frags[i], frags[j]);
-                    break;
-                case CHAR:
                     break;
                 case WORD:
                     m_score = m_metric_word(frags[i], frags[j]);

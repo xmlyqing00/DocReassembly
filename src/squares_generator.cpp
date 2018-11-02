@@ -78,10 +78,16 @@ bool SquaresGenerator::save_puzzle(const string & output_folder) {
     for (int i = 0; i < squares_n; i++) {
         gt_order[access_idx[i]] = i;
     }
-    const string order_file_path = output_folder + "order.txt";
-    ofstream fout(order_file_path, ios::out);
+
+    const string puzzle_size_file_path = output_folder + "puzzle_size.txt";
+    ofstream fout(puzzle_size_file_path, ios::out);
     fout << puzzle_size.width << endl;
     fout << puzzle_size.height << endl;
+    fout.close();
+
+    const string order_file_path = output_folder + "order.txt";
+    fout = ofstream(order_file_path, ios::out);
+    
     for (const int & i: gt_order) {
         fout << i << endl;
     }

@@ -23,7 +23,6 @@ s_puzzle = $(src_dir)solve_puzzle.o \
 			$(src_dir)fragment.o
 s_puzzle_debug = $(s_puzzle:.o=.debug.o)
 
-x = a b c
 y = $(src_dir)$(x)
 
 .PHONY: clean default debug all

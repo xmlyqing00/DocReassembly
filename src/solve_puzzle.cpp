@@ -4,11 +4,15 @@
 void solve_stripes( const string & stripes_folder, 
                     const string & model_path,
                     const string & case_name,
-                    const int vertical_n,
-                    const Stripes::Composition comp_mode,
-                    const Stripes::Metric metric_mode) {
+                    const int vertical_n) {
     
-    Stripes stripes(model_path);
+    StripesSolver::Composition comp_mode = StripesSolver::GREEDY;
+    StripesSolver::Metric metric_mode = StripesSolver::PIXEL;
+
+    cout << "Composition mode:    \t" << comp_mode << endl;
+    cout << "Metric mode:         \t" << metric_mode << endl;
+
+    StripesSolver stripes(model_path);
 
     for (int i = 0; i < vertical_n; i++) {
         const string stripe_img_path = stripes_folder + to_string(i) + ".png";
@@ -25,6 +29,17 @@ void solve_stripes( const string & stripes_folder,
 
     cv::imshow("comp_img", stripes.comp_img);
     cv::waitKey();
+
+}
+
+void solve_squares (const string & squares_folder, 
+                    const string & model_path,
+                    const string & case_name,
+                    const int vertical_n) {
+
+    const string puzzle_size_file_path = squares_folder + "puzzle_size.txt";
+    FILE * file = fopen(squares_folder.c_str(), "r");
+
 }
 
 int main(int argc, char ** argv) {
@@ -33,8 +48,6 @@ int main(int argc, char ** argv) {
     string case_name = "test0";
     PuzzleType puzzle_type = STRIPES;
     int vertical_n = 4;
-    Stripes::Composition comp_mode = Stripes::GREEDY;
-    Stripes::Metric metric_mode = Stripes::PIXEL;
     string model_path = "data/models/";
 
     // Parse command line parameters
@@ -64,17 +77,17 @@ int main(int argc, char ** argv) {
     cout << "Vertical cut num:    \t" << vertical_n << endl;
     cout << "Puzzle type:         \t" << (puzzle_type ? "Squares": "Stripes") << endl;
     cout << "OCR model path:      \t" << model_path << endl;
-    cout << "Composition mode:    \t" << comp_mode << endl;
-    cout << "Metric mode:         \t" << metric_mode << endl;
-    cout << endl;
 
     // Import stripes
     if (puzzle_type == STRIPES) {
 
-        const string stripes_folder = "data/stripes/" + case_name + "_" + to_string(vertical_n) + "/";
-        solve_stripes(stripes_folder, model_path, case_name, vertical_n, comp_mode, metric_mode);
+        const string puzzle_folder = "data/stripes/" + case_name + "_" + to_string(vertical_n) + "/";
+        solve_stripes(puzzle_folder, model_path, case_name, vertical_n);
 
     } else {
+
+        const string puzzle_folder = "data/squares/" + case_name + "_" + to_string(vertical_n) + "/";
+        solve_squares(puzzle_folder, model_path, case_name, vertical_n);
 
     }
     

@@ -16,19 +16,17 @@
 
 using namespace std;
 
-class Stripes {
+class StripesSolver {
 
 public:
 
     enum Metric {
         PIXEL,
-        CHAR,
         WORD
     };
 
     enum Composition {
         GREEDY,
-        TSP,
     };
 
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
@@ -40,8 +38,8 @@ public:
     vector<int> comp_idx;
     cv::Mat comp_img;
 
-    Stripes(const string & _model_path);
-    ~Stripes();
+    StripesSolver(const string & _model_path);
+    ~StripesSolver();
 
     void push(const cv::Mat & stripe_img);
     
