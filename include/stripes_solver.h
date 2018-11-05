@@ -30,7 +30,6 @@ public:
         GREEDY,
     };
 
-    const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
     const double conf_thres {80};
     string model_path;
 
@@ -56,8 +55,6 @@ private:
 
     tesseract::TessBaseAPI * ocr;
 
-    cv::Mat merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1);
-
     Metric metric_mode;
     bool reassemble_greedy();
 
@@ -70,6 +67,8 @@ private:
 
     const double overlap_thres {0.3};
     double overlap(const cv::Rect & rect0, const cv::Rect & rect1, const int offset_x=0);
+
+    cv::Mat merge_imgs(const cv::Mat & in_img0, const cv::Mat & in_img1);
 
 };
 

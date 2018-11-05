@@ -72,12 +72,30 @@ double StripesSolver::m_metric_pixel(const Fragment & frag0, const Fragment & fr
 
 }
 
+cv::Mat StripesSolver::merge_imgs(const cv::Mat & in_img0, const cv::Mat & in_img1) {
+
+    assert(in_img0.rows == in_img1.rows);
+
+    cv::Size out_img_size(in_img0.cols + in_img1.cols, in_img0.rows);
+    cv::Mat out_img(out_img_size, CV_8UC3);
+
+    cv::Rect in_img0_roi(0, 0, in_img0.cols, in_img0.rows);
+    in_img0.copyTo(out_img(in_img0_roi));
+
+    cv::Rect in_img1_roi(in_img0.cols, 0, in_img1.cols, in_img1.rows);
+    in_img1.copyTo(out_img(in_img1_roi));
+
+    return out_img;
+
+}
+
 double StripesSolver::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
 
-    cv::Mat && merged_img = merge_frags(frag0.img, frag1.img);
+    cv::Mat merged_img = merge_imgs(frag0.img, frag1.img);
 
     const int seam_x = frag0.size.width;
     const int max_m_width = min(frag0.size.width, frag1.size.width);
+    const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
 
     ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
     ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, frag0.size.height);
@@ -123,23 +141,6 @@ double StripesSolver::m_metric_word(const Fragment & frag0, const Fragment & fra
 #endif
 
     return m_metric_score;
-
-}
-
-cv::Mat StripesSolver::merge_frags(const cv::Mat & in_frag0, const cv::Mat & in_frag1) {
-
-    assert(in_frag0.rows == in_frag1.rows);
-
-    cv::Size out_frag_size(in_frag0.cols + in_frag1.cols, in_frag0.rows);
-    cv::Mat out_frag(out_frag_size, CV_8UC3);
-
-    cv::Rect in_frag0_roi(0, 0, in_frag0.cols, in_frag0.rows);
-    in_frag0.copyTo(out_frag(in_frag0_roi));
-
-    cv::Rect in_frag1_roi(in_frag0.cols, 0, in_frag1.cols, in_frag1.rows);
-    in_frag1.copyTo(out_frag(in_frag1_roi));
-
-    return out_frag;
 
 }
 
@@ -286,7 +287,7 @@ bool StripesSolver::reassemble_greedy() {
 
     while (stripe_right[order_idx] != -1) {
         order_idx = stripe_right[order_idx];
-        comp_img = merge_frags(comp_img, stripes[order_idx]);
+        comp_img = merge_imgs(comp_img, stripes[order_idx]);
         comp_idx.push_back(order_idx);
     }
 

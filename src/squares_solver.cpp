@@ -27,7 +27,7 @@ void SquaresSolver::push(const cv::Mat & square_img) {
 void SquaresSolver::reassemble() {
     
     square_size = squares.front().size();
-    
+
     for (int i = 0; i < squares_n; i++) {
         for (int j = 0; j < squares_n; j++) {
             if (i == j) continue;
@@ -41,7 +41,44 @@ void SquaresSolver::reassemble() {
 
 }
 
-double SquaresSolver::m_metric_pixel(const cv::Mat & square0, const cv::Mat & square1, SquaresSolver::Splice splice) {
+ cv::Mat SquaresSolver::merge_squares(const cv::Mat & in_img0, const cv::Mat & in_img1, Splice splice) {
+    
+    cv::Size out_img_size;
+    cv::Rect in_img0_roi;
+    cv::Rect in_img1_roi;
+
+    switch (splice) {
+        case SquaresSolver::L:
+            out_img_size = cv::Size(square_size.width << 1, square_size.height);
+            in_img0_roi = cv::Rect(square_size.width, 0, square_size.width, square_size.height);
+            in_img1_roi = cv::Rect(0, 0, square_size.width, square_size.height);
+            break;
+        case SquaresSolver::R:
+            out_img_size = cv::Size(square_size.width << 1, square_size.height);
+            in_img0_roi = cv::Rect(0, 0, square_size.width, square_size.height);
+            in_img1_roi = cv::Rect(square_size.width, 0, square_size.width, square_size.height);
+            break;
+        case SquaresSolver::T:
+            out_img_size = cv::Size(square_size.width, square_size.height << 1);
+            in_img0_roi = cv::Rect(0, square_size.height, square_size.width, square_size.height);
+            in_img1_roi = cv::Rect(0, 0, square_size.width, square_size.height);
+            break;
+        case SquaresSolver::B:
+            out_img_size = cv::Size(square_size.width, square_size.height << 1);
+            in_img0_roi = cv::Rect(0, 0, square_size.width, square_size.height);
+            in_img1_roi = cv::Rect(0, square_size.height, square_size.width, square_size.height);
+            break;
+    }
+
+    cv::Mat out_img(out_img_size, CV_8UC3);
+    in_img0.copyTo(out_img(in_img0_roi));
+    in_img1.copyTo(out_img(in_img1_roi));
+
+    return out_img;
+
+}
+
+double SquaresSolver::m_metric_pixel(const cv::Mat & square0, const cv::Mat & square1, Splice splice) {
 
     double m_score = 0;
 
@@ -70,4 +107,11 @@ double SquaresSolver::m_metric_pixel(const cv::Mat & square0, const cv::Mat & sq
 
     return m_score / square_size.height;
 
+}
+
+double SquaresSolver::m_metric_symbol(const cv::Mat & square0, const cv::Mat & square1, Splice splice) {
+
+    cv::Mat && merged_img = merge_squares(square0, square1, splice);
+    double m_score = 0;
+    return m_score;
 }

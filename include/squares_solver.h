@@ -47,7 +47,10 @@ public:
 private:
     tesseract::TessBaseAPI * ocr;
 
+    cv::Mat merge_squares(const cv::Mat & in_img0, const cv::Mat & in_img1, Splice splice);
+
     double m_metric_pixel(const cv::Mat & square0, const cv::Mat & square1, Splice splice);
+    double m_metric_symbol(const cv::Mat & square0, const cv::Mat & square1, Splice splice);
 };
 
 #endif
