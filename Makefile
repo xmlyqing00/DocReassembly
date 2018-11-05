@@ -13,14 +13,17 @@ src = $(wildcard $(src_dir)*.cpp)
 obj = $(src:.cpp=.o)
 dep = $(src:.cpp=.d)
 
-c_puzzle = $(src_dir)generate_puzzle.o \
+c_puzzle = 	$(src_dir)generate_puzzle.o \
 			$(src_dir)stripes_generator.o \
-			$(src_dir)squares_generator.o
+			$(src_dir)squares_generator.o \
+			$(src_dir)utils.o
 			
-s_puzzle = $(src_dir)solve_puzzle.o \
+s_puzzle = 	$(src_dir)solve_puzzle.o \
 			$(src_dir)stripes_solver.o \
+			$(src_dir)squares_solver.o \
 			$(src_dir)stripe_pair.o \
-			$(src_dir)fragment.o
+			$(src_dir)fragment.o \
+			$(src_dir)utils.o
 s_puzzle_debug = $(s_puzzle:.o=.debug.o)
 
 y = $(src_dir)$(x)

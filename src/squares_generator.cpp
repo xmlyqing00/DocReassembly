@@ -96,7 +96,7 @@ bool SquaresGenerator::save_puzzle(const string & output_folder) {
     cv::Mat && puzzle_img = get_puzzle_img(3);
     cv::imwrite(output_folder + "puzzle_img.png", puzzle_img);
 
-    cout << "Stripes saved path: \t" << output_folder << endl;
+    cout << "Squares saved path: \t" << output_folder << endl;
 
     return true;
 

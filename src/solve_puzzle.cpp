@@ -1,6 +1,5 @@
 #include <solve_puzzle.h>
 
-
 void solve_stripes( const string & stripes_folder, 
                     const string & model_path,
                     const string & case_name,
@@ -12,22 +11,22 @@ void solve_stripes( const string & stripes_folder,
     cout << "Composition mode:    \t" << comp_mode << endl;
     cout << "Metric mode:         \t" << metric_mode << endl;
 
-    StripesSolver stripes(model_path);
+    StripesSolver stripes_solver(model_path);
 
     for (int i = 0; i < vertical_n; i++) {
         const string stripe_img_path = stripes_folder + to_string(i) + ".png";
         cv::Mat stripe_img = cv::imread(stripe_img_path);
-        stripes.push(stripe_img);
+        stripes_solver.push(stripe_img);
     }
 
-    stripes.reassemble(metric_mode, comp_mode);
-    stripes.save_result(case_name);
+    stripes_solver.reassemble(metric_mode, comp_mode);
+    stripes_solver.save_result(case_name);
 
-    for (const int idx: stripes.comp_idx) {
+    for (const int idx: stripes_solver.comp_idx) {
         cout << idx << endl;
     }
 
-    cv::imshow("comp_img", stripes.comp_img);
+    cv::imshow("comp_img", stripes_solver.comp_img);
     cv::waitKey();
 
 }
@@ -38,7 +37,22 @@ void solve_squares (const string & squares_folder,
                     const int vertical_n) {
 
     const string puzzle_size_file_path = squares_folder + "puzzle_size.txt";
-    FILE * file = fopen(squares_folder.c_str(), "r");
+    cv::Size puzzle_size;
+    ifstream fin(puzzle_size_file_path, ios::in);
+    fin >> puzzle_size.width;
+    fin >> puzzle_size.height;
+    int squares_n = puzzle_size.width * puzzle_size.height;
+
+    SquaresSolver squares_solver(model_path, puzzle_size);
+
+    for (int i = 0; i < squares_n; i++) {
+        const string square_img_path = squares_folder + to_string(i) + ".png";
+        cv::Mat square_img = cv::imread(square_img_path);
+        squares_solver.push(square_img);
+    }
+
+    squares_solver.reassemble();
+
 
 }
 
@@ -90,9 +104,6 @@ int main(int argc, char ** argv) {
         solve_squares(puzzle_folder, model_path, case_name, vertical_n);
 
     }
-    
-
-   
 
     return 0;
 }

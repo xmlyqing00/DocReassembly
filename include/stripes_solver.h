@@ -13,6 +13,7 @@
 
 #include <stripe_pair.h>
 #include <fragment.h>
+#include <utils.h>
 
 using namespace std;
 
@@ -59,8 +60,6 @@ private:
 
     Metric metric_mode;
     bool reassemble_greedy();
-
-    double diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1);
 
     bool cross_seam(const cv::Rect & bbox, int seam_x);
 

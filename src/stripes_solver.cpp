@@ -57,16 +57,6 @@ bool StripesSolver::reassemble(Metric _metric_mode, Composition comp_mode) {
 
 }
 
-double StripesSolver::diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
-
-    double diff = 0;
-    for (int i = 0; i < 3; i++) {
-        diff += abs(v0[i] - v1[i]);
-    }
-    return diff / 3;
-
-}
-
 double StripesSolver::m_metric_pixel(const Fragment & frag0, const Fragment & frag1) {
 
     int x0 = frag0.size.width - 1;
