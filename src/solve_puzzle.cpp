@@ -10,12 +10,18 @@ void solve_stripes( const string & stripes_folder,
 
     cout << "Composition mode:    \t" << comp_mode << endl;
     cout << "Metric mode:         \t" << metric_mode << endl;
+    cout << endl;
 
     StripesSolver stripes_solver(model_path);
 
+    cout << "[INFO] Import stripes." << endl;
     for (int i = 0; i < vertical_n; i++) {
         const string stripe_img_path = stripes_folder + to_string(i) + ".png";
         cv::Mat stripe_img = cv::imread(stripe_img_path);
+        if (stripe_img.empty()) {
+            cerr << "[ERR] Stripe img does not exist." << endl;
+            exit(-1); 
+        }
         stripes_solver.push(stripe_img);
     }
 
@@ -35,6 +41,8 @@ void solve_squares (const string & squares_folder,
                     const string & model_path,
                     const string & case_name,
                     const int vertical_n) {
+        
+    cout << endl;
 
     const string puzzle_size_file_path = squares_folder + "puzzle_size.txt";
     cv::Size puzzle_size;
@@ -45,9 +53,15 @@ void solve_squares (const string & squares_folder,
 
     SquaresSolver squares_solver(model_path, puzzle_size);
 
+    cout << "[INFO] Import squares." << endl;
+
     for (int i = 0; i < squares_n; i++) {
         const string square_img_path = squares_folder + to_string(i) + ".png";
         cv::Mat square_img = cv::imread(square_img_path);
+        if (square_img.empty()) {
+            cerr << "[ERR] Square img does not exist." << endl;
+            exit(-1); 
+        }
         squares_solver.push(square_img);
     }
 

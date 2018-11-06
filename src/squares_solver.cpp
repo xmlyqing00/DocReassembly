@@ -26,6 +26,8 @@ void SquaresSolver::push(const cv::Mat & square_img) {
 
 void SquaresSolver::reassemble() {
     
+    cout << "[INFO] Reassemble squares puzzle." << endl;
+    
     square_size = squares.front().size();
 
     for (int i = 0; i < squares_n; i++) {
@@ -113,5 +115,46 @@ double SquaresSolver::m_metric_symbol(const cv::Mat & square0, const cv::Mat & s
 
     cv::Mat && merged_img = merge_squares(square0, square1, splice);
     double m_score = 0;
+
+    const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_SYMBOL};
+
+    ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
+    // ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, frag0.size.height);
+    ocr->Recognize(0);
+    
+    tesseract::ResultIterator * symbol_iter = ocr->GetIterator();
+
+    if (symbol_iter != 0) {
+        do {
+
+            const float conf = symbol_iter->Confidence(tesseract_level);
+            if (conf < conf_thres || !symbol_iter->WordIsFromDictionary()) continue;
+
+            // Boundary cross constraint
+            int x0, y0, x1, y1;
+            symbol_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
+            const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
+
+            const string symbol = symbol_iter->GetUTF8Text(tesseract_level);
+
+            m_score += conf;
+
+#ifdef DEBUG
+            cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 200));
+
+            printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
+                    symbol.c_str(), conf, symbol_iter->WordIsFromDictionary(), x0, y0, x1, y1);
+#endif
+
+        } while (symbol_iter->Next(tesseract_level));
+    }
+
+#ifdef DEBUG
+    cout << "m_metric_score " << m_score << endl << endl;
+    cv::imshow("Merged", merged_img);
+    cv::waitKey();
+#endif
+    
     return m_score;
+
 }
