@@ -30,7 +30,8 @@ public:
     };
 
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_SYMBOL};
-    const double conf_thres {80};
+    const double conf_thres {50};
+    const double m_pixel_thres {-20};
     string model_path;
 
     cv::Size puzzle_size;
@@ -48,6 +49,7 @@ private:
     tesseract::TessBaseAPI * ocr;
 
     cv::Mat merge_squares(const cv::Mat & in_img0, const cv::Mat & in_img1, Splice splice);
+    bool cross_splice(const cv::Rect & bbox, Splice splice);
 
     double m_metric_pixel(const cv::Mat & square0, const cv::Mat & square1, Splice splice);
     double m_metric_symbol(const cv::Mat & square0, const cv::Mat & square1, Splice splice);

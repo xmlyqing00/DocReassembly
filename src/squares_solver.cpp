@@ -31,11 +31,14 @@ void SquaresSolver::reassemble() {
     square_size = squares.front().size();
 
     for (int i = 0; i < squares_n; i++) {
-        for (int j = 0; j < squares_n; j++) {
-            if (i == j) continue;
-            for (int k = 0; k < 4; k++) {
+        i = 34;
+        for (int k = 0; k < 4; k++) {
+            for (int j = 0; j < squares_n; j++) {
+                if (i == j) continue;
                 double m_pixel_score =  m_metric_pixel(squares[i], squares[j], static_cast<Splice>(k));
-                printf("i %d,\t j %d,\t k %d,\t score %.1lf\n", i, j, k, m_pixel_score);
+                if (m_pixel_score < m_pixel_thres) continue;
+                double m_symbol_score = m_metric_symbol(squares[i], squares[j], static_cast<Splice>(k));
+                printf("i %d,\t j %d,\t k %d,\t p_score %.1lf,\t s_score %.1lf\n", i, j, k, m_pixel_score, m_symbol_score);
             }
             
         }
@@ -50,22 +53,22 @@ void SquaresSolver::reassemble() {
     cv::Rect in_img1_roi;
 
     switch (splice) {
-        case SquaresSolver::L:
+        case L:
             out_img_size = cv::Size(square_size.width << 1, square_size.height);
             in_img0_roi = cv::Rect(square_size.width, 0, square_size.width, square_size.height);
             in_img1_roi = cv::Rect(0, 0, square_size.width, square_size.height);
             break;
-        case SquaresSolver::R:
+        case R:
             out_img_size = cv::Size(square_size.width << 1, square_size.height);
             in_img0_roi = cv::Rect(0, 0, square_size.width, square_size.height);
             in_img1_roi = cv::Rect(square_size.width, 0, square_size.width, square_size.height);
             break;
-        case SquaresSolver::T:
+        case T:
             out_img_size = cv::Size(square_size.width, square_size.height << 1);
             in_img0_roi = cv::Rect(0, square_size.height, square_size.width, square_size.height);
             in_img1_roi = cv::Rect(0, 0, square_size.width, square_size.height);
             break;
-        case SquaresSolver::B:
+        case B:
             out_img_size = cv::Size(square_size.width, square_size.height << 1);
             in_img0_roi = cv::Rect(0, 0, square_size.width, square_size.height);
             in_img1_roi = cv::Rect(0, square_size.height, square_size.width, square_size.height);
@@ -80,34 +83,63 @@ void SquaresSolver::reassemble() {
 
 }
 
+bool SquaresSolver::cross_splice(const cv::Rect & bbox, Splice splice) {
+
+    const double excess_ratio = 0.1;
+    int excess_part;
+
+    switch (splice) {
+        case L: case R:
+            excess_part = (int)(bbox.width * excess_ratio);
+            if (bbox.x + excess_part < square_size.width && 
+                bbox.x + bbox.width - excess_part > square_size.width) {
+                return true;
+            } else {
+                return false;
+            }
+        case T: case B:
+            excess_part = (int)(bbox.height * excess_ratio);
+            if (bbox.y + excess_part < square_size.height && 
+                bbox.y + bbox.height - excess_part > square_size.height) {
+                return true;
+            } else {
+                return false;
+            }
+        default:
+            cerr << "[ERRO] Wrong splice" << endl;
+            exit(-1);
+    }
+
+}
+
 double SquaresSolver::m_metric_pixel(const cv::Mat & square0, const cv::Mat & square1, Splice splice) {
 
     double m_score = 0;
 
     switch (splice) {
-        case SquaresSolver::L:
+        case L:
             for (int y = 0; y < square_size.height; y++) {
                 m_score += diff_vec3b(square0.at<cv::Vec3b>(y, 0), square1.at<cv::Vec3b>(y, square_size.width - 1));
             }
             break;
-        case SquaresSolver::R:
+        case R:
             for (int y = 0; y < square_size.height; y++) {
                 m_score += diff_vec3b(square0.at<cv::Vec3b>(y, square_size.width - 1), square1.at<cv::Vec3b>(y, 0));
             }
             break;
-        case SquaresSolver::T:
+        case T:
             for (int x = 0; x < square_size.width; x++) {
                 m_score += diff_vec3b(square0.at<cv::Vec3b>(0, x), square1.at<cv::Vec3b>(square_size.height - 1, x));
             }
             break;
-        case SquaresSolver::B:
+        case B:
             for (int x = 0; x < square_size.width; x++) {
                 m_score += diff_vec3b(square0.at<cv::Vec3b>(square_size.height - 1, x), square1.at<cv::Vec3b>(0, x));
             }
             break;
     }
 
-    return m_score / square_size.height;
+    return -m_score / square_size.height;
 
 }
 
@@ -134,7 +166,7 @@ double SquaresSolver::m_metric_symbol(const cv::Mat & square0, const cv::Mat & s
             int x0, y0, x1, y1;
             symbol_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
-
+            if (!cross_splice(o_bbox, splice)) continue;
             const string symbol = symbol_iter->GetUTF8Text(tesseract_level);
 
             m_score += conf;

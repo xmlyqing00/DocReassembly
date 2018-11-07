@@ -41,15 +41,20 @@ void solve_squares (const string & squares_folder,
                     const string & model_path,
                     const string & case_name,
                     const int vertical_n) {
-        
-    cout << endl;
 
     const string puzzle_size_file_path = squares_folder + "puzzle_size.txt";
     cv::Size puzzle_size;
     ifstream fin(puzzle_size_file_path, ios::in);
+    if (!fin.is_open()) {
+        cerr << "[ERRO] " << puzzle_size_file_path << " does not exist." << endl;
+        exit(-1);
+    }
     fin >> puzzle_size.width;
     fin >> puzzle_size.height;
+    fin.close();
     int squares_n = puzzle_size.width * puzzle_size.height;
+    cout << "Squares number:      \t" << squares_n << endl;
+    cout << endl;
 
     SquaresSolver squares_solver(model_path, puzzle_size);
 
