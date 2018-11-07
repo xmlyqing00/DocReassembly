@@ -78,7 +78,7 @@ void solve_squares (const string & squares_folder,
 int main(int argc, char ** argv) {
 
     // Default parameters
-    string case_name = "test0";
+    string case_name = "doc0";
     PuzzleType puzzle_type = STRIPES;
     int vertical_n = 4;
     string model_path = "data/models/";

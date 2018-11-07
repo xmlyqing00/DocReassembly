@@ -14,15 +14,15 @@ class SquaresSolver {
 
 public:
 
-    enum Metric {
+    enum class Metric {
         SYMBOL,
     };
 
-    enum Composition {
+    enum class Composition {
         GREEDY,
     };
 
-    enum Splice {
+    enum class SpliceType {
         L,
         R,
         T,
@@ -48,11 +48,11 @@ public:
 private:
     tesseract::TessBaseAPI * ocr;
 
-    cv::Mat merge_squares(const cv::Mat & in_img0, const cv::Mat & in_img1, Splice splice);
-    bool cross_splice(const cv::Rect & bbox, Splice splice);
+    cv::Mat merge_squares(const cv::Mat & in_img0, const cv::Mat & in_img1, SpliceType splice);
+    bool cross_splice(const cv::Rect & bbox, SpliceType splice);
 
-    double m_metric_pixel(const cv::Mat & square0, const cv::Mat & square1, Splice splice);
-    double m_metric_symbol(const cv::Mat & square0, const cv::Mat & square1, Splice splice);
+    double m_metric_pixel(const cv::Mat & square0, const cv::Mat & square1, SpliceType splice);
+    double m_metric_symbol(const cv::Mat & square0, const cv::Mat & square1, SpliceType splice);
 };
 
 #endif
