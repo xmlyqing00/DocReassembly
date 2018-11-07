@@ -22,16 +22,11 @@ public:
         GREEDY,
     };
 
-    enum class SpliceType {
-        L,
-        R,
-        T,
-        B
-    };
+    enum class SpliceType {L, R, T, B};
 
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_SYMBOL};
     const double conf_thres {50};
-    const double m_pixel_thres {-20};
+    const double m_pixel_thres {-40};
     string model_path;
 
     cv::Size puzzle_size;
