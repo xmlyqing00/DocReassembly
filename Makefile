@@ -13,6 +13,8 @@ src = $(wildcard $(src_dir)*.cpp)
 obj = $(src:.cpp=.o)
 dep = $(src:.cpp=.d)
 
+add_noise = $(src_dir)add_noise.o
+
 c_puzzle = 	$(src_dir)generate_puzzle.o \
 			$(src_dir)stripes_generator.o \
 			$(src_dir)squares_generator.o \
@@ -29,7 +31,7 @@ s_puzzle_debug = $(s_puzzle:.o=.debug.o)
 y = $(src_dir)$(x)
 
 .PHONY: clean default debug all
-default: solve-puzzle generate-puzzle
+default: solve-puzzle generate-puzzle add-noise
 debug: solve-puzzle-debug
 all: default debug
 
@@ -41,6 +43,9 @@ all: default debug
 -include $(dep)
 
 generate-puzzle: $(c_puzzle)
+	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(OPENCV_LIBS)
+
+add-noise: $(add_noise)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(OPENCV_LIBS)
 
 solve-puzzle: $(s_puzzle)
