@@ -8,12 +8,8 @@
 
 #include <stripes_solver.h>
 #include <squares_solver.h>
+#include <utils.h>
 
 using namespace std;
-
-enum PuzzleType {
-    STRIPES,
-    SQUARES
-};
 
 #endif

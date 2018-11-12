@@ -9,26 +9,17 @@ TESSARACT_LIBS = -ltesseract
 
 src_dir = ./src/
 dst_dir = ./bin/
-src = $(wildcard $(src_dir)*.cpp)
-obj = $(src:.cpp=.o)
-dep = $(src:.cpp=.d)
 
-add_noise = $(src_dir)add_noise.o
+generator_src = 	$(wildcard $(src_dir)generator/*.cpp) utils.cpp
+generator_dep = 	$(generator_src:.cpp=.d)
+generator_obj = 	$(generator_src:.cpp=.o)
 
-c_puzzle = 	$(src_dir)generate_puzzle.o \
-			$(src_dir)stripes_generator.o \
-			$(src_dir)squares_generator.o \
-			$(src_dir)utils.o
-			
-s_puzzle = 	$(src_dir)solve_puzzle.o \
-			$(src_dir)stripes_solver.o \
-			$(src_dir)squares_solver.o \
-			$(src_dir)stripe_pair.o \
-			$(src_dir)fragment.o \
-			$(src_dir)utils.o
-s_puzzle_debug = $(s_puzzle:.o=.debug.o)
+solver_src = 		$(wildcard $(src_dir)solver/*.cpp) utils.cpp
+solver_dep = 		$(solver_src:.cpp=.d)
+solver_obj =		$(solver_src:.cpp=.o)
+solver_obj_debug = 	$(solver_src:.cpp=.debug.o)
 
-y = $(src_dir)$(x)
+add_noise_obj = 	$(src_dir)add_noise.o
 
 .PHONY: clean default debug all
 default: solve-puzzle generate-puzzle add-noise
@@ -40,18 +31,19 @@ all: default debug
 %.o: %.cpp
 	$(CXX) -c $< -o $@ -MMD $(CXX_FLAGS) $(INCLUDES) $(OPT_FLAGS)
 
--include $(dep)
+-include $(generator_dep)
+-include $(solver_dep)
 
-generate-puzzle: $(c_puzzle)
+generate-puzzle: $(generator_obj)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(OPENCV_LIBS)
 
-add-noise: $(add_noise)
+add-noise: $(add_noise_obj)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(OPENCV_LIBS)
 
-solve-puzzle: $(s_puzzle)
+solve-puzzle: $(solver_obj)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(TESSARACT_LIBS) $(OPENCV_LIBS)
 
-solve-puzzle-debug: $(s_puzzle_debug)
+solve-puzzle-debug: $(solver_obj_debug)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(TESSARACT_LIBS) $(OPENCV_LIBS) 
 
 clean:

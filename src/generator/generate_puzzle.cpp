@@ -5,7 +5,7 @@ int main(int argc, char ** argv) {
     // Default parameters
     string case_name = "test0";
     int vertical_n = 4;
-    PuzzleType puzzle_type = STRIPES;
+    PuzzleType puzzle_type = PuzzleType::STRIPES;
 
     // Parse command line parameters
     const string opt_str = "t:T:n:N:gGsS";
@@ -20,7 +20,7 @@ int main(int argc, char ** argv) {
                 vertical_n = atoi(optarg);
                 break;
             case 's': case 'S':
-                puzzle_type = SQUARES;
+                puzzle_type = PuzzleType::SQUARES;
                 break;
         }
         
@@ -29,11 +29,11 @@ int main(int argc, char ** argv) {
 
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Vertical cut num:    \t" << vertical_n << endl;
-    cout << "Puzzle type:         \t" << (puzzle_type ? "Squares": "Stripes") << endl;
+    cout << "Puzzle type:         \t" << (puzzle_type == PuzzleType::SQUARES ? "Squares": "Stripes") << endl;
 
     // Generate new puzzle
     string puzzle_folder;
-    if (puzzle_type == STRIPES) {
+    if (puzzle_type == PuzzleType::STRIPES) {
         puzzle_folder = "data/stripes/";
     } else {
         puzzle_folder = "data/squares/";
@@ -54,7 +54,7 @@ int main(int argc, char ** argv) {
         exit(-1);
     }
 
-    if (puzzle_type == STRIPES) {
+    if (puzzle_type == PuzzleType::STRIPES) {
         StripesGenerator stripes_generator(gt_img_path, vertical_n);
         stripes_generator.save_puzzle(puzzle_folder);
     } else {

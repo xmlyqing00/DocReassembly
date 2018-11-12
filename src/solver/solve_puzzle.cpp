@@ -79,7 +79,7 @@ int main(int argc, char ** argv) {
 
     // Default parameters
     string case_name = "doc0";
-    PuzzleType puzzle_type = STRIPES;
+    PuzzleType puzzle_type = PuzzleType::STRIPES;
     int vertical_n = 4;
     string model_path = "data/models/";
 
@@ -99,7 +99,7 @@ int main(int argc, char ** argv) {
                 model_path = string(optarg);
                 break;
             case 's': case 'S':
-                puzzle_type = SQUARES;
+                puzzle_type = PuzzleType::SQUARES;
                 break;
         }
         
@@ -108,11 +108,11 @@ int main(int argc, char ** argv) {
 
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Vertical cut num:    \t" << vertical_n << endl;
-    cout << "Puzzle type:         \t" << (puzzle_type ? "Squares": "Stripes") << endl;
+    cout << "Puzzle type:         \t" << (puzzle_type == PuzzleType::SQUARES ? "Squares": "Stripes") << endl;
     cout << "OCR model path:      \t" << model_path << endl;
 
     // Import stripes
-    if (puzzle_type == STRIPES) {
+    if (puzzle_type == PuzzleType::STRIPES) {
 
         const string puzzle_folder = "data/stripes/" + case_name + "_" + to_string(vertical_n) + "/";
         solve_stripes(puzzle_folder, model_path, case_name, vertical_n);
