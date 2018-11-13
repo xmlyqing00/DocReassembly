@@ -21,12 +21,16 @@ solver_dep = 		$(solver_src:.cpp=.d)
 solver_obj =		$(solver_src:.cpp=.o)
 solver_obj_debug = 	$(solver_src:.cpp=.debug.o)
 
-add_noise_obj = 	$(src_dir)add_noise.o
+add_noise_src = 	$(src_dir)add_noise.cpp
+add_noise_obj = 	$(add_noise_src:.cpp=.o)
+
+debug_tool_src =	$(src_dir)debug_tool.cpp $(src_dir)utils.cpp
+debug_tool_obj =	$(debug_tool_src:.cpp=.o)
 
 .PHONY: clean default debug all
-default: solve-puzzle generate-puzzle add-noise
+default: solve-puzzle generate-puzzle
 debug: solve-puzzle-debug
-all: default debug
+all: default debug add-noise debug-tool
 
 %.debug.o: %.cpp
 	$(CXX) -c $< -o $@ -MMD $(CXX_FLAGS) $(INCLUDES) -DDEBUG -g
@@ -42,8 +46,10 @@ generate-puzzle: $(generator_obj)
 add-noise: $(add_noise_obj)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(OPENCV_LIBS)
 
+debug-tool: $(debug_tool_obj)
+	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(OPENCV_LIBS)
+
 solve-puzzle: $(solver_obj)
-	@echo $(solver_obj)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(TESSARACT_LIBS) $(OPENCV_LIBS)
 
 solve-puzzle-debug: $(solver_obj_debug)
