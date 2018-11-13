@@ -59,6 +59,5 @@ clean:
 	rm $(src_solver_dir)*.o $(src_solver_dir)*.d
 	rm $(src_generator_dir)*.o $(src_generator_dir)*.d
 	rm $(src_dir)*.o $(src_dir)*.d
-	rm $(dst_dir)*
-	
+	rm $(dst_dir)*	
 

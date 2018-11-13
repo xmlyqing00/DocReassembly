@@ -32,7 +32,7 @@ int main(int argc, char ** argv) {
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Saved name:          \t" << out_name << endl;
     cout << "Noise level [1-100]: \t" << noise_level << endl;
-    cout << "Dense level [1-100]: \t" << dense_level << endl;
+    cout << "Dense level [1-1000]:\t" << dense_level << endl;
     
     const string gt_folder = "data/gt/";
     const string in_img_path = gt_folder + case_name + ".png";
@@ -43,12 +43,13 @@ int main(int argc, char ** argv) {
     random_device rand_device;
     default_random_engine rand_engine(rand_device());
     uniform_real_distribution<double> uni_dist(1 - (double)noise_level / 100, 1);
-    uniform_int_distribution<int> uni_dense(0, 100);
+    uniform_int_distribution<int> uni_dense(0, 1000);
 
     for (int y = 0; y < in_img.rows; y++) {
         for (int x = 0; x < in_img.cols; x++) {
 
-            int dense_test = uni_dense(rand_engine);
+            int dense_test = rand_engine() % 1000;
+            // dense_test = int(abs(sin(x * y)) * dense_test);
             if (dense_test > dense_level) continue;
 
             cv::Vec3b color = in_img.at<cv::Vec3b>(y, x);
