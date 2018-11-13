@@ -8,13 +8,15 @@ OPENCV_LIBS = -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_video
 TESSARACT_LIBS = -ltesseract
 
 src_dir = ./src/
+src_generator_dir  = $(src_dir)generator/
+src_solver_dir = $(src_dir)solver/
 dst_dir = ./bin/
 
-generator_src = 	$(wildcard $(src_dir)generator/*.cpp) utils.cpp
+generator_src = 	$(wildcard $(src_generator_dir)*.cpp) $(src_dir)utils.cpp
 generator_dep = 	$(generator_src:.cpp=.d)
 generator_obj = 	$(generator_src:.cpp=.o)
 
-solver_src = 		$(wildcard $(src_dir)solver/*.cpp) utils.cpp
+solver_src = 		$(wildcard $(src_solver_dir)*.cpp) $(src_dir)utils.cpp
 solver_dep = 		$(solver_src:.cpp=.d)
 solver_obj =		$(solver_src:.cpp=.o)
 solver_obj_debug = 	$(solver_src:.cpp=.debug.o)
@@ -41,13 +43,16 @@ add-noise: $(add_noise_obj)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(OPENCV_LIBS)
 
 solve-puzzle: $(solver_obj)
+	@echo $(solver_obj)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(TESSARACT_LIBS) $(OPENCV_LIBS)
 
 solve-puzzle-debug: $(solver_obj_debug)
 	$(CXX) $^ -o $(dst_dir)$@ $(CXX_FLAGS) $(TESSARACT_LIBS) $(OPENCV_LIBS) 
 
 clean:
+	rm $(src_solver_dir)*.o $(src_solver_dir)*.d
+	rm $(src_generator_dir)*.o $(src_generator_dir)*.d
 	rm $(src_dir)*.o $(src_dir)*.d
-	rm $(dst_dir)generate-puzzle $(dst_dir)solve-puzzle $(dst_dir)solve-puzzle-debug
+	rm $(dst_dir)*
 	
 
