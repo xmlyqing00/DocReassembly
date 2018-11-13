@@ -10,10 +10,10 @@ bool counter_exmple_pixel_metric(   const cv::Mat & root_img,
     cout << m_score_best << " " << m_score_test << endl;
     if (m_score_best > m_score_test) return false;
 
-    const int indication_width = 30;
+    const int indication_width = 20;
     const double scale = 50;
     canvas = cv::Mat(   root_img.rows, 
-                        root_img.cols * 4 + indication_width * 4, 
+                        root_img.cols * 4 + indication_width * 7, 
                         CV_8UC3, 
                         cv::Scalar(255, 255, 255));
     cv::Rect roi_rect;
@@ -33,8 +33,20 @@ bool counter_exmple_pixel_metric(   const cv::Mat & root_img,
     }
     cv::normalize(m_score_map, heat_map, 0, 255, cv::NORM_MINMAX, CV_8UC1);
     cv::applyColorMap(heat_map, heat_map, cv::COLORMAP_JET);
-    roi_rect = cv::Rect(root_img.cols, 0, indication_width, root_img.rows);
+    roi_rect = cv::Rect(root_img.cols * 2 + indication_width, 0, indication_width, root_img.rows);
     heat_map.copyTo(canvas(roi_rect));
+
+    // draw abutting boundary
+    cv::line(   canvas, 
+                cv::Point(root_img.cols + 2, 0),
+                cv::Point(root_img.cols + 2, root_img.rows),
+                cv::Scalar(0, 0, 255),
+                2);
+    cv::line(   canvas, 
+                cv::Point(root_img.cols + indication_width - 2, 0), 
+                cv::Point(root_img.cols + indication_width - 2, root_img.rows),
+                cv::Scalar(0, 0, 255),
+                2);
 
     // matching score between root and test.
     for (int y = 0; y < m_score_map.rows; y++) {
@@ -49,8 +61,20 @@ bool counter_exmple_pixel_metric(   const cv::Mat & root_img,
     }
     cv::normalize(m_score_map, heat_map, 0, 255, cv::NORM_MINMAX, CV_8UC1);
     cv::applyColorMap(heat_map, heat_map, cv::COLORMAP_JET);
-    roi_rect = cv::Rect(root_img.cols * 3 + indication_width * 3, 0, indication_width, root_img.rows);
+    roi_rect = cv::Rect(root_img.cols * 4 + indication_width * 6, 0, indication_width, root_img.rows);
     heat_map.copyTo(canvas(roi_rect));
+
+    // draw abutting boundary
+    cv::line(   canvas, 
+                cv::Point(root_img.cols * 3 + indication_width * 5 + 2, 0), 
+                cv::Point(root_img.cols * 3 + indication_width * 5 + 2, root_img.rows),
+                cv::Scalar(0, 0, 255),
+                2);
+    cv::line(   canvas, 
+                cv::Point(root_img.cols * 3 + indication_width * 6 - 2, 0), 
+                cv::Point(root_img.cols * 3 + indication_width * 6 - 2, root_img.rows),
+                cv::Scalar(0, 0, 255),
+                2);
 
     // root
     roi_rect = cv::Rect(0, 0, root_img.cols, root_img.rows);
@@ -61,11 +85,11 @@ bool counter_exmple_pixel_metric(   const cv::Mat & root_img,
     best_img.copyTo(canvas(roi_rect));
 
     // root
-    roi_rect = cv::Rect(root_img.cols * 2 + indication_width * 3, 0, root_img.cols, root_img.rows);
+    roi_rect = cv::Rect(root_img.cols * 2 + indication_width * 5, 0, root_img.cols, root_img.rows);
     root_img.copyTo(canvas(roi_rect));
 
     // test
-    roi_rect = cv::Rect(root_img.cols * 3 + indication_width * 4, 0, root_img.cols, root_img.rows);
+    roi_rect = cv::Rect(root_img.cols * 3 + indication_width * 6, 0, root_img.cols, root_img.rows);
     test_img.copyTo(canvas(roi_rect));
 
     return true;
