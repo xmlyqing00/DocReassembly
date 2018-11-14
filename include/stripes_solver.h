@@ -58,8 +58,6 @@ private:
     Metric metric_mode;
     bool reassemble_greedy();
 
-    bool cross_seam(const cv::Rect & bbox, int seam_x);
-
     bool detect_new_word(   const string & word, 
                             const cv::Rect & bbox, 
                             const Fragment & frag,

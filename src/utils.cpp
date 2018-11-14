@@ -41,3 +41,13 @@ cv::Mat merge_imgs(const cv::Mat & in_img0, const cv::Mat & in_img1) {
     return out_img;
 
 }
+
+bool cross_seam(const cv::Rect & bbox, int seam_x) {
+
+    if (bbox.x < seam_x && bbox.x + bbox.width >= seam_x) {
+        return true;
+    } else {
+        return false;
+    }
+
+}

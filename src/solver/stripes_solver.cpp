@@ -74,7 +74,7 @@ double StripesSolver::m_metric_pixel(const Fragment & frag0, const Fragment & fr
 
 double StripesSolver::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
 
-    cv::Mat merged_img = merge_imgs(frag0.img, frag1.img);
+    cv::Mat && merged_img = merge_imgs(frag0.img, frag1.img);
 
     const int seam_x = frag0.size.width;
     const int max_m_width = min(frag0.size.width, frag1.size.width);
@@ -124,16 +124,6 @@ double StripesSolver::m_metric_word(const Fragment & frag0, const Fragment & fra
 #endif
 
     return m_metric_score;
-
-}
-
-bool StripesSolver::cross_seam(const cv::Rect & bbox, int seam_x) {
-
-    if (bbox.x < seam_x && bbox.x + bbox.width >= seam_x) {
-        return true;
-    } else {
-        return false;
-    }
 
 }
 
