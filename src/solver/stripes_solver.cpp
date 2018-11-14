@@ -72,23 +72,6 @@ double StripesSolver::m_metric_pixel(const Fragment & frag0, const Fragment & fr
 
 }
 
-cv::Mat StripesSolver::merge_imgs(const cv::Mat & in_img0, const cv::Mat & in_img1) {
-
-    assert(in_img0.rows == in_img1.rows);
-
-    cv::Size out_img_size(in_img0.cols + in_img1.cols, in_img0.rows);
-    cv::Mat out_img(out_img_size, CV_8UC3);
-
-    cv::Rect in_img0_roi(0, 0, in_img0.cols, in_img0.rows);
-    in_img0.copyTo(out_img(in_img0_roi));
-
-    cv::Rect in_img1_roi(in_img0.cols, 0, in_img1.cols, in_img1.rows);
-    in_img1.copyTo(out_img(in_img1_roi));
-
-    return out_img;
-
-}
-
 double StripesSolver::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
 
     cv::Mat merged_img = merge_imgs(frag0.img, frag1.img);
