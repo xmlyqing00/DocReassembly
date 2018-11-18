@@ -3,8 +3,13 @@ project(DOC_REASSEMBLY)
 
 # Find includes and libraries
 include_directories(${DOC_REASSEMBLY_SOURCE_DIR}/include)
-find_package(Torch REQUIRED)
 find_package(OpenCV REQUIRED)
+
+get_filename_component(CMAKE_PREFIX_PATH "${Libtorch_REL_PATH}" 
+    ABSOLUTE BASE_DIR "${DOC_REASSEMBLY_SOURCE_DIR}")
+message("-- Liborch package search path: " ${CMAKE_PREFIX_PATH})
+find_package(Torch REQUIRED)
+
 if (APPLE)
     # Add tesseract lib directory
     link_directories(/usr/local/lib)
