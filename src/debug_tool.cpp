@@ -270,7 +270,7 @@ void find_counter_example_ocr_char_metric(  const string & puzzle_folder,
                                                 to_string(root_id) + "_" + 
                                                 to_string(i) + "_";
 
-                for (int j = 0; j < out_imgs.size(); j++) {
+                for (int j = 0; j < (int)out_imgs.size(); j++) {
                     string img_path = img_path_prefix + to_string(j) + ".png";
                     cv::imwrite(img_path, out_imgs[j]);
                     cv::imshow("canvas", out_imgs[j]);
