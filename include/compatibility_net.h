@@ -1,9 +1,10 @@
 #ifndef COMPATIBILITY_NET_H
 #define COMPATIBILITY_NET_H
 
-#include <iostream>
-#include <torch/script.h>
+class CompatibilityNet {
 
-using namespace std;
+public:
+    CompatibilityNet();
+};
 
 #endif
