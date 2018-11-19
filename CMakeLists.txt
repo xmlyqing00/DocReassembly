@@ -17,14 +17,17 @@ endif()
 
 # Set default variables
 set(SRC_ROOT_PATH ${DOC_REASSEMBLY_SOURCE_DIR}/src)
-set(EXECUTABLE_OUTPUT_PATH ${DOC_REASSEMBLY_SOURCE_DIR}/bin)
 set(CMAKE_CXX_STANDARD 11)
-set(DEBUG_FLAG "-DDEBUG")
-# set(RELEASE_FLAG "-O3 -DNDEBUG")
-set(CMAKE_BUILD_TYPE Release)
+
+if (${CMAKE_BUILD_TYPE} MATCHES "Release")
+    set(EXECUTABLE_OUTPUT_PATH ${DOC_REASSEMBLY_SOURCE_DIR}/bin/release)
+else()
+    set(DEBUG_FLAG "-DDEBUG")
+    set(EXECUTABLE_OUTPUT_PATH ${DOC_REASSEMBLY_SOURCE_DIR}/bin/debug)
+endif()
 
 # Debug cmake
-# set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # utils
 add_library(utils ${SRC_ROOT_PATH}/utils.cpp)
@@ -39,26 +42,22 @@ add_executable(train-evaluator ${EVALUATOR_PATH}/train_evaluator.cpp)
 target_link_libraries(train-evaluator ${TORCH_LIBRARIES} compatibility-net)
 
 # add-noise
-# add_executable(add-noise ${SRC_ROOT_PATH}/add_noise.cpp)
-# target_link_libraries(add-noise ${OpenCV_LIBRARIES})
+add_executable(add-noise ${SRC_ROOT_PATH}/add_noise.cpp)
+target_link_libraries(add-noise ${OpenCV_LIBRARIES})
 
 # debug-tool
-# add_executable(debug-tool ${SRC_ROOT_PATH}/debug_tool.cpp)
-# target_link_libraries(debug-tool ${OpenCV_LIBRARIES} tesseract utils)
+add_executable(debug-tool ${SRC_ROOT_PATH}/debug_tool.cpp)
+target_link_libraries(debug-tool ${OpenCV_LIBRARIES} tesseract utils)
 
 # generator
-# set(GENERATOR_PATH ${SRC_ROOT_PATH}/generator)
-# aux_source_directory(${GENERATOR_PATH} GENERATOR_SRC)
-# add_executable(generator ${GENERATOR_SRC})
-# target_link_libraries(generator ${OpenCV_LIBRARIES} tesseract utils)
+set(GENERATOR_PATH ${SRC_ROOT_PATH}/generator)
+aux_source_directory(${GENERATOR_PATH} GENERATOR_SRC)
+add_executable(generator ${GENERATOR_SRC})
+target_link_libraries(generator ${OpenCV_LIBRARIES} tesseract utils)
 
 # solver
 set(SOLVER_PATH ${SRC_ROOT_PATH}/solver)
 aux_source_directory(${SOLVER_PATH} SOLVER_SRC)
 add_executable(solver ${SOLVER_SRC})
+target_compile_definitions(solver PUBLIC ${DEBUG_FLAG})
 target_link_libraries(solver ${OpenCV_LIBRARIES} tesseract utils)
-
-# solver-debug
-add_executable(solver-debug ${SOLVER_SRC})
-target_compile_definitions(solver-debug PUBLIC ${DEBUG_FLAG})
-target_link_libraries(solver-debug ${OpenCV_LIBRARIES} tesseract utils)
