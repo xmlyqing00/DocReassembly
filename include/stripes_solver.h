@@ -11,6 +11,7 @@
 #include <tesseract/baseapi.h>
 #include <opencv2/opencv.hpp>
 
+#include <ocr_extractor.h>
 #include <stripe_pair.h>
 #include <fragment.h>
 #include <utils.h>
@@ -37,6 +38,8 @@ public:
     vector<cv::Mat> stripes;
     vector<int> comp_idx;
     cv::Mat comp_img;
+
+    OcrExtractor ocr_ectractor;
 
     StripesSolver(const string & _model_path);
     ~StripesSolver();

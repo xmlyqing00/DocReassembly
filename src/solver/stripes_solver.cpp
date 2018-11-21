@@ -41,6 +41,9 @@ void StripesSolver::save_result(const string & case_name) {
 void StripesSolver::push(const cv::Mat & stripe_img) {
     stripes.push_back(stripe_img.clone());
     stripes_n = stripes.size();
+
+    ocr_ectractor.add_ref_img(stripe_img);
+    
 }
 
 bool StripesSolver::reassemble(Metric _metric_mode, Composition comp_mode) {

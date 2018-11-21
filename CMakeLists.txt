@@ -55,13 +55,15 @@ aux_source_directory(${GENERATOR_PATH} GENERATOR_SRC)
 add_executable(generator ${GENERATOR_SRC})
 target_link_libraries(generator ${OpenCV_LIBRARIES} tesseract utils)
 
+# ocr-extractor
+add_library(ocr-extractor ${SRC_ROOT_PATH}/ocr_extractor.cpp)
+target_link_libraries(ocr-extractor ${OpenCV_LIBRARIES})
+
 # solver
 set(SOLVER_PATH ${SRC_ROOT_PATH}/solver)
 aux_source_directory(${SOLVER_PATH} SOLVER_SRC)
 add_executable(solver ${SOLVER_SRC})
 target_compile_definitions(solver PUBLIC ${DEBUG_FLAG})
-target_link_libraries(solver ${OpenCV_LIBRARIES} tesseract utils)
+target_link_libraries(solver ${OpenCV_LIBRARIES} tesseract utils ocr-extractor)
 
-# ocr-extractor
-add_library(ocr-extractor ${SRC_ROOT_PATH}/ocr_extractor.cpp)
-target_link_libraries(ocr-extractor ${OpenCV_LIBRARIES})
+
