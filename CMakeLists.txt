@@ -61,3 +61,7 @@ aux_source_directory(${SOLVER_PATH} SOLVER_SRC)
 add_executable(solver ${SOLVER_SRC})
 target_compile_definitions(solver PUBLIC ${DEBUG_FLAG})
 target_link_libraries(solver ${OpenCV_LIBRARIES} tesseract utils)
+
+# ocr-extractor
+add_library(ocr-extractor ${SRC_ROOT_PATH}/ocr_extractor.cpp)
+target_link_libraries(ocr-extractor ${OpenCV_LIBRARIES})
