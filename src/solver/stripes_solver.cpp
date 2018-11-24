@@ -105,7 +105,6 @@ double StripesSolver::m_metric_word(const cv::Mat & piece0, const cv::Mat & piec
 
 #ifdef DEBUG
             cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 200));
-
             printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
                     word.c_str(), conf, word_iter->WordIsFromDictionary(), x0, y0, x1, y1);
 #endif
