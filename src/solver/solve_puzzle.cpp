@@ -6,7 +6,7 @@ void solve_stripes( const string & stripes_folder,
                     const int vertical_n) {
     
     StripesSolver::Composition comp_mode = StripesSolver::GREEDY;
-    StripesSolver::Metric metric_mode = StripesSolver::PIXEL;
+    StripesSolver::Metric metric_mode = StripesSolver::COMP_EVA;
 
     cout << "Composition mode:    \t" << comp_mode << endl;
     cout << "Metric mode:         \t" << metric_mode << endl;
@@ -82,6 +82,10 @@ int main(int argc, char ** argv) {
     PuzzleType puzzle_type = PuzzleType::STRIPES;
     int vertical_n = 4;
     string model_path = "data/models/";
+
+    cv::Mat arial_img = cv::imread("data/symbols/arial.png");
+    cv::imshow("arial_img", arial_img);
+    cv::waitKey();
 
     // Parse command line parameters
     const string opt_str = "t:T:n:N:m:M:sS";

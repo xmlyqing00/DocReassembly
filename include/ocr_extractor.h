@@ -16,6 +16,8 @@ public:
 
     OcrExtractor();
     void add_img(const cv::Mat & piece);
+    bool has_next();
+    cv::Mat next_roi();
 
 };
 

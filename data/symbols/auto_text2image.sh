@@ -1,9 +1,23 @@
+#!/bin/bash
+
+if [[ "$OSTYPE" = "linux-gnu" ]]; then
+	fonts_dir='/usr/share/fonts/'
+else
+	fonts_dir='/Library/Fonts/'
+fi
+
+echo "Fonts Dir: " $fonts_dir
+
 text2image \
 	--text symbols.txt \
-	--outputbase arial_bold_italic \
-	--font='Arial Bold Italic' \
-    --fonts_dir /usr/share/fonts/ \
+	--outputbase arial \
+	--font='Arial' \
+	--fonts_dir $fonts_dir \
+	--degrade_image=false \
 	--rotate_image=false \
+	--xsize=1800 \
+	--ysize=800 \
+	--ptsize=14 \
 	--box_padding 4 \
-	--glyph_resized_size 32 \
+	--glyph_resized_size 48 \
 	--output_individual_glyph_images \

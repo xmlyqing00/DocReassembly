@@ -24,7 +24,8 @@ public:
 
     enum Metric {
         PIXEL,
-        WORD
+        WORD,
+        COMP_EVA
     };
 
     enum Composition {
@@ -51,6 +52,8 @@ public:
     double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
 
     double m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1);
+
+    double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
 
     void save_result(const string & case_name);
 

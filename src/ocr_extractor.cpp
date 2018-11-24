@@ -101,3 +101,11 @@ void OcrExtractor::add_img(const cv::Mat & piece) {
     }
 
 }
+
+bool OcrExtractor::has_next() {
+    return roi_idx < roi_arr.size();
+}
+
+cv::Mat OcrExtractor::next_roi() {
+    return roi_arr[roi_idx++];
+}

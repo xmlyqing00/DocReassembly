@@ -122,6 +122,23 @@ double StripesSolver::m_metric_word(const cv::Mat & piece0, const cv::Mat & piec
 
 }
 
+double StripesSolver::m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1) {
+
+    cv::Mat && merged_img = merge_imgs(piece0, piece1);
+    const int seam_x = piece0.cols;
+
+    ocr_ectractor.add_img(merged_img);
+
+    while (ocr_ectractor.has_next()) {
+        cv::Mat ocr = ocr_ectractor.next_roi();
+        cv::imshow("ocr", ocr);
+        cv::waitKey();
+    }
+
+    return 0;
+    
+}
+
 bool StripesSolver::reassemble_greedy() {
 
     // Compute matching score for each pair
@@ -140,6 +157,9 @@ bool StripesSolver::reassemble_greedy() {
                     break;
                 case WORD:
                     m_score = m_metric_word(stripes[i], stripes[j]);
+                    break;
+                case COMP_EVA:
+                    m_score = m_metric_comp_eva(stripes[i], stripes[j]);
                     break;
             }   
             
