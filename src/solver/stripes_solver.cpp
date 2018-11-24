@@ -41,9 +41,6 @@ void StripesSolver::save_result(const string & case_name) {
 void StripesSolver::push(const cv::Mat & stripe_img) {
     stripes.push_back(stripe_img.clone());
     stripes_n = stripes.size();
-
-    ocr_ectractor.add_ref_img(stripe_img);
-    
 }
 
 bool StripesSolver::reassemble(Metric _metric_mode, Composition comp_mode) {
@@ -60,31 +57,31 @@ bool StripesSolver::reassemble(Metric _metric_mode, Composition comp_mode) {
 
 }
 
-double StripesSolver::m_metric_pixel(const Fragment & frag0, const Fragment & frag1) {
+double StripesSolver::m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1) {
 
-    int x0 = frag0.size.width - 1;
+    int x0 = piece0.cols - 1;
     int x1 = 0;
 
     double m_score = 0;
-    for (int y = 0; y < frag0.size.height; y++) {
-        m_score += diff_vec3b(  frag0.img.at<cv::Vec3b>(y, x0), 
-                                frag1.img.at<cv::Vec3b>(y, x1));
+    for (int y = 0; y < piece0.rows; y++) {
+        m_score += diff_vec3b(  piece0.at<cv::Vec3b>(y, x0), 
+                                piece1.at<cv::Vec3b>(y, x1));
     }
 
-    return -m_score / frag0.size.height;
+    return -m_score / piece0.rows;
 
 }
 
-double StripesSolver::m_metric_word(const Fragment & frag0, const Fragment & frag1) {
+double StripesSolver::m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1) {
 
-    cv::Mat && merged_img = merge_imgs(frag0.img, frag1.img);
+    cv::Mat && merged_img = merge_imgs(piece0, piece1);
 
-    const int seam_x = frag0.size.width;
-    const int max_m_width = min(frag0.size.width, frag1.size.width);
+    const int seam_x = piece0.cols;
+    const int max_m_width = min(piece0.cols, piece1.cols);
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
 
     ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
-    ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, frag0.size.height);
+    ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, piece0.rows);
     ocr->Recognize(0);
     
     tesseract::ResultIterator * word_iter = ocr->GetIterator();
@@ -104,11 +101,7 @@ double StripesSolver::m_metric_word(const Fragment & frag0, const Fragment & fra
             if (!cross_seam(o_bbox, seam_x)) continue;
 
             const string word = word_iter->GetUTF8Text(tesseract_level);
-            if (!detect_new_word(word, o_bbox, frag0, 0) || 
-                !detect_new_word(word, o_bbox, frag1, seam_x)) continue;
-
             m_metric_score += conf * word.length();
-            // m_metric_score ++;
 
 #ifdef DEBUG
             cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 200));
@@ -130,66 +123,7 @@ double StripesSolver::m_metric_word(const Fragment & frag0, const Fragment & fra
 
 }
 
-bool StripesSolver::detect_new_word(  const string & word, 
-                                const cv::Rect & bbox, 
-                                const Fragment & frag,
-                                const int offset_x) {
-
-    for (int i = 0; i < frag.word_cnt; i++) {
-        
-        if (word != frag.words[i]) continue;
-        if (overlap(bbox, frag.bboxs[i], offset_x) < overlap_thres) continue;
-        
-#ifdef DEBUG
-        cout << "frag_word: " << frag.words[i] << endl;
-        cout << "frag_bbox: " << frag.bboxs[i] << endl;
-        cout << "bbox: " << bbox << endl; 
-        cout << "offset: " << offset_x << endl;
-#endif
-        return false;
-
-    }
-
-    return true;
-
-}
-
-double StripesSolver::overlap(const cv::Rect & rect0, const cv::Rect & rect1, const int offset_x) {
-
-    int area0 = rect0.width * rect0.height;
-    int area1 = rect1.width * rect1.height;
-
-    int x0 = max(rect0.x, rect1.x + offset_x);
-    int y0 = max(rect0.y, rect1.y);
-    int x1 = min(rect0.x + rect0.width, rect1.x + rect1.width + offset_x);
-    int y1 = min(rect0.y + rect0.height, rect1.y + rect1.height);
-
-    int area_inter;
-    if (x1 < x0 || y1 < y0) {
-        area_inter = 0;
-    } else {
-        area_inter = max(0, (x1 - x0) * (y1 - y0));
-    }
-
-#ifdef DEBUG
-    cout << "overlay: " << (double)area_inter / (area0 + area1 - area_inter) << endl; 
-#endif
-
-    return (double)area_inter / (area0 + area1 - area_inter);
-    
-}
-
 bool StripesSolver::reassemble_greedy() {
-
-    // Init fragment from stripe
-    cout << "[INFO] Init fragment from stripe." << endl;
-
-    vector<Fragment> frags;
-    for (int i = 0; i < stripes_n; i++) {
-        Fragment frag(i, stripes[i], model_path);
-        if (metric_mode == WORD) frag.ocr_words();
-        frags.push_back(frag);
-    }
 
     // Compute matching score for each pair
     cout << "[INFO] Compute matching score for each pair." << endl;
@@ -203,14 +137,16 @@ bool StripesSolver::reassemble_greedy() {
             double m_score = 0;
             switch (metric_mode) {
                 case PIXEL:
-                    m_score = m_metric_pixel(frags[i], frags[j]);
+                    m_score = m_metric_pixel(stripes[i], stripes[j]);
                     break;
                 case WORD:
-                    m_score = m_metric_word(frags[i], frags[j]);
+                    m_score = m_metric_word(stripes[i], stripes[j]);
                     break;
             }   
             
 #ifdef DEBUG
+            cv::Mat && merged_img = merge_imgs(stripes[i].img, stripes[j].img);
+            ocr_ectractor.add_img(merged_img);
             printf("Metric i %d, j %d, m %.3lf\n", i, j, m_score);
 #endif
             StripePair sp(i, j, m_score);
