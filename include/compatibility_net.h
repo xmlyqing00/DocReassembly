@@ -3,13 +3,15 @@
 
 #include <torch/torch.h>
 
-class CompatibilityNet: torch::nn::Module {
+using namespace torch;
+
+class CompatibilityNet: nn::Module {
 
 public:
-    torch::nn::Conv2d conv1;
+    nn::Conv2d conv1;
 
     CompatibilityNet();
-    torch::Tensor forward(torch::Tensor & x);
+    Tensor forward(Tensor & x);
 };
 
 #endif
