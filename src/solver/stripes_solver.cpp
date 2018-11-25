@@ -1,5 +1,11 @@
 #include <stripes_solver.h>
 
+StripePair::StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score) {
+    stripe_idx0 = _stripe_idx0;
+    stripe_idx1 = _stripe_idx1;
+    m_score = _m_score;
+}
+
 StripesSolver::StripesSolver(const string & _model_path) {
 
     stripes_n = 0;
@@ -136,7 +142,7 @@ double StripesSolver::m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & 
     }
 
     return 0;
-    
+
 }
 
 bool StripesSolver::reassemble_greedy() {

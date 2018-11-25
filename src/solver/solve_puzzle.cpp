@@ -83,26 +83,22 @@ int main(int argc, char ** argv) {
     int vertical_n = 4;
     string model_path = "data/models/";
 
-    cv::Mat arial_img = cv::imread("data/symbols/arial.png");
-    cv::imshow("arial_img", arial_img);
-    cv::waitKey();
-
     // Parse command line parameters
-    const string opt_str = "t:T:n:N:m:M:sS";
+    const string opt_str = "t:n:m:s";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
         switch (opt) {
-            case 't': case 'T':
+            case 't':
                 case_name = string(optarg);
                 break;
-            case 'n': case 'N':
+            case 'n': 
                 vertical_n = atoi(optarg);
                 break;
-            case 'm': case 'M':
+            case 'm': 
                 model_path = string(optarg);
                 break;
-            case 's': case 'S':
+            case 's': 
                 puzzle_type = PuzzleType::SQUARES;
                 break;
         }
