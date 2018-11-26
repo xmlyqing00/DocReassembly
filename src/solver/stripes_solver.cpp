@@ -133,11 +133,16 @@ double StripesSolver::m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & 
     cv::Mat && merged_img = merge_imgs(piece0, piece1);
     const int seam_x = piece0.cols;
 
+    cv::imshow("merged", merged_img);
+    cv::imwrite("tmp/merged.png", merged_img);
+
     ocr_ectractor.add_img(merged_img);
 
+    int idx = 0;
     while (ocr_ectractor.has_next()) {
         cv::Mat ocr = ocr_ectractor.next_roi();
         cv::imshow("ocr", ocr);
+        cv::imwrite("tmp/ocr_" + to_string(idx++) + ".png", ocr);
         cv::waitKey();
     }
 
@@ -170,7 +175,7 @@ bool StripesSolver::reassemble_greedy() {
             }   
             
 #ifdef DEBUG
-            cv::Mat && merged_img = merge_imgs(stripes[i].img, stripes[j].img);
+            cv::Mat && merged_img = merge_imgs(stripes[i], stripes[j]);
             ocr_ectractor.add_img(merged_img);
             printf("Metric i %d, j %d, m %.3lf\n", i, j, m_score);
 #endif
