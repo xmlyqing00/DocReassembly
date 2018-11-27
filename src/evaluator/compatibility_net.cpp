@@ -47,7 +47,7 @@ Tensor CompatibilityNet::forward(Tensor & x)  {
     x = x.view({-1, 256});
     x = relu(fc1->forward(x));
     x = fc2->forward(x);
-    
+
     x = log_softmax(x, 1);
 
     return x;

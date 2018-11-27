@@ -9,4 +9,8 @@
 
 using namespace std;
 
+const int symbols_n = 63;
+const string dataset_path = "data/";
+const int batch_size = 64;
+
 #endif

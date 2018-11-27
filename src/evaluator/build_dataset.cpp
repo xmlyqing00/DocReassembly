@@ -68,7 +68,7 @@ void generate_training_data(const string & font_name,
     vector<cv::Mat> symbol_imgs;
     for (int i = 0; i < symbol_n; i++) {
         cv::Mat symbol_img = cv::imread(symbol_folder + font_name + "_" + to_string(i) + ".png");
-        symbol_imgs.push_back(symbol_img);
+        symbol_imgs.push_back(move(symbol_img));
     }
 
     if (access(training_folder.c_str(), 0) == -1) {

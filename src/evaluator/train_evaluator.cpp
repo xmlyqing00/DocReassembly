@@ -10,26 +10,25 @@ void train( int epoch,
     comp_net.train();
     int batch_idx = 0;
 
-    for (auto & batch_vec: data_loader) {
+    for (auto & batch: data_loader) {
+        
+        Tensor data = batch.data.to(device);
+        Tensor target = batch.target.to(device);
 
-        // for (auto & batch: batch_vec) {
-        //     batch.data = batch.data.to(device);
-        //     batch.target = batch.target.to(device);
-        // }
-        auto data = batch.data.to(device);
-        auto target = batch.target.to(device);
-        cout << batch_idx++ << endl;        
-        // Tensor output = comp_net.forward(data);
-        // Tensor loss = nll_loss(output, target);
-        // optimizer.zero_grad();
-        // loss.backward();
-        // optimizer.step();
+        Tensor output = comp_net.forward(data);
+        cout << output.type() << " " << target.type() << endl;
+        cout << output.sizes() << " " << target.sizes() << endl;
 
-        // if (batch_idx++ % 10 == 0) {
-        //     printf("Train epoch: %d [%4d/%4d]\tLoss: %.3f\n",
-        //         epoch, batch_idx * batch.data.size(0), 10,
-        //         loss.template item<float>());
-        // }
+        Tensor loss = nll_loss(output, target);
+        optimizer.zero_grad();
+        loss.backward();
+        optimizer.step();
+
+        if (batch_idx++ % 10 == 0) {
+            printf("Train epoch: %d [%4d/%4d]\tLoss: %.3f\n",
+                epoch, int(batch_idx * batch.data.size(0)), 10,
+                loss.template item<float>());
+        }
 
     }
 
@@ -37,8 +36,6 @@ void train( int epoch,
 
 int main() {
 
-    const string dataset_path = "data/";
-    int batch_size = 64;
     int epochs = 100;
     double lr = 1e-2;
     double momentum = 1e-4;
@@ -57,13 +54,14 @@ int main() {
     comp_net.to(device);
 
     auto train_loader = data::make_data_loader(
-        CompatibilityDataset(dataset_path), 
+        CompatibilityDataset(dataset_path).map(torch::data::transforms::Stack<>()), 
         // data::datasets::MNIST(dataset_path),
         batch_size
     );
 
     auto test_loader = data::make_data_loader(
-        CompatibilityDataset(dataset_path), 
+        CompatibilityDataset(dataset_path).map(torch::data::transforms::Stack<>()), 
+        // data::datasets::MNIST(dataset_path),
         batch_size
     );
 
@@ -71,10 +69,6 @@ int main() {
         comp_net.parameters(),
         torch::optim::SGDOptions(lr).momentum(momentum)
     );
-
-    Tensor tensor = torch::rand({1, 3, 64, 64}).to(device);
-    Tensor y = comp_net.forward(tensor);
-    cout << y << endl;
 
     for (int epoch = 1; epoch <= epochs; epoch++) {
         train(epoch, comp_net, *train_loader, optimizer, device);
@@ -230,15 +224,16 @@ int main() {
 
 //   auto train_loader = torch::data::make_data_loader(
 //       torch::data::datasets::MNIST(
-//           options.data_root, torch::data::datasets::MNIST::Mode::kTrain)
-//           .map(Normalize(0.1307, 0.3081))
-//           .map(torch::data::transforms::Stack<>()), options.batch_size);
+//           options.data_root, torch::data::datasets::MNIST::Mode::kTrain),
+//         //   .map(Normalize(0.1307, 0.3081))
+//         //   .map(torch::data::transforms::Stack<>()), 
+//     options.batch_size);
 
 //   auto test_loader = torch::data::make_data_loader(
 //       torch::data::datasets::MNIST(
-//           options.data_root, torch::data::datasets::MNIST::Mode::kTest)
-//           .map(Normalize(0.1307, 0.3081))
-//           .map(torch::data::transforms::Stack<>()),
+//           options.data_root, torch::data::datasets::MNIST::Mode::kTest),
+//         //   .map(Normalize(0.1307, 0.3081))
+//         //   .map(torch::data::transforms::Stack<>()),
 //       options.batch_size);
 
 //     //     auto train_loader = data::make_data_loader(

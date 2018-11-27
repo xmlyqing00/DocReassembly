@@ -16,8 +16,9 @@ public:
 
     explicit CompatibilityDataset(const string & dataset_folder);
 
-    data::Example<> get(size_t index) override;
-    torch::optional<size_t> size() const override;
+    data::Example<> get(size_t index);
+    torch::optional<size_t> size() const;
+    bool is_train() const noexcept;
 
 };
 
