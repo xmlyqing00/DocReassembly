@@ -38,11 +38,14 @@ set(EVALUATOR_PATH ${SRC_ROOT_PATH}/evaluator)
 add_library(compatibility-net ${EVALUATOR_PATH}/compatibility_net.cpp)
 target_link_libraries(compatibility-net ${TORCH_LIBRARIES})
 
+add_library(compatibility-dataset ${EVALUATOR_PATH}/compatibility_dataset.cpp)
+target_link_libraries(compatibility-dataset ${TORCH_LIBRARIES})
+
 add_executable(build-dataset ${EVALUATOR_PATH}/build_dataset.cpp)
 target_link_libraries(build-dataset ${OpenCV_LIBRARIES})
 
 add_executable(train-evaluator ${EVALUATOR_PATH}/train_evaluator.cpp)
-target_link_libraries(train-evaluator ${TORCH_LIBRARIES} compatibility-net)
+target_link_libraries(train-evaluator ${TORCH_LIBRARIES} compatibility-net compatibility-dataset)
 
 # add-noise
 add_executable(add-noise ${SRC_ROOT_PATH}/add_noise.cpp)

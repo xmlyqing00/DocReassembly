@@ -5,6 +5,7 @@
 #include <torch/torch.h>
 
 #include <compatibility_net.h>
+#include <compatibility_dataset.h>
 
 using namespace std;
 
