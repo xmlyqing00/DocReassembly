@@ -7,8 +7,8 @@
 /data/stripes/
 /data/results/
 /data/squares/
-/data/training/
-/data/training.txt
+/data/cp_dataset/
+/data/cp_dataset.txt
 
 tmp/
 .DS_Store

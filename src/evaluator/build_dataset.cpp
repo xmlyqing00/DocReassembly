@@ -16,7 +16,7 @@ void extract_symbols(const string & font_name) {
     cv::imshow("font img", font_img);
 #endif
 
-    ifstream in_file(symbol_folder + font_name + ".box");
+    ifstream in_file(symbol_folder + font_name + ".box", ios::in);
     string line;
     int symbol_idx = 0;
 
@@ -53,11 +53,58 @@ void extract_symbols(const string & font_name) {
     
 }
 
-void generate_training_data(const string & font_name, 
-                            int symbol_n, 
-                            int output_w) {
+void partition_dataset() {
+
+    cout << "Partition dataset into train and test." << endl;
+    ifstream in_file(data_root + "cp_dataset.txt", ios::out);
+    if (!in_file) {
+        cerr << "File " << data_root + "training.txt" << " doesn't exist." << endl;
+        exit(-1);
+    }
     
-    cout << "Generate training data." << endl;
+    int data_n;
+    in_file >> data_n;
+    vector< pair<int, char> > data(data_n, make_pair(0, '?'));
+    for (int i = 0; i < data_n; i++) {
+        in_file >> i >> data[i].first >> data[i].second;
+    }
+    in_file.close();
+
+    vector<int> access_idx(data_n);
+    default_random_engine rand_engine(time(0));
+
+    iota(access_idx.begin(), access_idx.end(), 0);
+    shuffle(access_idx.begin(), access_idx.end(), rand_engine);
+
+    int train_n = int(data_n * partition_rate);
+    int test_n = data_n - train_n;
+
+    cout << "Training dataset number: " << train_n << endl;
+    cout << "Testing dataset number: " << test_n << endl;
+
+    ofstream out_file(data_root + "cp_dataset_train.txt", ios::out);
+    out_file << train_n << endl;
+    for (int i = 0; i < train_n; i++) {
+        int idx = access_idx[i];
+        out_file << idx << " " << data[idx].first << " " << data[idx].second << endl;
+    }
+    out_file.close();
+
+    out_file = ofstream(data_root + "cp_dataset_test.txt", ios::out);
+    out_file << test_n << endl;
+    for (int i = 0; i < test_n; i++) {
+        int idx = access_idx[train_n + i];
+        out_file << idx << " " << data[idx].first << " " << data[idx].second << endl;
+    }
+    out_file.close();
+
+}
+
+void generate_dataset(  const string & font_name, 
+                        int symbol_n, 
+                        int output_w) {
+    
+    cout << "Generate compatibility dataset." << endl;
 
     vector<char> symbols;
     for (int i = 0; i < 10; i++) symbols.push_back('0' + i);
@@ -71,14 +118,16 @@ void generate_training_data(const string & font_name,
         symbol_imgs.push_back(move(symbol_img));
     }
 
-    if (access(training_folder.c_str(), 0) == -1) {
-        mkdir(training_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+    if (access(dataset_folder.c_str(), 0) == -1) {
+        mkdir(dataset_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
     }
 
     int data_idx = 0;
     int data_total = symbol_n * symbol_n * noise_n * 2;
-    ofstream out_file("data/training.txt");
+    ofstream out_file(data_root + "cp_dataset.txt");
     out_file << data_total << endl;
+
+    cout << "Dataset number: " << data_total << endl;
 
     int canvas_w = 256;
     int canvas_w_half = canvas_w >> 1;
@@ -96,7 +145,7 @@ void generate_training_data(const string & font_name,
         cv::Rect s0_roi_rect(0, 0, s0_w_half, symbol_imgs[i].rows);
 
         for (int j = 0; j < symbol_n; j++) {
-            
+
             // Right half symbol
             int s1_w_half = symbol_imgs[j].cols >> 1;
             int s1_h_half = symbol_imgs[j].rows >> 1;
@@ -140,7 +189,7 @@ void generate_training_data(const string & font_name,
                                             canvas_h_half - output_w / 2,
                                             output_w,
                                             output_w);
-                string output_path = training_folder + to_string(data_idx) + ".png";
+                string output_path = dataset_folder + to_string(data_idx) + ".png";
                 cv::imwrite(output_path, canvas(canvas_roi_rect));
                 out_file << data_idx++ << " " << comp << " " << ((comp == 1) ? symbols[i] : '?') << endl;
 
@@ -150,7 +199,7 @@ void generate_training_data(const string & font_name,
                                             canvas_h_half / 2 - output_w / 2,
                                             output_w,
                                             output_w);
-                output_path = training_folder + to_string(data_idx) + ".png";
+                output_path = dataset_folder + to_string(data_idx) + ".png";
                 cv::imwrite(output_path, canvas(canvas_roi_rect));
                 out_file << data_idx++ << " " << comp << " " << ((comp == 1) ? symbols[i] : '?') << endl;
 
@@ -167,6 +216,8 @@ void generate_training_data(const string & font_name,
     }
 
     out_file.close();
+
+    partition_dataset();
 
 }
 
@@ -203,7 +254,7 @@ int main(int argc, char ** argv) {
 
     cout << "Font name:           \t" << font_name << endl;
     cout << "Symbols num:         \t" << symbol_n << endl;
-    cout << "Training data size: \t" << output_w << " x " << output_w << endl;
+    cout << "Training data size:  \t" << output_w << " x " << output_w << endl;
     cout << "Build dataset type:  \t" << static_cast<int>(build_type) << endl;
     cout << endl;
 
@@ -213,11 +264,11 @@ int main(int argc, char ** argv) {
             extract_symbols(font_name);
             break;
         case BuildType::TRAINING: 
-            generate_training_data(font_name, symbol_n, output_w);
+            generate_dataset(font_name, symbol_n, output_w);
             break;
         case BuildType::ALL:
             extract_symbols(font_name);
-            generate_training_data(font_name, symbol_n, output_w);
+            generate_dataset(font_name, symbol_n, output_w);
             break;
 
     }

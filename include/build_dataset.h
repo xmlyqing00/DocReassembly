@@ -13,13 +13,17 @@
 using namespace std;
 
 enum class BuildType {
-    ALL,
     EXTRACT_SYMBOLS,
     TRAINING,
+    ALL,
 };
 
 const int noise_n = 3;
-const string symbol_folder = "data/symbols/";
-const string training_folder = "data/training/";
+const float partition_rate = 0.9;
+
+const string data_root = "data/";
+const string symbol_folder = data_root + "symbols/";
+const string dataset_folder = data_root + "cp_dataset/";
+
 
 #endif

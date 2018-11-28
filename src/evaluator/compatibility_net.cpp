@@ -38,7 +38,11 @@ CompatibilityNet::CompatibilityNet() :
 
 Tensor CompatibilityNet::forward(Tensor & x)  {
 
+    // cout << "input:" << endl;
+
     x = relu(conv1->forward(x));
+    cout << "layer 1" << endl;
+    cout << x[0] << endl;
     x = relu(conv2->forward(x));
     x = relu(conv3->forward(x));
     x = relu(conv4->forward(x));
@@ -46,7 +50,9 @@ Tensor CompatibilityNet::forward(Tensor & x)  {
     x = avg_pool2d(x, 4);
     x = x.view({-1, 256});
     x = relu(fc1->forward(x));
-    x = fc2->forward(x);
+
+    cout << "last:" << endl;
+    cout << x << endl;
 
     x = log_softmax(x, 1);
 
