@@ -6,9 +6,7 @@ CompatibilityDataset::CompatibilityDataset(const string & dataset_folder) {
 
 data::Example<> CompatibilityDataset::get(size_t index) {
     Tensor img = torch::rand({3, 64, 64});
-    Tensor target = torch::randn({64});
-    
-    cout << target.type() << endl;
+    Tensor target = torch::randint(0, 64, {1}, dtype(kInt64));
     return {img, target};
 }
 
