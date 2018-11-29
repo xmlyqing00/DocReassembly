@@ -1,10 +1,10 @@
 #include <train_evaluator.h>
 
-template<typename DataLoader>
+template<typename DataLoader, typename Optimizer>
 void train( int epoch, 
             CompatibilityNet & comp_net, 
             DataLoader & data_loader,
-            optim::SGD & optimizer,
+            Optimizer & optimizer,
             const Device & device) {
     
     comp_net.train();
@@ -16,21 +16,23 @@ void train( int epoch,
         Tensor target = batch.target.to(device);
         target = squeeze(target, /*dim*/1);
 
+        // cout << data << endl;
+
         Tensor output = comp_net.forward(data);
-        cout << target << endl;
-        cout << output << endl;
+        
+        // cout << target << endl;
+        // cout << output << endl;
         Tensor loss = nll_loss(output, target);
+        // cv::waitKey();
         optimizer.zero_grad();
         loss.backward();
         optimizer.step();
 
-        if (batch_idx++ % 1 == 0) {
-            printf("Train [epoch: %3d | %5d]\tLoss: %.3f\n",
+        if (batch_idx++ % 10 == 0) {
+            printf("Train [epoch: %3d | %5d]\tLoss: %.6f\n",
                 epoch, int(batch_idx * batch.data.size(0)),
                 loss.template item<float>());
         }
-
-        if (batch_idx == 10) break;
 
     }
 
@@ -42,10 +44,10 @@ int main(int argc, char ** argv) {
     int epochs = 100;
     int batch_size = 128;
     double lr = 1e-3;
-    double momentum = 0.9;
+    double alpha = 0.9;
 
     // Parse command line parameters
-    const string opt_str = "e:b:l:m:";
+    const string opt_str = "e:b:l:a:";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -59,8 +61,8 @@ int main(int argc, char ** argv) {
             case 'l':
                 lr = atof(optarg);
                 break;
-            case 'm':
-                momentum = atof(optarg);
+            case 'a':
+                alpha = atof(optarg);
                 break;
         }
         
@@ -70,7 +72,7 @@ int main(int argc, char ** argv) {
     cout << "Total epochs:        \t" << epochs << endl;
     cout << "Batch size:          \t" << batch_size << endl;
     cout << "Learning rate:       \t" << lr << endl;
-    cout << "Momentum:            \t" << momentum << endl;
+    cout << "Alpha:               \t" << alpha << endl;
     cout << endl;
 
     DeviceType device_type;
@@ -89,25 +91,25 @@ int main(int argc, char ** argv) {
     CompatibilityNet comp_net;
     comp_net.to(device);
 
-    data::DataLoaderOptions dataloader_options;
-    dataloader_options.batch_size(batch_size);
-    dataloader_options.workers(workers);
+    // data::DataLoaderOptions dataloader_options;
+    // dataloader_options.batch_size(batch_size);
+    // dataloader_options.workers(workers);
 
     auto train_loader = data::make_data_loader(
         CompatibilityDataset(CompatibilityDataset::Mode::kTrain).
             map(data::transforms::Stack<>()),
-        dataloader_options
+        batch_size
     );
 
     auto test_loader = data::make_data_loader(
         CompatibilityDataset(CompatibilityDataset::Mode::kTest).
             map(data::transforms::Stack<>()),
-        dataloader_options
+        batch_size
     );
 
-    optim::SGD optimizer(
+    optim::RMSprop optimizer(
         comp_net.parameters(),
-        optim::SGDOptions(lr).momentum(momentum)
+        optim::RMSpropOptions(lr).alpha(alpha)
     );
 
     for (int epoch = 1; epoch <= epochs; epoch++) {

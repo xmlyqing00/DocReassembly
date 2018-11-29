@@ -18,7 +18,7 @@ public:
     nn::Linear fc2;
 
     CompatibilityNet();
-    Tensor forward(Tensor & x);
+    Tensor forward(Tensor x);
 };
 
 #endif
