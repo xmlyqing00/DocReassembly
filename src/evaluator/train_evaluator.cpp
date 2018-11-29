@@ -16,14 +16,9 @@ void train( int epoch,
         Tensor target = batch.target.to(device);
         target = squeeze(target, /*dim*/1);
 
-        // cout << data << endl;
-
         Tensor output = comp_net.forward(data);
         
-        // cout << target << endl;
-        // cout << output << endl;
         Tensor loss = nll_loss(output, target);
-        // cv::waitKey();
         optimizer.zero_grad();
         loss.backward();
         optimizer.step();
@@ -36,12 +31,52 @@ void train( int epoch,
 
     }
 
+    const string model_path = saved_model_folder + to_string(epoch) + ".pt";
+    serialize::OutputArchive output_archive;
+    comp_net.save(output_archive);
+    output_archive.save_to(model_path);
+    cout << "Saved model at " << model_path << endl;
+
+}
+
+template<typename DataLoader>
+void test(  CompatibilityNet & comp_net, 
+            DataLoader & data_loader,
+            const Device & device) {
+    
+    comp_net.eval();
+    NoGradGuard no_grad;
+
+    float test_loss = 0;
+    int correct_n = 0;
+    int total_n = 0;
+
+    for (const auto & batch: data_loader) {
+        
+        Tensor data = batch.data.to(device);
+        Tensor target = batch.target.to(device);
+        target = squeeze(target, /*dim*/1);
+
+        Tensor output = comp_net.forward(data);
+
+        test_loss += nll_loss(output, target, /*weight=*/{}, Reduction::Sum).template item<float>();
+        auto pred = output.argmax(1);
+        correct_n += pred.eq(target).sum().template item<int64_t>();
+        total_n++;
+
+    }
+
+    test_loss /= total_n;
+    float avg_correct = (float)correct_n / total_n;
+
+    printf("Test\tAvg Correct: %.2f\tAvg Loss: %.6f\n", avg_correct, test_loss);
+
 }
 
 int main(int argc, char ** argv) {
 
     // Default parameters
-    int epochs = 100;
+    int epochs = 500;
     int batch_size = 128;
     double lr = 1e-2;
     double alpha = 0.9;
@@ -92,20 +127,22 @@ int main(int argc, char ** argv) {
     comp_net.to(device);
 
     // DataLoaderOptions have bugs.
-    // data::DataLoaderOptions dataloader_options;
-    // dataloader_options.batch_size(batch_size);
-    // dataloader_options.workers(workers);
+    data::DataLoaderOptions dataloader_options;
+    dataloader_options.batch_size(batch_size);
+    dataloader_options.workers(workers);
 
     auto train_loader = data::make_data_loader(
         CompatibilityDataset(CompatibilityDataset::Mode::kTrain).
             map(data::transforms::Stack<>()),
-        batch_size
+        // batch_size
+        dataloader_options
     );
 
     auto test_loader = data::make_data_loader(
         CompatibilityDataset(CompatibilityDataset::Mode::kTest).
             map(data::transforms::Stack<>()),
-        batch_size
+        // batch_size
+        dataloader_options
     );
 
     optim::RMSprop optimizer(
@@ -113,8 +150,13 @@ int main(int argc, char ** argv) {
         optim::RMSpropOptions(lr).alpha(alpha)
     );
 
+    if (access(saved_model_folder.c_str(), 0) == -1) {
+        mkdir(saved_model_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+    }
+
     for (int epoch = 1; epoch <= epochs; epoch++) {
         train(epoch, comp_net, *train_loader, optimizer, device);
+        test(comp_net, *test_loader, device);
     }
 
     return 0;

@@ -4,6 +4,8 @@
 /bin/
 /build/
 .vscode/
+
+/data/saved_models/
 /data/stripes/
 /data/results/
 /data/squares/

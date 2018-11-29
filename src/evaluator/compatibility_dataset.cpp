@@ -42,15 +42,10 @@ CompatibilityDataset::CompatibilityDataset(Mode _mode) {
 
 data::Example<> CompatibilityDataset::get(size_t index) {
 
-    // cout << index << " " << data[index].first << endl;
     
     cv::Mat img = cv::imread(dataset_folder + to_string(data[index].first) + ".png");
-    // cv::Mat img = cv::Mat(64, 64, CV_8UC3, cv::Scalar(255, 255, 255));
-    // img.convertTo(img, CV_32FC3, 1.0 / 255);
-
     Tensor img_tensor = torch::from_blob(img.data, {img_size.height, img_size.width, 3}, kByte);
-    img_tensor = img_tensor.permute({2, 0, 1});
-    img_tensor = img_tensor.toType(kFloat32).div_(255);
+    img_tensor = img_tensor.permute({2, 0, 1}).toType(kFloat32).div_(255);
     
     int class_idx = symbol2class[data[index].second];
     Tensor target = torch::tensor(class_idx, dtype(kInt64));
