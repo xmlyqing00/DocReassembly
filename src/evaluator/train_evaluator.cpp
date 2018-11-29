@@ -158,6 +158,7 @@ int main(int argc, char ** argv) {
         symbols_w[i] = 1;
     }
     symbols_w[symbols_n] = 1.0 / symbols_n / (symbols_n - 1);
+    symbols_w.to(device);
 
     for (int epoch = 1; epoch <= epochs; epoch++) {
         train(epoch, comp_net, *train_loader, optimizer, device);
