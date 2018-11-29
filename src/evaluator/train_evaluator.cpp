@@ -157,7 +157,7 @@ int main(int argc, char ** argv) {
     for (int i = 0; i < symbols_n; i++) {
         symbols_w[i] = 1;
     }
-    symbols_w[symbols_n] = 1.0 / symbols_n / (symbols_n - 1);
+    symbols_w[symbols_n] = 1.0 / symbols_n;
     symbols_w = symbols_w.to(device);
 
     for (int epoch = 1; epoch <= epochs; epoch++) {

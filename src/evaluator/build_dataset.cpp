@@ -40,16 +40,16 @@ void extract_symbols(const string & font_name) {
         cv::waitKey();
 #endif
 
-        const string symbol_name = symbol_folder + font_name + "_" + to_string(symbol_idx++) + ".png";
-        cv::imwrite(symbol_name, symbol_img);
+        const string symbols_name = symbol_folder + font_name + "_" + to_string(symbol_idx++) + ".png";
+        cv::imwrite(symbols_name, symbol_img);
 
     }
 
     in_file.close();
 
-    const string symbol_name = symbol_folder + font_name + "_" + to_string(symbol_idx++) + ".png";
+    const string symbols_name = symbol_folder + font_name + "_" + to_string(symbol_idx++) + ".png";
     cv::Mat blank_img(48, 48, CV_8UC3, cv::Scalar(255, 255, 255));
-    cv::imwrite(symbol_name, blank_img);
+    cv::imwrite(symbols_name, blank_img);
     
 }
 
@@ -101,7 +101,7 @@ void partition_dataset() {
 }
 
 void generate_dataset(  const string & font_name, 
-                        int symbol_n, 
+                        int symbols_n, 
                         int output_w) {
     
     cout << "Generate compatibility dataset." << endl;
@@ -113,7 +113,7 @@ void generate_dataset(  const string & font_name,
     symbols.push_back('.');
 
     vector<cv::Mat> symbol_imgs;
-    for (int i = 0; i < symbol_n; i++) {
+    for (int i = 0; i < symbols_n; i++) {
         cv::Mat symbol_img = cv::imread(symbol_folder + font_name + "_" + to_string(i) + ".png");
         symbol_imgs.push_back(move(symbol_img));
     }
@@ -123,7 +123,7 @@ void generate_dataset(  const string & font_name,
     }
 
     int data_idx = 0;
-    int data_total = symbol_n * symbol_n * noise_n * 2;
+    int data_total = symbols_n * (symbols_n - 1 + symbols_n - 1) * 2;
     ofstream out_file(data_root + "cp_dataset.txt");
     out_file << data_total << endl;
 
@@ -135,16 +135,16 @@ void generate_dataset(  const string & font_name,
 
     random_device rand_device;
     default_random_engine rand_engine(rand_device());
-    uniform_int_distribution<int> uni_int(0, symbol_n - 1);
+    uniform_int_distribution<int> uni_int(0, symbols_n - 1);
 
-    for (int i = 0; i < symbol_n; i++) {
+    for (int i = 0; i < symbols_n; i++) {
 
         // Left half symbol
         int s0_w_half = symbol_imgs[i].cols >> 1;
         int s0_h_half = symbol_imgs[i].rows >> 1;
         cv::Rect s0_roi_rect(0, 0, s0_w_half, symbol_imgs[i].rows);
 
-        for (int j = 0; j < symbol_n; j++) {
+        for (int j = 0; j < symbols_n; j++) {
 
             // Right half symbol
             int s1_w_half = symbol_imgs[j].cols >> 1;
@@ -163,6 +163,7 @@ void generate_dataset(  const string & font_name,
 
             // Compability flag
             int comp = (i == j);
+            int noise_n = (comp == 1) ? symbols_n - 1 : 1;
             
             for (int t = 0; t < noise_n; t++) {
 
@@ -225,7 +226,7 @@ int main(int argc, char ** argv) {
 
     // Default parameters
     string font_name = "arial";
-    int symbol_n = 63;
+    int symbols_n = 63;
     int output_w = 64;
     BuildType build_type = BuildType::ALL;
 
@@ -239,7 +240,7 @@ int main(int argc, char ** argv) {
                 font_name = string(optarg);
                 break;
             case 'n':
-                symbol_n = atoi(optarg);
+                symbols_n = atoi(optarg);
                 break;
             case 'b':
                 build_type = static_cast<BuildType>(atoi(optarg));
@@ -253,7 +254,7 @@ int main(int argc, char ** argv) {
     }
 
     cout << "Font name:           \t" << font_name << endl;
-    cout << "Symbols num:         \t" << symbol_n << endl;
+    cout << "Symbols num:         \t" << symbols_n << endl;
     cout << "Training data size:  \t" << output_w << " x " << output_w << endl;
     cout << "Build dataset type:  \t" << static_cast<int>(build_type) << endl;
     cout << endl;
@@ -264,11 +265,11 @@ int main(int argc, char ** argv) {
             extract_symbols(font_name);
             break;
         case BuildType::TRAINING: 
-            generate_dataset(font_name, symbol_n, output_w);
+            generate_dataset(font_name, symbols_n, output_w);
             break;
         case BuildType::ALL:
             extract_symbols(font_name);
-            generate_dataset(font_name, symbol_n, output_w);
+            generate_dataset(font_name, symbols_n, output_w);
             break;
 
     }

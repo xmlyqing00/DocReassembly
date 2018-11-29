@@ -18,7 +18,6 @@ enum class BuildType {
     ALL,
 };
 
-const int noise_n = 3;
 const float partition_rate = 0.9;
 
 const string data_root = "data/";
