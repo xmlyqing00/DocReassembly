@@ -58,7 +58,8 @@ void test(  CompatibilityNet & comp_net,
         target = squeeze(target, /*dim*/1);
 
         Tensor output = comp_net.forward(data);
-
+        cout << target[0] << endl;
+        cout << output[0] << endl;
         test_loss += nll_loss(output, target, symbols_w, Reduction::Sum).template item<float>();
         auto pred = output.argmax(1);
         correct_n += pred.eq(target).sum().template item<int64_t>();
