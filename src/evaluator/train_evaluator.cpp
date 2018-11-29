@@ -18,7 +18,7 @@ void train( int epoch,
 
         Tensor output = comp_net.forward(data);
         
-        Tensor loss = nll_loss(output, target);
+        Tensor loss = nll_loss(output, target, symbols_w);
         optimizer.zero_grad();
         loss.backward();
         optimizer.step();
@@ -59,7 +59,7 @@ void test(  CompatibilityNet & comp_net,
 
         Tensor output = comp_net.forward(data);
 
-        test_loss += nll_loss(output, target, /*weight=*/{}, Reduction::Sum).template item<float>();
+        test_loss += nll_loss(output, target, symbols_w, Reduction::Sum).template item<float>();
         auto pred = output.argmax(1);
         correct_n += pred.eq(target).sum().template item<int64_t>();
         total_n += batch.data.size(0);
@@ -154,9 +154,15 @@ int main(int argc, char ** argv) {
         mkdir(saved_model_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
     }
 
+    for (int i = 0; i < symbols_n; i++) {
+        symbols_w[i] = 1;
+    }
+    symbols_w[symbols_n] = 1.0 / symbols_n / (symbols_n - 1);
+
     for (int epoch = 1; epoch <= epochs; epoch++) {
         train(epoch, comp_net, *train_loader, optimizer, device);
         test(comp_net, *test_loader, device);
+        cout << endl;
     }
 
     return 0;

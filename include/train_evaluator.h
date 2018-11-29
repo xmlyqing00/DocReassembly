@@ -14,5 +14,6 @@ using namespace std;
 
 const int symbols_n = 63;
 const string saved_model_folder = "data/saved_models/";
+Tensor symbols_w = torch::empty({symbols_n + 1}, kFloat32);
 
 #endif
