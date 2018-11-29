@@ -45,7 +45,7 @@ add_executable(build-dataset ${EVALUATOR_PATH}/build_dataset.cpp)
 target_link_libraries(build-dataset ${OpenCV_LIBRARIES})
 
 add_executable(train-evaluator ${EVALUATOR_PATH}/train_evaluator.cpp)
-target_link_libraries(train-evaluator ${TORCH_LIBRARIES} compatibility-net compatibility-dataset)
+target_link_libraries(train-evaluator ${TORCH_LIBRARIES} compatibility-net compatibility-dataset utils)
 
 # add-noise
 add_executable(add-noise ${SRC_ROOT_PATH}/add_noise.cpp)

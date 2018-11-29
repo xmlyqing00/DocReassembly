@@ -58,8 +58,7 @@ void test(  CompatibilityNet & comp_net,
         target = squeeze(target, /*dim*/1);
 
         Tensor output = comp_net.forward(data);
-        cout << target[0] << endl;
-        cout << output[0] << endl;
+        
         test_loss += nll_loss(output, target, symbols_w, Reduction::Sum).template item<float>();
         auto pred = output.argmax(1);
         correct_n += pred.eq(target).sum().template item<int64_t>();
@@ -80,10 +79,10 @@ int main(int argc, char ** argv) {
     int epochs = 500;
     int batch_size = 128;
     double lr = 1e-2;
-    double alpha = 0.9;
+    double momentum = 0.9;
 
     // Parse command line parameters
-    const string opt_str = "e:b:l:a:";
+    const string opt_str = "e:b:l:m:";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -97,8 +96,8 @@ int main(int argc, char ** argv) {
             case 'l':
                 lr = atof(optarg);
                 break;
-            case 'a':
-                alpha = atof(optarg);
+            case 'm':
+                momentum = atof(optarg);
                 break;
         }
         
@@ -108,7 +107,7 @@ int main(int argc, char ** argv) {
     cout << "Total epochs:        \t" << epochs << endl;
     cout << "Batch size:          \t" << batch_size << endl;
     cout << "Learning rate:       \t" << lr << endl;
-    cout << "Alpha:               \t" << alpha << endl;
+    cout << "Momentum:            \t" << momentum << endl;
     cout << endl;
 
     DeviceType device_type;
@@ -146,9 +145,13 @@ int main(int argc, char ** argv) {
         dataloader_options
     );
 
-    optim::RMSprop optimizer(
+    // optim::RMSprop optimizer(
+    //     comp_net.parameters(),
+    //     optim::RMSpropOptions(lr).alpha(alpha)
+    // );
+    optim::SGD optimizer(
         comp_net.parameters(),
-        optim::RMSpropOptions(lr).alpha(alpha)
+        optim::SGDOptions(lr).momentum(momentum)
     );
 
     if (access(saved_model_folder.c_str(), 0) == -1) {
@@ -162,9 +165,9 @@ int main(int argc, char ** argv) {
     symbols_w = symbols_w.to(device);
 
     for (int epoch = 1; epoch <= epochs; epoch++) {
+        print_timestamp();
         train(epoch, comp_net, *train_loader, optimizer, device);
         test(comp_net, *test_loader, device);
-        cout << endl;
     }
 
     return 0;

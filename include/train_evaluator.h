@@ -7,6 +7,7 @@
 #include <string>
 #include <torch/torch.h>
 
+#include <utils.h>
 #include <compatibility_net.h>
 #include <compatibility_dataset.h>
 

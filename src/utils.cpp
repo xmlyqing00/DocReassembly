@@ -51,3 +51,12 @@ bool cross_seam(const cv::Rect & bbox, int seam_x) {
     }
 
 }
+
+void print_timestamp() {
+    
+    auto now = chrono::system_clock::now();
+    time_t cur_time = chrono::system_clock::to_time_t(now);
+    
+    cout << endl << "Current timestamp: " << ctime(&cur_time) << endl;
+
+}
