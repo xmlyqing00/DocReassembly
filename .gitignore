@@ -11,6 +11,8 @@
 /data/squares/
 /data/cp_dataset/
 /data/cp_dataset.txt
+/data/cp_dataset_train.txt
+/data/cp_dataset_test.txt
 
 tmp/
 .DS_Store
