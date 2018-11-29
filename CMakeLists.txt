@@ -70,6 +70,6 @@ set(SOLVER_PATH ${SRC_ROOT_PATH}/solver)
 aux_source_directory(${SOLVER_PATH} SOLVER_SRC)
 add_executable(solver ${SOLVER_SRC})
 target_compile_definitions(solver PUBLIC ${DEBUG_FLAG})
-target_link_libraries(solver ${OpenCV_LIBRARIES} tesseract utils ocr-extractor)
+target_link_libraries(solver ${OpenCV_LIBRARIES} ${TORCH_LIBRARIES} tesseract utils ocr-extractor compatibility-net)
 
 

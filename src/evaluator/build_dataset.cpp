@@ -102,7 +102,8 @@ void partition_dataset() {
 
 void generate_dataset(  const string & font_name, 
                         int symbols_n, 
-                        int output_w) {
+                        int output_w,
+                        bool add_noise_flag) {
     
     cout << "Generate compatibility dataset." << endl;
 
@@ -123,7 +124,14 @@ void generate_dataset(  const string & font_name,
     }
 
     int data_idx = 0;
-    int data_total = symbols_n * (symbols_n - 1 + symbols_n - 1) * 2;
+    int data_total;
+    
+    if (add_noise_flag) {
+        data_total = symbols_n * ((symbols_n - 1) * symbols_n + symbols_n - 1) * 2;
+    } else {
+        data_total = symbols_n * (symbols_n + symbols_n - 1);
+    }
+    
     ofstream out_file(data_root + "cp_dataset.txt");
     out_file << data_total << endl;
 
@@ -163,53 +171,93 @@ void generate_dataset(  const string & font_name,
 
             // Compability flag
             int comp = (i == j);
-            int noise_n = (comp == 1) ? symbols_n - 1 : 1;
+
+            if (add_noise_flag) {
+
+                int noise_n = (comp == 1) ? (symbols_n - 1) * symbols_n : 1;
             
-            for (int t = 0; t < noise_n; t++) {
+                for (int t = 0; t < noise_n; t++) {
 
-                cv::Mat store_canvas = canvas.clone();
+                    cv::Mat store_canvas = canvas.clone();
 
-                // Add left noisy symbol
-                int rand_symbol_idx = uni_int(rand_engine);
-                canvas_roi_rect = cv::Rect( canvas_w_half - s0_w_half - symbol_imgs[rand_symbol_idx].cols,
-                                            canvas_h_half - symbol_imgs[rand_symbol_idx].rows / 2,
-                                            symbol_imgs[rand_symbol_idx].cols,
-                                            symbol_imgs[rand_symbol_idx].rows);
-                symbol_imgs[rand_symbol_idx].copyTo(canvas(canvas_roi_rect));
+                    // Add left noisy symbol
+                    int rand_symbol_idx = uni_int(rand_engine);
+                    canvas_roi_rect = cv::Rect( canvas_w_half - s0_w_half - symbol_imgs[rand_symbol_idx].cols,
+                                                canvas_h_half - symbol_imgs[rand_symbol_idx].rows / 2,
+                                                symbol_imgs[rand_symbol_idx].cols,
+                                                symbol_imgs[rand_symbol_idx].rows);
+                    symbol_imgs[rand_symbol_idx].copyTo(canvas(canvas_roi_rect));
 
-                // Add right noisy symbol
-                rand_symbol_idx = uni_int(rand_engine);
-                canvas_roi_rect = cv::Rect( canvas_w_half + s0_w_half,
-                                            canvas_h_half - symbol_imgs[rand_symbol_idx].rows / 2,
-                                            symbol_imgs[rand_symbol_idx].cols,
-                                            symbol_imgs[rand_symbol_idx].rows);
-                symbol_imgs[rand_symbol_idx].copyTo(canvas(canvas_roi_rect));
+                    // Add right noisy symbol
+                    rand_symbol_idx = uni_int(rand_engine);
+                    canvas_roi_rect = cv::Rect( canvas_w_half + s0_w_half,
+                                                canvas_h_half - symbol_imgs[rand_symbol_idx].rows / 2,
+                                                symbol_imgs[rand_symbol_idx].cols,
+                                                symbol_imgs[rand_symbol_idx].rows);
+                    symbol_imgs[rand_symbol_idx].copyTo(canvas(canvas_roi_rect));
 
-                // Save canvas to training data
-                canvas_roi_rect = cv::Rect( canvas_w_half - output_w / 2, 
-                                            canvas_h_half - output_w / 2,
-                                            output_w,
-                                            output_w);
-                string output_path = dataset_folder + to_string(data_idx) + ".png";
-                cv::imwrite(output_path, canvas(canvas_roi_rect));
-                out_file << data_idx++ << " " << comp << " " << ((comp == 1) ? symbols[i] : '?') << endl;
+                    // Save canvas to training data
+                    canvas_roi_rect = cv::Rect( canvas_w_half - output_w / 2, 
+                                                canvas_h_half - output_w / 2,
+                                                output_w,
+                                                output_w);
+                    string output_path = dataset_folder + to_string(data_idx) + ".png";
+                    cv::imwrite(output_path, canvas(canvas_roi_rect));
+                    out_file << data_idx++ << " " << comp << " " << ((comp == 1) ? symbols[i] : '?') << endl;
 
-                // Resize canvas to 50% and save it to training data
-                cv::resize(canvas, canvas, cv::Size(), 0.5, 0.5);
-                canvas_roi_rect = cv::Rect( canvas_w_half / 2 - output_w / 2, 
-                                            canvas_h_half / 2 - output_w / 2,
-                                            output_w,
-                                            output_w);
-                output_path = dataset_folder + to_string(data_idx) + ".png";
-                cv::imwrite(output_path, canvas(canvas_roi_rect));
-                out_file << data_idx++ << " " << comp << " " << ((comp == 1) ? symbols[i] : '?') << endl;
+                    // Resize canvas to 50% and save it to training data
+                    cv::resize(canvas, canvas, cv::Size(), 0.5, 0.5);
+                    canvas_roi_rect = cv::Rect( canvas_w_half / 2 - output_w / 2, 
+                                                canvas_h_half / 2 - output_w / 2,
+                                                output_w,
+                                                output_w);
+                    output_path = dataset_folder + to_string(data_idx) + ".png";
+                    cv::imwrite(output_path, canvas(canvas_roi_rect));
+                    out_file << data_idx++ << " " << comp << " " << ((comp == 1) ? symbols[i] : '?') << endl;
 
 #ifdef DEBUG
-                cv::imshow("canvas", canvas);
-                cv::waitKey();
+                    cv::imshow("canvas", canvas);
+                    cv::waitKey();
 #endif
 
-                canvas = store_canvas;
+                    canvas = store_canvas;
+
+                }
+            } else {
+                
+                if (comp) {
+
+                    float s_step = 0.6 / symbols_n;
+                    cv::Mat out_img;
+                    for (int k = 0; k < symbols_n; k++) {
+
+                        // Save canvas to training data
+                        float scale = 1 - k * s_step;
+                        cv::resize(canvas, out_img, cv::Size(), scale, scale);
+
+                        canvas_roi_rect = cv::Rect( int(canvas_w_half * scale) - output_w / 2, 
+                                                    int(canvas_h_half * scale) - output_w / 2,
+                                                    output_w,
+                                                    output_w);
+                        string output_path = dataset_folder + to_string(data_idx) + ".png";
+                        cv::imwrite(output_path, out_img(canvas_roi_rect));
+                        out_file << data_idx++ << " " << comp << " " << ((comp == 1) ? symbols[i] : '?') << endl;
+
+                    }
+
+                } else {
+                    
+                     // Resize canvas to 50% and save it to training data
+                    cv::resize(canvas, canvas, cv::Size(), 0.5, 0.5);
+                    canvas_roi_rect = cv::Rect( canvas_w_half / 2 - output_w / 2, 
+                                                canvas_h_half / 2 - output_w / 2,
+                                                output_w,
+                                                output_w);
+                    string output_path = dataset_folder + to_string(data_idx) + ".png";
+                    cv::imwrite(output_path, canvas(canvas_roi_rect));
+                    out_file << data_idx++ << " " << comp << " " << ((comp == 1) ? symbols[i] : '?') << endl;
+
+                }
 
             }
 
@@ -218,20 +266,21 @@ void generate_dataset(  const string & font_name,
 
     out_file.close();
 
-    partition_dataset();
+    cout << "Dataset imgs number: " << data_idx << endl;
 
 }
 
 int main(int argc, char ** argv) {
 
     // Default parameters
-    string font_name = "arial";
+    string font_name = "Abyssinica";
     int symbols_n = 63;
     int output_w = 64;
     BuildType build_type = BuildType::ALL;
+    bool add_noise_flag = false;
 
     // Parse command line parameters
-    const string opt_str = "t:n:b:w:";
+    const string opt_str = "f:n:b:w:a";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -248,6 +297,9 @@ int main(int argc, char ** argv) {
             case 'w':
                 output_w = atoi(optarg);
                 break;
+            case 'a':
+                add_noise_flag = true;
+                break;
         }
         
         opt = getopt(argc, argv, opt_str.c_str());
@@ -257,6 +309,7 @@ int main(int argc, char ** argv) {
     cout << "Symbols num:         \t" << symbols_n << endl;
     cout << "Training data size:  \t" << output_w << " x " << output_w << endl;
     cout << "Build dataset type:  \t" << static_cast<int>(build_type) << endl;
+    cout << "Add noise:           \t" << boolalpha << add_noise_flag << endl;
     cout << endl;
 
     switch (build_type) {
@@ -264,12 +317,17 @@ int main(int argc, char ** argv) {
         case BuildType::EXTRACT_SYMBOLS:
             extract_symbols(font_name);
             break;
+        case BuildType::PARTITION:
+            partition_dataset();
+            break;
         case BuildType::TRAINING: 
-            generate_dataset(font_name, symbols_n, output_w);
+            generate_dataset(font_name, symbols_n, output_w, add_noise_flag);
+            partition_dataset();
             break;
         case BuildType::ALL:
             extract_symbols(font_name);
-            generate_dataset(font_name, symbols_n, output_w);
+            generate_dataset(font_name, symbols_n, output_w, add_noise_flag);
+            partition_dataset();
             break;
 
     }

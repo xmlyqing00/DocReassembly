@@ -6,6 +6,8 @@
 .vscode/
 
 /data/saved_models/
+!/data/saved_models/best.pt
+
 /data/stripes/
 /data/results/
 /data/squares/

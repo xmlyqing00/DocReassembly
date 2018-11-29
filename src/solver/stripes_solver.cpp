@@ -130,20 +130,36 @@ double StripesSolver::m_metric_word(const cv::Mat & piece0, const cv::Mat & piec
 
 double StripesSolver::m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1) {
 
+    double m_pixel_score = m_metric_pixel(piece0, piece1);
+
     cv::Mat && merged_img = merge_imgs(piece0, piece1);
     const int seam_x = piece0.cols;
 
     cv::imshow("merged", merged_img);
-    cv::imwrite("tmp/merged.png", merged_img);
 
-    ocr_ectractor.add_img(merged_img);
+    ocr_ectractor.extract_img(merged_img);
 
     int idx = 0;
     while (ocr_ectractor.has_next()) {
+
         cv::Mat ocr = ocr_ectractor.next_roi();
+        cv::resize(ocr, ocr, cp_net_img_size);
+
+        Tensor img_tensor = torch::from_blob(ocr.data, {ocr.rows, ocr.cols, 3}, kByte);
+        img_tensor = img_tensor.permute({2, 0, 1}).toType(kFloat32).div_(255).unsqueeze(0);
+        img_tensor = img_tensor.to(device);
+        
+
+        Tensor output = cp_net.forward(img_tensor);
+        int class_idx = output.argmax(1).item<int>();
+
+        cout << output << endl;
+        cout << "pred " << class_idx << " " << symbols[class_idx] << endl;
+
         cv::imshow("ocr", ocr);
         cv::imwrite("tmp/ocr_" + to_string(idx++) + ".png", ocr);
         cv::waitKey();
+
     }
 
     return 0;
@@ -156,34 +172,85 @@ bool StripesSolver::reassemble_greedy() {
     cout << "[INFO] Compute matching score for each pair." << endl;
 
     vector<StripePair> stripe_pairs;
-    for (int i = 0; i < stripes_n; i++) {
-        for (int j = 0; j < stripes_n; j++) {
-            
-            if (i == j) continue;
 
-            double m_score = 0;
-            switch (metric_mode) {
-                case PIXEL:
-                    m_score = m_metric_pixel(stripes[i], stripes[j]);
-                    break;
-                case WORD:
-                    m_score = m_metric_word(stripes[i], stripes[j]);
-                    break;
-                case COMP_EVA:
-                    m_score = m_metric_comp_eva(stripes[i], stripes[j]);
-                    break;
-            }   
-            
-#ifdef DEBUG
-            cv::Mat && merged_img = merge_imgs(stripes[i], stripes[j]);
-            ocr_ectractor.add_img(merged_img);
-            printf("Metric i %d, j %d, m %.3lf\n", i, j, m_score);
-#endif
-            StripePair sp(i, j, m_score);
-            stripe_pairs.push_back(sp);
+    if (metric_mode == COMP_EVA) {
+        
+        int filters_n = int(stripes_n * filter_rate);
+
+        const string model_path = saved_model_folder + "best.pt";
+        if (access(model_path.c_str(), 0) == -1) {
+            cerr << "Model file: " << model_path << " does not exist!" << endl;
+            exit(-1);
+        }
+        serialize::InputArchive input_archive;
+        input_archive.load_from(model_path);
+
+        cp_net.load(input_archive);
+
+        for (int i = 0; i < 10; i++) symbols.push_back('0' + i);
+        for (int i = 0; i < 26; i++) symbols.push_back('A' + i);
+        for (int i = 0; i < 26; i++) symbols.push_back('a' + i);
+        symbols.push_back('.');
+        symbols.push_back('?');
+
+        DeviceType device_type;
+        if (cuda::is_available()) {
+            cout << "CUDA available! Training on GPU" << endl;
+            device_type = kCUDA;
+        } else {
+            cout << "Training on CPU" << endl;
+            device_type = kCPU;
+        }
+        device = Device(device_type);
+        cp_net.to(device);
+
+        for (int i = 0; i < stripes_n; i++) {
+
+            vector<StripePair> candidates;
+            for (int j = 0; j < stripes_n; j++) {
+                double m_score = m_metric_pixel(stripes[i], stripes[j]);
+                candidates.push_back(StripePair(i, j, m_score));
+            }
+
+            sort(candidates.begin(), candidates.end());
+
+            for (int j = 0; j < filters_n; j++) {
+                cout << j << " " << candidates[j].m_score << endl;
+                double m_score = m_metric_comp_eva(stripes[i], stripes[candidates[j].stripe_idx1]);
+                StripePair sp(i, candidates[j].stripe_idx1, m_score);
+                stripe_pairs.push_back(sp);
+            }
 
         }
+
+    
+    } else {
+
+        for (int i = 0; i < stripes_n; i++) {
+            for (int j = 0; j < stripes_n; j++) {
+                
+                if (i == j) continue;
+
+                double m_score = 0;
+                switch (metric_mode) {
+                    case PIXEL:
+                        m_score = m_metric_pixel(stripes[i], stripes[j]);
+                        break;
+                    case WORD:
+                        m_score = m_metric_word(stripes[i], stripes[j]);
+                        break;
+                    case COMP_EVA:
+                        m_score = m_metric_comp_eva(stripes[i], stripes[j]);
+                        break;
+                }   
+                
+                stripe_pairs.push_back(StripePair(i, j, m_score));
+
+            }
+        }
     }
+
+    
 
     sort(stripe_pairs.begin(), stripe_pairs.end());
 

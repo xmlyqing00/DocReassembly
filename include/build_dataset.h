@@ -15,10 +15,11 @@ using namespace std;
 enum class BuildType {
     EXTRACT_SYMBOLS,
     TRAINING,
+    PARTITION,
     ALL,
 };
 
-const float partition_rate = 0.9;
+const float partition_rate = 0.95;
 
 const string data_root = "data/";
 const string symbol_folder = data_root + "symbols/";

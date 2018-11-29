@@ -42,7 +42,6 @@ CompatibilityDataset::CompatibilityDataset(Mode _mode) {
 
 data::Example<> CompatibilityDataset::get(size_t index) {
 
-    
     cv::Mat img = cv::imread(dataset_folder + to_string(data[index].first) + ".png");
     Tensor img_tensor = torch::from_blob(img.data, {img_size.height, img_size.width, 3}, kByte);
     img_tensor = img_tensor.permute({2, 0, 1}).toType(kFloat32).div_(255);

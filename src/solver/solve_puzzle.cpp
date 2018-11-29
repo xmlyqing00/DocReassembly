@@ -84,7 +84,7 @@ int main(int argc, char ** argv) {
     string model_path = "data/models/";
 
     // Parse command line parameters
-    const string opt_str = "t:n:m:s";
+    const string opt_str = "t:n:m:s:";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {

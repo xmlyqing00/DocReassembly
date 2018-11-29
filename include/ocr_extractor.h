@@ -15,7 +15,7 @@ public:
     vector<cv::Mat> roi_arr;
 
     OcrExtractor();
-    void add_img(const cv::Mat & piece);
+    void extract_img(const cv::Mat & piece);
     bool has_next();
     cv::Mat next_roi();
 

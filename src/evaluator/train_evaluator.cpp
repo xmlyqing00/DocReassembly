@@ -2,12 +2,12 @@
 
 template<typename DataLoader, typename Optimizer>
 void train( int epoch, 
-            CompatibilityNet & comp_net, 
+            CompatibilityNet & cp_net, 
             DataLoader & data_loader,
             Optimizer & optimizer,
             const Device & device) {
     
-    comp_net.train();
+    cp_net.train();
     int batch_idx = 0;
 
     for (auto & batch: data_loader) {
@@ -16,7 +16,7 @@ void train( int epoch,
         Tensor target = batch.target.to(device);
         target = squeeze(target, /*dim*/1);
 
-        Tensor output = comp_net.forward(data);
+        Tensor output = cp_net.forward(data);
         
         Tensor loss = nll_loss(output, target, symbols_w);
         optimizer.zero_grad();
@@ -24,27 +24,33 @@ void train( int epoch,
         optimizer.step();
 
         if (batch_idx++ % 10 == 0) {
-            printf("Train [epoch: %3d | %5d]\tLoss: %.6f\n",
+            printf("Train [epoch: %3d | %6d]\tLoss: %.6f\n",
                 epoch, int(batch_idx * batch.data.size(0)),
-                loss.template item<float>());
+                loss.item<float>());
         }
 
     }
 
-    const string model_path = saved_model_folder + to_string(epoch) + ".pt";
+    string model_path = saved_model_folder + to_string(epoch) + ".pt";
     serialize::OutputArchive output_archive;
-    comp_net.save(output_archive);
+    cp_net.save(output_archive);
     output_archive.save_to(model_path);
     cout << "Saved model at " << model_path << endl;
+
+    if (epoch % 10 == 0) {
+        model_path = saved_model_folder + "best.pt";
+        output_archive.save_to(model_path);
+        cout << "Saved model at " << model_path << endl;
+    }
 
 }
 
 template<typename DataLoader>
-void test(  CompatibilityNet & comp_net, 
+void test(  CompatibilityNet & cp_net, 
             DataLoader & data_loader,
             const Device & device) {
     
-    comp_net.eval();
+    cp_net.eval();
     NoGradGuard no_grad;
 
     float test_loss = 0;
@@ -57,11 +63,11 @@ void test(  CompatibilityNet & comp_net,
         Tensor target = batch.target.to(device);
         target = squeeze(target, /*dim*/1);
 
-        Tensor output = comp_net.forward(data);
+        Tensor output = cp_net.forward(data);
         
-        test_loss += nll_loss(output, target, symbols_w, Reduction::Sum).template item<float>();
+        test_loss += nll_loss(output, target, symbols_w, Reduction::Sum).item<float>();
         auto pred = output.argmax(1);
-        correct_n += pred.eq(target).sum().template item<int64_t>();
+        correct_n += pred.eq(target).sum().item<int64_t>();
         total_n += batch.data.size(0);
 
     }
@@ -69,7 +75,7 @@ void test(  CompatibilityNet & comp_net,
     test_loss /= total_n;
     float avg_correct = (float)correct_n / total_n;
 
-    printf("Test\tAvg Correct: %.2f\tAvg Loss: %.6f\n", avg_correct, test_loss);
+    printf("Test\tAvg Correct: %.4f\tAvg Loss: %.6f\n", avg_correct, test_loss);
 
 }
 
@@ -80,9 +86,10 @@ int main(int argc, char ** argv) {
     int batch_size = 128;
     double lr = 1e-2;
     double momentum = 0.9;
+    int resume = 0;
 
     // Parse command line parameters
-    const string opt_str = "e:b:l:m:";
+    const string opt_str = "e:b:l:m:r:";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -99,6 +106,9 @@ int main(int argc, char ** argv) {
             case 'm':
                 momentum = atof(optarg);
                 break;
+            case 'r':
+                resume = max(0, atoi(optarg));
+                break;
         }
         
         opt = getopt(argc, argv, opt_str.c_str());
@@ -108,7 +118,22 @@ int main(int argc, char ** argv) {
     cout << "Batch size:          \t" << batch_size << endl;
     cout << "Learning rate:       \t" << lr << endl;
     cout << "Momentum:            \t" << momentum << endl;
+    cout << "Resume training:     \t" << resume << endl;
     cout << endl;
+
+    CompatibilityNet cp_net;
+
+    if (resume > 0) {
+        const string model_path = saved_model_folder + to_string(resume) + ".pt";
+        if (access(model_path.c_str(), 0) == -1) {
+            cerr << "Model file: " << model_path << " does not exist!" << endl;
+            exit(-1);
+        }
+        serialize::InputArchive input_archive;
+        input_archive.load_from(model_path);
+
+        cp_net.load(input_archive);
+    }
 
     DeviceType device_type;
     int workers;
@@ -122,9 +147,7 @@ int main(int argc, char ** argv) {
         workers = 0;
     }
     Device device(device_type);
-
-    CompatibilityNet comp_net;
-    comp_net.to(device);
+    cp_net.to(device);
 
     // DataLoaderOptions have bugs.
     data::DataLoaderOptions dataloader_options;
@@ -146,11 +169,11 @@ int main(int argc, char ** argv) {
     );
 
     // optim::RMSprop optimizer(
-    //     comp_net.parameters(),
+    //     cp_net.parameters(),
     //     optim::RMSpropOptions(lr).alpha(alpha)
     // );
     optim::SGD optimizer(
-        comp_net.parameters(),
+        cp_net.parameters(),
         optim::SGDOptions(lr).momentum(momentum)
     );
 
@@ -162,12 +185,13 @@ int main(int argc, char ** argv) {
         symbols_w[i] = 1;
     }
     symbols_w[symbols_n] = 1.0 / symbols_n;
+    // symbols_w[symbols_n] = 1;
     symbols_w = symbols_w.to(device);
 
-    for (int epoch = 1; epoch <= epochs; epoch++) {
+    for (int epoch = resume + 1; epoch <= epochs; epoch++) {
         print_timestamp();
-        train(epoch, comp_net, *train_loader, optimizer, device);
-        test(comp_net, *test_loader, device);
+        train(epoch, cp_net, *train_loader, optimizer, device);
+        test(cp_net, *test_loader, device);
     }
 
     return 0;

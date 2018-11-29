@@ -4,7 +4,7 @@ OcrExtractor::OcrExtractor() {
 
 }
 
-void OcrExtractor::add_img(const cv::Mat & piece) {
+void OcrExtractor::extract_img(const cv::Mat & piece) {
 
     cv::Mat gray_img, col_mean;
     cv::cvtColor(piece, gray_img, cv::COLOR_BGR2GRAY);

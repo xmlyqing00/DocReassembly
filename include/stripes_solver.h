@@ -14,6 +14,7 @@
 #include <ocr_extractor.h>
 #include <fragment.h>
 #include <utils.h>
+#include <compatibility_net.h>
 
 using namespace std;
 
@@ -71,6 +72,15 @@ public:
     void save_result(const string & case_name);
 
 private:
+
+    const double filter_rate = 0.1;
+    const int symbols_n = 64;
+    const cv::Size cp_net_img_size {64, 64};
+    const string saved_model_folder = "data/saved_models/";
+    vector<char> symbols;
+
+    CompatibilityNet cp_net;
+    Device device {kCPU};
 
     tesseract::TessBaseAPI * ocr;
 
