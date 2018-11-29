@@ -62,7 +62,7 @@ void test(  CompatibilityNet & comp_net,
         test_loss += nll_loss(output, target, /*weight=*/{}, Reduction::Sum).template item<float>();
         auto pred = output.argmax(1);
         correct_n += pred.eq(target).sum().template item<int64_t>();
-        total_n++;
+        total_n += batch.data.size(0);
 
     }
 
