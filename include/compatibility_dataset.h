@@ -19,6 +19,8 @@ public:
     enum class Mode { kTrain, kTest };
     Mode mode;
     int data_n {0};
+    // Tensor imgs;
+    // Tensor targets;
     vector< pair<int, char> > data;
 
     explicit CompatibilityDataset(Mode mode);

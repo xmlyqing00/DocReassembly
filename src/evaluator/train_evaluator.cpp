@@ -43,7 +43,7 @@ int main(int argc, char ** argv) {
     // Default parameters
     int epochs = 100;
     int batch_size = 128;
-    double lr = 1e-3;
+    double lr = 1e-2;
     double alpha = 0.9;
 
     // Parse command line parameters
@@ -91,6 +91,7 @@ int main(int argc, char ** argv) {
     CompatibilityNet comp_net;
     comp_net.to(device);
 
+    // DataLoaderOptions have bugs.
     // data::DataLoaderOptions dataloader_options;
     // dataloader_options.batch_size(batch_size);
     // dataloader_options.workers(workers);
