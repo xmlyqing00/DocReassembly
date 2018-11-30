@@ -62,7 +62,7 @@ int main(int argc, char ** argv) {
         }
 
         // cv::resize(img, img, cp_net_imgsize);
-        cv::Mat canvas = cv::Mat::zeros(cp_net_imgsize, CV_8UC3);
+        cv::Mat canvas = cv::Mat(cp_net_imgsize, CV_8UC3, cv::Scalar(255 ,255, 255));
         cv::Rect roi_rect(  cp_net_imgsize.width / 2 - img.cols / 2,
                             cp_net_imgsize.height / 2 - img.rows / 2,
                             img.cols,
