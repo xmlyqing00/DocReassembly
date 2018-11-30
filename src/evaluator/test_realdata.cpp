@@ -53,8 +53,14 @@ int main(int argc, char ** argv) {
     cp_net.to(device);
 
     for (int i = 0; i < data_n; i++) {
+        
+        const string img_path = realdata_folder + to_string(i) + ".png";
+        cv::Mat img = cv::imread(img_path);
+        if (img.empty()) {
+            cerr << "Img: " << img_path << " does not exist!" << endl;
+            exit(-1);
+        }
 
-        cv::Mat img = cv::imread(realdata_folder + to_string(i) + ".png");
         cv::resize(img, img, cp_net_imgsize);
         Tensor img_tensor = torch::from_blob(img.data, {img.rows, img.cols, 3}, kByte);
         img_tensor = img_tensor.permute({2, 0, 1}).toType(kFloat32).div_(255).unsqueeze(0);
