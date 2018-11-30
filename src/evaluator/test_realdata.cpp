@@ -61,8 +61,15 @@ int main(int argc, char ** argv) {
             exit(-1);
         }
 
-        cv::resize(img, img, cp_net_imgsize);
-        Tensor img_tensor = torch::from_blob(img.data, {img.rows, img.cols, 3}, kByte);
+        // cv::resize(img, img, cp_net_imgsize);
+        cv::Mat canvas = cv::Mat::zeros(cp_net_imgsize, CV_8UC3);
+        cv::Rect roi_rect(  cp_net_imgsize.width / 2 - img.cols / 2,
+                            cp_net_imgsize.height / 2 - img.rows / 2,
+                            img.cols,
+                            img.rows);
+        img.copyTo(canvas(roi_rect));
+
+        Tensor img_tensor = torch::from_blob(canvas.data, {canvas.rows, canvas.cols, 3}, kByte);
         img_tensor = img_tensor.permute({2, 0, 1}).toType(kFloat32).div_(255).unsqueeze(0);
         img_tensor = img_tensor.to(device);
         
@@ -72,7 +79,7 @@ int main(int argc, char ** argv) {
         cout << output << endl;
         cout << "pred " << class_idx << " " << symbols[class_idx] << endl;
 
-        cv::imshow("img", img);
+        cv::imshow("canvas", canvas);
         cv::waitKey();
 
     }
