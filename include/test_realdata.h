@@ -12,7 +12,7 @@
 using namespace std;
 
 const string saved_model_folder = "data/saved_models/";
-const string realdata_folder = "data/realdata/";
+const string realdata_folder = "data/cp_dataset_realdata/";
 cv::Size cp_net_imgsize(64, 64);
 
 #endif
