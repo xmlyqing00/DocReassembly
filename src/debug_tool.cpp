@@ -4,11 +4,17 @@ bool show_counter_example_pixel_metric( const cv::Mat & root_img,
                                         const cv::Mat & best_img,
                                         const cv::Mat & test_img,
                                         const double & m_score_best,
-                                        cv::Mat & canvas) {
+                                        cv::Mat & canvas,
+                                        int operation) {
     
     double m_score_test = m_metric_pixel(root_img, test_img);
     cout << m_score_best << " " << m_score_test << endl;
-    if (m_score_best > m_score_test) return false;
+    if (operation == 0) {
+        if (m_score_best > m_score_test) return false;
+    } else {
+        if (m_score_best <= m_score_test) return false;
+    }
+    
 
     const int indication_width = 20;
     canvas = cv::Mat(   root_img.rows, 
@@ -87,7 +93,8 @@ bool show_counter_example_pixel_metric( const cv::Mat & root_img,
 
 void find_counter_example_pixel_metric( const string & puzzle_folder,
                                         const string & case_name,
-                                        int vertical_n) {
+                                        int vertical_n,
+                                        int operation) {
 
     ifstream fin(puzzle_folder + "order.txt", ios::in);
     if (!fin.is_open()) {
@@ -134,7 +141,8 @@ void find_counter_example_pixel_metric( const string & puzzle_folder,
                                                             best_img, 
                                                             test_img,
                                                             m_score_best,
-                                                            canvas);
+                                                            canvas,
+                                                            operation);
 
             if (found) {
                 printf("Root: %d,\t Best: %d,\t Test: %d\n", root_id, best_id, i);
@@ -295,9 +303,10 @@ int main(int argc, char ** argv) {
     PuzzleType puzzle_type = PuzzleType::STRIPES;
     int vertical_n = 20;
     DebugType debug_type = DebugType::Pixel;
+    int operation = 0;
 
     // Parse command line parameters
-    const string opt_str = "t:n:sd:";
+    const string opt_str = "t:n:sd:o:";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -314,6 +323,9 @@ int main(int argc, char ** argv) {
             case 'd':
                 debug_type = static_cast<DebugType>(atoi(optarg));
                 break;
+            case 'o':
+                operation = atoi(optarg);
+                break;
         }
         
         opt = getopt(argc, argv, opt_str.c_str());
@@ -322,6 +334,7 @@ int main(int argc, char ** argv) {
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Vertical cut num:    \t" << vertical_n << endl;
     cout << "Puzzle type:         \t" << (puzzle_type == PuzzleType::SQUARES ? "Squares": "Stripes") << endl;
+    cout << "operation:           \t" << operation << endl;
 
     string puzzle_folder;
     if (puzzle_type == PuzzleType::STRIPES) {
@@ -338,7 +351,7 @@ int main(int argc, char ** argv) {
     switch (debug_type) {
         case DebugType::Pixel:
             cout << "Pixel" << endl;
-            find_counter_example_pixel_metric(puzzle_folder, case_name, vertical_n);
+            find_counter_example_pixel_metric(puzzle_folder, case_name, vertical_n, operation);
             break;
         case DebugType::OCR_char:
             cout << "OCR Char" << endl;

@@ -6,7 +6,7 @@ void solve_stripes( const string & stripes_folder,
                     const int vertical_n) {
     
     StripesSolver::Composition comp_mode = StripesSolver::GREEDY;
-    StripesSolver::Metric metric_mode = StripesSolver::COMP_EVA;
+    StripesSolver::Metric metric_mode = StripesSolver::PIXEL;
 
     cout << "Composition mode:    \t" << comp_mode << endl;
     cout << "Metric mode:         \t" << metric_mode << endl;
