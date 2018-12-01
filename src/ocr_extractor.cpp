@@ -1,7 +1,7 @@
 #include <ocr_extractor.h>
 
-OcrExtractor::OcrExtractor() {
-
+OcrExtractor::OcrExtractor(Mode _mode) :
+    mode(_mode) {
 }
 
 void OcrExtractor::extract_img(const cv::Mat & piece) {
@@ -83,6 +83,8 @@ void OcrExtractor::extract_img(const cv::Mat & piece) {
 
     roi_arr.clear();
     roi_idx = 0;
+    int width_half = piece.cols >> 1;
+
     for (int i = 1; i < (int)symbol_y_arr.size(); i++) {
         
         int y0 = symbol_block_y_arr[i - 1];
@@ -90,8 +92,21 @@ void OcrExtractor::extract_img(const cv::Mat & piece) {
         int margin = int((y1 - y0) * 0.1);
         y0 = max(0, y0 - margin);
         y1 = min(piece.rows, y1 + margin);
-
         int height = y1 - y0;
+
+        if (mode == Mode::CLEAN) {
+            
+            queue< pair<int,int> > que;
+            vector< vector<int> > visited();
+
+            for (int y = y0; y < y1; y++) {
+                for (int x = width_half - 2; width_half + 2; width_half++) {
+                    if ()
+                }
+            }
+        }
+
+        
         int width = min(height, piece.cols);
         int x0 = (piece.cols - width) >> 1;
 
