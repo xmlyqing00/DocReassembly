@@ -6,10 +6,6 @@ void solve_stripes( const string & stripes_folder,
                     StripesSolver::Metric metric_mode,
                     StripesSolver::Composition composition_mode) {
     
-    cout << "Metric mode:         \t" << metric_mode << endl;
-    cout << "Composition mode:    \t" << composition_mode << endl;
-    cout << endl;
-
     StripesSolver stripes_solver;
 
     cout << "[INFO] Import stripes." << endl;
@@ -20,7 +16,7 @@ void solve_stripes( const string & stripes_folder,
             cerr << "[ERR] Stripe img does not exist." << endl;
             exit(-1); 
         }
-        stripes_solver.push(stripe_img);
+        stripes_solver.push(move(stripe_img));
     }
 
     stripes_solver.reassemble(metric_mode, composition_mode);
@@ -78,7 +74,7 @@ int main(int argc, char ** argv) {
     string case_name = "doc0";
     PuzzleType puzzle_type = PuzzleType::STRIPES;
     int vertical_n = 4;
-    StripesSolver::Composition composition_mode = StripesSolver::GREEDY_PROBABILITY;
+    StripesSolver::Composition composition_mode = StripesSolver::GREEDY;
     StripesSolver::Metric metric_mode = StripesSolver::PIXEL;
 
     // Parse command line parameters
@@ -107,11 +103,16 @@ int main(int argc, char ** argv) {
         opt = getopt(argc, argv, opt_str.c_str());
     }
 
+    const string metric_mode_str = 
+        metric_mode == StripesSolver::Metric::PIXEL ? "Pixel" :
+        metric_mode == StripesSolver::Metric::WORD ? "Word" :
+        "Compability Evaluator";
+
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Vertical cut num:    \t" << vertical_n << endl;
     cout << "Puzzle type:         \t" << (puzzle_type == PuzzleType::SQUARES ? "Squares": "Stripes") << endl;
-    cout << "Metric mode:         \t" << (static_cast<int>(metric_mode)) << endl;
-    cout << "Composition mode:    \t" << (static_cast<int>(composition_mode)) << endl;
+    cout << "Metric mode:         \t" << metric_mode_str << endl;
+    cout << "Composition mode:    \t" << (composition_mode == StripesSolver::Composition::GREEDY ? "Greedy" : "Greedy Probability") << endl;
 
     // Import stripes
     if (puzzle_type == PuzzleType::STRIPES) {

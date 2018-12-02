@@ -1,9 +1,10 @@
 #include <stripes_solver.h>
 
-StripePair::StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score) {
+StripePair::StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score, double _ac_prob) {
     stripe_idx0 = _stripe_idx0;
     stripe_idx1 = _stripe_idx1;
     m_score = _m_score;
+    ac_prob = _ac_prob;
 }
 
 StripesSolver::StripesSolver() {
@@ -11,7 +12,7 @@ StripesSolver::StripesSolver() {
     stripes_n = 0;
 
     ocr = new tesseract::TessBaseAPI();
-    if (ocr->Init(nullptr, "eng", tesseract::OEM_LSTM_ONLY)) {
+    if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_LSTM_ONLY)) {
         cerr << "Could not initialize tesseract." << endl;
         exit(-1);
     }
@@ -53,10 +54,13 @@ bool StripesSolver::reassemble(Metric _metric_mode, Composition _composition_mod
     metric_mode = _metric_mode;
     composition_mode = _composition_mode;
 
+    m_metric();
+
     switch (composition_mode) {
         case Composition::GREEDY:
-            cout << "Reassemble mode: \t" << "GREEDY" << endl;
             return reassemble_greedy();
+        case Composition::GREEDY_PROBABILITY:
+            return reassemble_greedy_probability();
         default:
             return false;
     }
@@ -166,12 +170,10 @@ double StripesSolver::m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & 
 
 }
 
-bool StripesSolver::reassemble_greedy() {
+void StripesSolver::m_metric() {
 
     // Compute matching score for each pair
     cout << "[INFO] Compute matching score for each pair." << endl;
-
-    vector<StripePair> stripe_pairs;
 
     if (metric_mode == COMP_EVA) {
         
@@ -208,6 +210,7 @@ bool StripesSolver::reassemble_greedy() {
 
             vector<StripePair> candidates;
             for (int j = 0; j < stripes_n; j++) {
+                if (i == j) continue;
                 double m_score = m_metric_pixel(stripes[i], stripes[j]);
                 candidates.push_back(StripePair(i, j, m_score));
             }
@@ -227,6 +230,8 @@ bool StripesSolver::reassemble_greedy() {
     } else {
 
         for (int i = 0; i < stripes_n; i++) {
+
+            vector<StripePair> candidates;
             for (int j = 0; j < stripes_n; j++) {
                 
                 if (i == j) continue;
@@ -239,20 +244,38 @@ bool StripesSolver::reassemble_greedy() {
                     case WORD:
                         m_score = m_metric_word(stripes[i], stripes[j]);
                         break;
-                    case COMP_EVA:
-                        m_score = m_metric_comp_eva(stripes[i], stripes[j]);
-                        break;
                 }   
                 
-                stripe_pairs.push_back(StripePair(i, j, m_score));
+                candidates.push_back(StripePair(i, j, m_score));
 
             }
+
+            if (composition_mode == Composition::GREEDY_PROBABILITY) {
+                
+                sort(candidates.begin(), candidates.end());
+                for (int j = 0; j < candidates.size() - 1; j++) {
+                    // m_score are negatives.
+                    double alpha = candidates[j + 1].m_score / candidates[j].m_score;
+                    candidates[j].ac_prob = alpha / (1 + alpha);
+                }
+
+                stripe_pairs.insert(
+                    stripe_pairs.end(),
+                    make_move_iterator(candidates.begin()),
+                    make_move_iterator(candidates.end()));
+
+            }
+            
+
+
         }
     }
 
-    
-
     sort(stripe_pairs.begin(), stripe_pairs.end());
+
+}
+
+bool StripesSolver::reassemble_greedy() {
 
     // Greedy algorithm
     cout << "[INFO] Reassemble the document by greedy algorithm." << endl;
@@ -303,5 +326,9 @@ bool StripesSolver::reassemble_greedy() {
     cout << "[INFO] Best matching score:\t" << avg_m_score << endl;
 
     return true;
+
+}
+
+bool StripesSolver::reassemble_greedy_probability() {
 
 }

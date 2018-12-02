@@ -101,7 +101,6 @@ void OcrExtractor::extract_img(const cv::Mat & piece) {
 
             for (int y = y0; y < y1; y++) {
                 for (int x = width_half - 2; width_half + 2; width_half++) {
-                    if ()
                 }
             }
         }

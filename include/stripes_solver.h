@@ -24,8 +24,9 @@ public:
     int stripe_idx0;
     int stripe_idx1;
     double m_score;
+    double ac_prob;
 
-    StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score);
+    StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score, double _ac_prob=1);
     bool operator < (const StripePair & _sp) const {
         return m_score > _sp.m_score;
     }
@@ -54,20 +55,17 @@ public:
     vector<int> comp_idx;
     cv::Mat comp_img;
 
+    const string tesseract_model_path {"data/tesseract_model/"};
     OcrExtractor ocr_ectractor;
 
     StripesSolver();
     ~StripesSolver();
 
     void push(const cv::Mat & stripe_img);
+
+    void m_metric();
     
     bool reassemble(Metric _metric_mode, Composition _composition_mode);
-
-    double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
-
-    double m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1);
-
-    double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
 
     void save_result(const string & case_name);
 
@@ -86,7 +84,17 @@ private:
 
     Metric metric_mode;
     Composition composition_mode;
+
+    vector<StripePair> stripe_pairs;
+    
+    double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
+    double m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1);
+    double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
+    
     bool reassemble_greedy();
+    bool reassemble_greedy_probability();
+
+
 
 };
 
