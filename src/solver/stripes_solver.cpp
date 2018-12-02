@@ -6,13 +6,12 @@ StripePair::StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score) {
     m_score = _m_score;
 }
 
-StripesSolver::StripesSolver(const string & _model_path) {
+StripesSolver::StripesSolver() {
 
     stripes_n = 0;
-    model_path = _model_path;
 
     ocr = new tesseract::TessBaseAPI();
-    if (ocr->Init(model_path.c_str(), "eng", tesseract::OEM_LSTM_ONLY)) {
+    if (ocr->Init(nullptr, "eng", tesseract::OEM_LSTM_ONLY)) {
         cerr << "Could not initialize tesseract." << endl;
         exit(-1);
     }
@@ -49,12 +48,13 @@ void StripesSolver::push(const cv::Mat & stripe_img) {
     stripes_n = stripes.size();
 }
 
-bool StripesSolver::reassemble(Metric _metric_mode, Composition comp_mode) {
+bool StripesSolver::reassemble(Metric _metric_mode, Composition _composition_mode) {
     
     metric_mode = _metric_mode;
+    composition_mode = _composition_mode;
 
-    switch (comp_mode) {
-        case StripesSolver::GREEDY:
+    switch (composition_mode) {
+        case Composition::GREEDY:
             cout << "Reassemble mode: \t" << "GREEDY" << endl;
             return reassemble_greedy();
         default:

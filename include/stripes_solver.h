@@ -44,10 +44,10 @@ public:
 
     enum Composition {
         GREEDY,
+        GREEDY_PROBABILITY
     };
 
     const double conf_thres {80};
-    string model_path;
 
     int stripes_n {0};
     vector<cv::Mat> stripes;
@@ -56,12 +56,12 @@ public:
 
     OcrExtractor ocr_ectractor;
 
-    StripesSolver(const string & _model_path);
+    StripesSolver();
     ~StripesSolver();
 
     void push(const cv::Mat & stripe_img);
     
-    bool reassemble(Metric _metric_mode, Composition comp_mode);
+    bool reassemble(Metric _metric_mode, Composition _composition_mode);
 
     double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
 
@@ -85,6 +85,7 @@ private:
     tesseract::TessBaseAPI * ocr;
 
     Metric metric_mode;
+    Composition composition_mode;
     bool reassemble_greedy();
 
 };

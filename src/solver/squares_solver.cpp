@@ -1,15 +1,13 @@
 #include <squares_solver.h>
 
-SquaresSolver::SquaresSolver(   const string & _model_path, 
-                                const cv::Size & _puzzle_size) {
+SquaresSolver::SquaresSolver(const cv::Size & _puzzle_size) {
 
     puzzle_size = _puzzle_size;
     square_size = cv::Size(0, 0);
-    model_path = _model_path;
     squares_n = puzzle_size.width * puzzle_size.height;
 
     ocr = new tesseract::TessBaseAPI();
-    if (ocr->Init(model_path.c_str(), "eng", tesseract::OEM_LSTM_ONLY)) {
+    if (ocr->Init(nullptr, "eng", tesseract::OEM_LSTM_ONLY)) {
         cerr << "Could not initialize tesseract." << endl;
         exit(-1);
     }

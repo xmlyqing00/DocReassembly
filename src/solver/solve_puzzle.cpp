@@ -1,18 +1,16 @@
 #include <solve_puzzle.h>
 
 void solve_stripes( const string & stripes_folder, 
-                    const string & model_path,
                     const string & case_name,
-                    const int vertical_n) {
+                    const int vertical_n,
+                    StripesSolver::Metric metric_mode,
+                    StripesSolver::Composition composition_mode) {
     
-    StripesSolver::Composition comp_mode = StripesSolver::GREEDY;
-    StripesSolver::Metric metric_mode = StripesSolver::PIXEL;
-
-    cout << "Composition mode:    \t" << comp_mode << endl;
     cout << "Metric mode:         \t" << metric_mode << endl;
+    cout << "Composition mode:    \t" << composition_mode << endl;
     cout << endl;
 
-    StripesSolver stripes_solver(model_path);
+    StripesSolver stripes_solver;
 
     cout << "[INFO] Import stripes." << endl;
     for (int i = 0; i < vertical_n; i++) {
@@ -25,7 +23,7 @@ void solve_stripes( const string & stripes_folder,
         stripes_solver.push(stripe_img);
     }
 
-    stripes_solver.reassemble(metric_mode, comp_mode);
+    stripes_solver.reassemble(metric_mode, composition_mode);
     stripes_solver.save_result(case_name);
 
     for (const int idx: stripes_solver.comp_idx) {
@@ -38,9 +36,8 @@ void solve_stripes( const string & stripes_folder,
 }
 
 void solve_squares (const string & squares_folder, 
-                    const string & model_path,
                     const string & case_name,
-                    const int vertical_n) {
+                    int vertical_n) {
 
     const string puzzle_size_file_path = squares_folder + "puzzle_size.txt";
     cv::Size puzzle_size;
@@ -56,7 +53,7 @@ void solve_squares (const string & squares_folder,
     cout << "Squares number:      \t" << squares_n << endl;
     cout << endl;
 
-    SquaresSolver squares_solver(model_path, puzzle_size);
+    SquaresSolver squares_solver(puzzle_size);
 
     cout << "[INFO] Import squares." << endl;
 
@@ -81,10 +78,11 @@ int main(int argc, char ** argv) {
     string case_name = "doc0";
     PuzzleType puzzle_type = PuzzleType::STRIPES;
     int vertical_n = 4;
-    string model_path = "data/models/";
+    StripesSolver::Composition composition_mode = StripesSolver::GREEDY_PROBABILITY;
+    StripesSolver::Metric metric_mode = StripesSolver::PIXEL;
 
     // Parse command line parameters
-    const string opt_str = "t:n:m:s:";
+    const string opt_str = "t:n:s:c:m:";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -95,11 +93,14 @@ int main(int argc, char ** argv) {
             case 'n': 
                 vertical_n = atoi(optarg);
                 break;
-            case 'm': 
-                model_path = string(optarg);
+            case 'c': 
+                composition_mode = static_cast<StripesSolver::Composition>(atoi(optarg));
                 break;
             case 's': 
                 puzzle_type = PuzzleType::SQUARES;
+                break;
+            case 'm':
+                metric_mode = static_cast<StripesSolver::Metric>(atoi(optarg));
                 break;
         }
         
@@ -109,18 +110,19 @@ int main(int argc, char ** argv) {
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Vertical cut num:    \t" << vertical_n << endl;
     cout << "Puzzle type:         \t" << (puzzle_type == PuzzleType::SQUARES ? "Squares": "Stripes") << endl;
-    cout << "OCR model path:      \t" << model_path << endl;
+    cout << "Metric mode:         \t" << (static_cast<int>(metric_mode)) << endl;
+    cout << "Composition mode:    \t" << (static_cast<int>(composition_mode)) << endl;
 
     // Import stripes
     if (puzzle_type == PuzzleType::STRIPES) {
 
         const string puzzle_folder = "data/stripes/" + case_name + "_" + to_string(vertical_n) + "/";
-        solve_stripes(puzzle_folder, model_path, case_name, vertical_n);
+        solve_stripes(puzzle_folder, case_name, vertical_n, metric_mode, composition_mode);
 
     } else {
 
         const string puzzle_folder = "data/squares/" + case_name + "_" + to_string(vertical_n) + "/";
-        solve_squares(puzzle_folder, model_path, case_name, vertical_n);
+        solve_squares(puzzle_folder, case_name, vertical_n);
 
     }
 

@@ -27,14 +27,13 @@ public:
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_SYMBOL};
     const double conf_thres {50};
     const double m_pixel_thres {-40};
-    string model_path;
 
     cv::Size puzzle_size;
     cv::Size square_size;
     int squares_n;
     vector<cv::Mat> squares;
 
-    SquaresSolver(const string & _model_path, const cv::Size & _puzzle_size);
+    SquaresSolver(const cv::Size & _puzzle_size);
     ~SquaresSolver();
 
     void push(const cv::Mat & square_img);
