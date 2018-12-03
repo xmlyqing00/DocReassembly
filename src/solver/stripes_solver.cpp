@@ -7,6 +7,11 @@ StripePair::StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score, doub
     ac_prob = _ac_prob;
 }
 
+ostream & operator << (ostream & outs, const StripePair & sp) {
+    outs << sp.stripe_idx0 << " " << sp.stripe_idx1 << " " << sp.m_score << " " << sp.ac_prob;
+    return outs;
+}
+
 StripesSolver::StripesSolver() {
 
     stripes_n = 0;
@@ -40,7 +45,7 @@ void StripesSolver::save_result(const string & case_name) {
     }
 
     const string output_path = result_folder + case_name + ".png";
-    cv::imwrite(output_path, comp_img);
+    cv::imwrite(output_path, composition_img);
 
 }
 
@@ -58,14 +63,29 @@ bool StripesSolver::reassemble(Metric _metric_mode, Composition _composition_mod
 
     switch (composition_mode) {
         case Composition::GREEDY:
-            return reassemble_greedy();
+            composition_order = reassemble_greedy();
         case Composition::GREEDY_PROBABILITY:
-            return reassemble_greedy_probability();
+            composition_order = reassemble_greedy_probability();
         default:
             return false;
     }
 
+    composition_img = compose_img(composition_order);
+
+    return true;
+
 }
+
+cv::Mat StripesSolver::compose_img(const vector<int> & composition_order) {
+    
+    cv::Mat composition_img;
+    for (int order_idx: composition_order) {
+        composition_img = merge_imgs(composition_img, stripes[order_idx]);
+    }
+    return composition_img;
+
+}
+
 
 double StripesSolver::m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1) {
 
@@ -175,9 +195,9 @@ void StripesSolver::m_metric() {
     // Compute matching score for each pair
     cout << "[INFO] Compute matching score for each pair." << endl;
 
+    int filters_n = int(stripes_n * filter_rate);
+
     if (metric_mode == COMP_EVA) {
-        
-        int filters_n = int(stripes_n * filter_rate);
 
         const string model_path = saved_model_folder + "best.pt";
         if (access(model_path.c_str(), 0) == -1) {
@@ -238,11 +258,13 @@ void StripesSolver::m_metric() {
 
                 double m_score = 0;
                 switch (metric_mode) {
-                    case PIXEL:
+                    case Metric::PIXEL:
                         m_score = m_metric_pixel(stripes[i], stripes[j]);
                         break;
-                    case WORD:
+                    case Metric::WORD:
                         m_score = m_metric_word(stripes[i], stripes[j]);
+                        break;
+                    default:
                         break;
                 }   
                 
@@ -253,32 +275,45 @@ void StripesSolver::m_metric() {
             if (composition_mode == Composition::GREEDY_PROBABILITY) {
                 
                 sort(candidates.begin(), candidates.end());
-                for (int j = 0; j < candidates.size() - 1; j++) {
+
+                for (int j = 0; j < filters_n - 1; j++) {
                     // m_score are negatives.
-                    double alpha = candidates[j + 1].m_score / candidates[j].m_score;
-                    candidates[j].ac_prob = alpha / (1 + alpha);
+                    if (abs(candidates[j].m_score) < eps) {
+                        candidates[j].ac_prob = 1;
+                    } else {
+                        int mid_idx = (filters_n + j) >> 1;
+                        double alpha = candidates[mid_idx].m_score / candidates[j].m_score;
+                        candidates[j].ac_prob = exp(alpha-1) / (1 + exp(alpha-1));
+                    }
+
                 }
 
-                stripe_pairs.insert(
-                    stripe_pairs.end(),
-                    make_move_iterator(candidates.begin()),
-                    make_move_iterator(candidates.end()));
-
             }
-            
 
+            stripe_pairs.insert(
+                stripe_pairs.end(),
+                make_move_iterator(candidates.begin()),
+                make_move_iterator(candidates.begin() + filters_n));
 
         }
     }
 
     sort(stripe_pairs.begin(), stripe_pairs.end());
 
+#ifdef DEBUG
+    for (const StripePair & sp : stripe_pairs) cout << sp << endl;
+#endif
+
 }
 
-bool StripesSolver::reassemble_greedy() {
+vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
 
     // Greedy algorithm
     cout << "[INFO] Reassemble the document by greedy algorithm." << endl;
+
+    random_device rand_device;
+    default_random_engine rand_engine(rand_device());
+    uniform_real_distribution<double> uniform_unit_dist(0, 1);
 
     vector<int> stripe_left(stripes_n, -1);
     vector<int> stripe_right(stripes_n, -1);
@@ -289,6 +324,14 @@ bool StripesSolver::reassemble_greedy() {
 
         if (stripe_right[sp.stripe_idx0] != -1) continue;
         if (stripe_left[sp.stripe_idx1] != -1) continue;
+
+        if (probability_flag) {
+            double rand_f = uniform_unit_dist(rand_engine);
+
+            // cout << rand_f << " " << sp << endl;
+            if (rand_f > sp.ac_prob) continue;
+        }
+        // cout << "x" << endl;
 
         int left_most = sp.stripe_idx0;
         while (stripe_left[left_most] != -1) {
@@ -302,8 +345,10 @@ bool StripesSolver::reassemble_greedy() {
         avg_m_score += sp.m_score;
         merged_cnt++;
 
-        cout << merged_cnt << " " << sp.stripe_idx0 << " " << sp.stripe_idx1 << " " << sp.m_score << endl;
-        
+#ifdef DEBUG
+        cout << merged_cnt << " " << sp << endl;
+#endif
+
         if (merged_cnt == stripes_n - 1) break;
         
     }
@@ -314,21 +359,41 @@ bool StripesSolver::reassemble_greedy() {
     while (stripe_left[order_idx] != -1) {
         order_idx = stripe_left[order_idx];
     }
-    comp_img = stripes[order_idx];
-    comp_idx.push_back(order_idx);
+    
+
+    vector<int> composition_order;
+    composition_order.push_back(order_idx);
 
     while (stripe_right[order_idx] != -1) {
         order_idx = stripe_right[order_idx];
-        comp_img = merge_imgs(comp_img, stripes[order_idx]);
-        comp_idx.push_back(order_idx);
+        composition_img = merge_imgs(composition_img, stripes[order_idx]);
+        composition_order.push_back(order_idx);
     }
 
-    cout << "[INFO] Best matching score:\t" << avg_m_score << endl;
-
-    return true;
+    return composition_order;
 
 }
 
-bool StripesSolver::reassemble_greedy_probability() {
+ vector<int> StripesSolver::reassemble_greedy_probability() {
+
+    int candidates_n = 10;
+    vector< vector<int> > candidate_sols;
+
+    while (candidate_sols.size() < candidates_n) {
+
+        vector<int> && sol = reassemble_greedy(true);
+        cout << sol.size() << endl;
+        if (sol.size() != stripes_n) continue;
+
+        candidate_sols.push_back(move(sol));
+
+        for (int i = 0; i < sol.size(); i++) cout << sol[i] << endl;
+        cv::imshow("comp img", compose_img(sol));
+        cv::waitKey();
+
+    }
+
+    vector<int> composition_order;
+    return composition_order;
 
 }

@@ -22,11 +22,11 @@ void solve_stripes( const string & stripes_folder,
     stripes_solver.reassemble(metric_mode, composition_mode);
     stripes_solver.save_result(case_name);
 
-    for (const int idx: stripes_solver.comp_idx) {
+    for (int idx: stripes_solver.composition_order) {
         cout << idx << endl;
     }
 
-    cv::imshow("comp_img", stripes_solver.comp_img);
+    cv::imshow("Composition Img", stripes_solver.composition_img);
     cv::waitKey();
 
 }

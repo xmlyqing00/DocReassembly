@@ -8,6 +8,7 @@
 #include <vector>
 #include <deque>
 #include <string>
+#include <random>
 #include <tesseract/baseapi.h>
 #include <opencv2/opencv.hpp>
 
@@ -33,6 +34,8 @@ public:
 
 };
 
+ostream & operator << (ostream & outs, const StripePair & sp);
+
 class StripesSolver {
 
 public:
@@ -52,11 +55,8 @@ public:
 
     int stripes_n {0};
     vector<cv::Mat> stripes;
-    vector<int> comp_idx;
-    cv::Mat comp_img;
-
-    const string tesseract_model_path {"data/tesseract_model/"};
-    OcrExtractor ocr_ectractor;
+    vector<int> composition_order;
+    cv::Mat composition_img;
 
     StripesSolver();
     ~StripesSolver();
@@ -67,32 +67,38 @@ public:
     
     bool reassemble(Metric _metric_mode, Composition _composition_mode);
 
+    cv::Mat compose_img(const vector<int> & composition_order);
+
     void save_result(const string & case_name);
 
 private:
-
-    const double filter_rate = 0.1;
-    const int symbols_n = 64;
-    const cv::Size cp_net_img_size {64, 64};
-    const string saved_model_folder = "data/saved_models/";
-    vector<char> symbols;
-
-    CompatibilityNet cp_net;
-    Device device {kCPU};
-
-    tesseract::TessBaseAPI * ocr;
 
     Metric metric_mode;
     Composition composition_mode;
 
     vector<StripePair> stripe_pairs;
-    
+
+    // Tesseract
+    const string tesseract_model_path {"data/tesseract_model/"};
+    tesseract::TessBaseAPI * ocr;
+
+    // Compatibility 
+    const double filter_rate = 0.2;
+    const int symbols_n = 64;
+    const cv::Size cp_net_img_size {64, 64};
+    const string saved_model_folder = "data/saved_models/";
+    vector<char> symbols;
+
+    OcrExtractor ocr_ectractor;
+    CompatibilityNet cp_net;
+    Device device {kCPU};
+
     double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     
-    bool reassemble_greedy();
-    bool reassemble_greedy_probability();
+    vector<int> reassemble_greedy(bool probability_flag=false);
+    vector<int> reassemble_greedy_probability();
 
 
 

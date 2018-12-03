@@ -27,6 +27,10 @@ double m_metric_pixel(const cv::Mat & img0, const cv::Mat & img1) {
 
 cv::Mat merge_imgs(const cv::Mat & in_img0, const cv::Mat & in_img1) {
 
+    if (in_img0.empty()) {
+        return in_img1;
+    }
+    
     assert(in_img0.rows == in_img1.rows);
 
     cv::Size out_img_size(in_img0.cols + in_img1.cols, in_img0.rows);

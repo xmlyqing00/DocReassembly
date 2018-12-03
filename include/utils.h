@@ -4,6 +4,7 @@
 #include <chrono>
 #include <ctime>
 #include <string>
+#include <random>
 #include <opencv2/opencv.hpp>
 
 using namespace std;
@@ -12,6 +13,8 @@ enum class PuzzleType {
     STRIPES,
     SQUARES
 };
+
+const double eps = 1e-8;
 
 const cv::Scalar boundary_color(50, 50, 255);
 
