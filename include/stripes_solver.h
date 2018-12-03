@@ -51,8 +51,6 @@ public:
         GREEDY_PROBABILITY
     };
 
-    const double conf_thres {80};
-
     int stripes_n {0};
     vector<cv::Mat> stripes;
     vector<int> composition_order;
@@ -81,9 +79,10 @@ private:
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
     tesseract::TessBaseAPI * ocr;
+    const double conf_thres {70};
 
     // Compatibility 
-    const double filter_rate = 0.2;
+    const double filter_rate = 1;
     const int symbols_n = 64;
     const cv::Size cp_net_img_size {64, 64};
     const string saved_model_folder = "data/saved_models/";
@@ -100,7 +99,7 @@ private:
     vector<int> reassemble_greedy(bool probability_flag=false);
     vector<int> reassemble_greedy_probability();
 
-
+    void word_detection(const cv::Mat & img);
 
 };
 
