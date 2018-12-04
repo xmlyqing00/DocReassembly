@@ -28,4 +28,6 @@ bool cross_seam(const cv::Rect & bbox, int seam_x);
 
 void print_timestamp();
 
+bool valid_symbol(char ch);
+
 #endif

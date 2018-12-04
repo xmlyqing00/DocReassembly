@@ -1,12 +1,5 @@
 #include <build_dataset.h>
 
-bool valid_symbol(char ch) {
-    if (ch >= '0' && ch <= '9') return true;
-    if (ch >= 'A' && ch <= 'Z') return true;
-    if (ch >= 'a' && ch <= 'z') return true;
-    return false;
-}
-
 void extract_symbols(const string & font_name) {
     
     cout << "Extract symbols." << endl;

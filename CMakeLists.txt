@@ -42,7 +42,7 @@ add_library(compatibility-dataset ${EVALUATOR_PATH}/compatibility_dataset.cpp)
 target_link_libraries(compatibility-dataset ${TORCH_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(build-dataset ${EVALUATOR_PATH}/build_dataset.cpp)
-target_link_libraries(build-dataset ${OpenCV_LIBRARIES})
+target_link_libraries(build-dataset ${OpenCV_LIBRARIES} utils)
 
 add_executable(train-evaluator ${EVALUATOR_PATH}/train_evaluator.cpp)
 target_link_libraries(train-evaluator ${TORCH_LIBRARIES} compatibility-net compatibility-dataset utils)

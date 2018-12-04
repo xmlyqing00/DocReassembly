@@ -17,7 +17,7 @@ StripesSolver::StripesSolver() {
     stripes_n = 0;
 
     ocr = new tesseract::TessBaseAPI();
-    if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_LSTM_ONLY)) {
+    if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_TESSERACT_ONLY)) {
         cerr << "Could not initialize tesseract." << endl;
         exit(-1);
     }
@@ -27,12 +27,11 @@ StripesSolver::StripesSolver() {
     for (int i = 0; i < 26; i++) white_chars += char(int('A') + i);
     for (int i = 0; i < 26; i++) white_chars += char(int('a') + i);
     bool x = ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
-    // cout << "set white: " <<  x << endl;
     string black_chars = ",<.>/?;:\'\"[{]}\\|";
     ocr->SetVariable("tessedit_char_blacklist", black_chars.c_str());
 
-    ocr->SetVariable("language_model_penalty_non_freq_dict_word", "2");
-    ocr->SetVariable("language_model_penalty_non_dict_word", "0.5");
+    ocr->SetVariable("language_model_penalty_non_freq_dict_word", "10");
+    ocr->SetVariable("language_model_penalty_non_dict_word", "1");
 
 #ifdef DEBUG
     FILE * file = fopen("tmp/variables.txt", "w");
@@ -408,7 +407,7 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
 
     while (candidate_sols.size() < candidates_n) {
 
-        vector<int> && sol = reassemble_greedy(false);
+        vector<int> && sol = reassemble_greedy(true);
         cout << sol.size() << endl;
         if (sol.size() != stripes_n) continue;
 
@@ -421,6 +420,7 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
     }
 
     for (const auto & sol: candidate_sols) {
+        for (int i : sol) cout << i << endl;
         cv::Mat composition_img = compose_img(sol);
         word_detection(composition_img);
     }
@@ -448,7 +448,7 @@ void StripesSolver::word_detection(const cv::Mat & img) {
         do {
             const float conf = word_iter->Confidence(tesseract_level);
             const string word = word_iter->GetUTF8Text(tesseract_level);
-            if (word.length() < 3 || conf < conf_thres) continue;
+            if (word.length() < 3 || conf < conf_thres || !word_iter->WordIsFromDictionary()) continue;
 
             // Boundary cross constraint
             int x0, y0, x1, y1;
