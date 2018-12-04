@@ -408,7 +408,7 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
 
     while (candidate_sols.size() < candidates_n) {
 
-        vector<int> && sol = reassemble_greedy(true);
+        vector<int> && sol = reassemble_greedy(false);
         cout << sol.size() << endl;
         if (sol.size() != stripes_n) continue;
 
@@ -448,7 +448,7 @@ void StripesSolver::word_detection(const cv::Mat & img) {
         do {
             const float conf = word_iter->Confidence(tesseract_level);
             const string word = word_iter->GetUTF8Text(tesseract_level);
-            if (word.length() < 3 || conf < conf_thres || !word_iter->WordIsFromDictionary()) continue;
+            if (word.length() < 3 || conf < conf_thres) continue;
 
             // Boundary cross constraint
             int x0, y0, x1, y1;
