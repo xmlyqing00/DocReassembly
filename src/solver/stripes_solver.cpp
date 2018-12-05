@@ -124,6 +124,8 @@ cv::Mat StripesSolver::compose_img(const vector<int> & composition_order) {
 
 cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & composition_order) {
 
+    const cv::Scalar color_red(100, 100, 200);
+    const cv::Scalar color_green(100, 200, 100);
     cv::Mat img_seams = img.clone();
     int col = stripes[composition_order[0]].cols;
     cv::Scalar seam_color;
@@ -133,9 +135,9 @@ cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & compos
         for (int j = 0; j < stripes_n; j++) {
             if (gt_order[j] != composition_order[i-1]) continue;
             if (j == stripes_n - 1 || gt_order[j+1] != composition_order[i]) {
-                seam_color = cv::Scalar(200, 200, 255);
+                seam_color = color_red;
             } else {
-                seam_color = cv::Scalar(200, 255, 200);
+                seam_color = color_green;
             }
             break;
         }
@@ -347,8 +349,8 @@ void StripesSolver::m_metric() {
                         candidates[j].ac_prob = 1;
                     } else {
                         int mid_idx = (stripes_n + j) >> 1;
-                        double alpha = candidates[mid_idx].m_score / candidates[j].m_score;
-                        candidates[j].ac_prob = exp(alpha-1) / (1 + exp(alpha-1));
+                        double alpha = candidates[mid_idx].m_score / candidates[j].m_score - 1;
+                        candidates[j].ac_prob = exp(alpha * alpha) / (1 + exp(alpha * alpha));
                     }
 
                 }
@@ -492,6 +494,7 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
 cv::Mat StripesSolver::word_detection(const cv::Mat & img) {
 
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
+    const cv::Scalar color_blue(200, 0, 0);
 
     ocr->SetImage(img.data, img.cols, img.rows, 3, img.step);
     ocr->Recognize(0);
@@ -513,7 +516,7 @@ cv::Mat StripesSolver::word_detection(const cv::Mat & img) {
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
             
             m_metric_score += conf * word.length();
-            cv::rectangle(img_bbox, o_bbox, cv::Scalar(200, 0, 0));
+            cv::rectangle(img_bbox, o_bbox, color_blue);
 
 #ifdef DEBUG
             printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
