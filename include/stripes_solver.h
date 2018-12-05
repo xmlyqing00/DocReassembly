@@ -51,22 +51,22 @@ public:
         GREEDY_PROBABILITY
     };
 
-    int stripes_n {0};
+    const string puzzle_folder;
+    const int stripes_n;
+    vector<int> gt_order;
     vector<cv::Mat> stripes;
     vector<int> composition_order;
     cv::Mat composition_img;
+    cv::Mat composition_img_seams;
 
-    StripesSolver();
+    StripesSolver(const string & _puzzle_foler, const int _stripes_n);
     ~StripesSolver();
 
-    void push(const cv::Mat & stripe_img);
-
     void m_metric();
-    
     bool reassemble(Metric _metric_mode, Composition _composition_mode);
 
     cv::Mat compose_img(const vector<int> & composition_order);
-
+    cv::Mat add_seams(const cv::Mat & img, const vector<int> & composition_order);
     void save_result(const string & case_name);
 
 private:
@@ -79,7 +79,7 @@ private:
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
     tesseract::TessBaseAPI * ocr;
-    const double conf_thres {70};
+    const double conf_thres {80};
 
     // Compatibility 
     const double filter_rate = 1;
@@ -99,7 +99,7 @@ private:
     vector<int> reassemble_greedy(bool probability_flag=false);
     vector<int> reassemble_greedy_probability();
 
-    void word_detection(const cv::Mat & img);
+    cv::Mat word_detection(const cv::Mat & img);
 
 };
 

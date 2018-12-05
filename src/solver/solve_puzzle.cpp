@@ -6,19 +6,7 @@ void solve_stripes( const string & stripes_folder,
                     StripesSolver::Metric metric_mode,
                     StripesSolver::Composition composition_mode) {
     
-    StripesSolver stripes_solver;
-
-    cout << "[INFO] Import stripes." << endl;
-    for (int i = 0; i < vertical_n; i++) {
-        const string stripe_img_path = stripes_folder + to_string(i) + ".png";
-        cv::Mat stripe_img = cv::imread(stripe_img_path);
-        if (stripe_img.empty()) {
-            cerr << "[ERR] Stripe img does not exist." << endl;
-            exit(-1); 
-        }
-        stripes_solver.push(move(stripe_img));
-    }
-
+    StripesSolver stripes_solver(stripes_folder, vertical_n);
     stripes_solver.reassemble(metric_mode, composition_mode);
     stripes_solver.save_result(case_name);
 
@@ -26,7 +14,8 @@ void solve_stripes( const string & stripes_folder,
         cout << idx << endl;
     }
 
-    cv::imshow("Composition Img", stripes_solver.composition_img);
+    cv::imshow("Composition Image", stripes_solver.composition_img);
+    cv::imshow("Composition Image Seams", stripes_solver.composition_img_seams);
     cv::waitKey();
 
 }

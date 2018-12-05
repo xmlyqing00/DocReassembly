@@ -12,9 +12,9 @@ ostream & operator << (ostream & outs, const StripePair & sp) {
     return outs;
 }
 
-StripesSolver::StripesSolver() {
-
-    stripes_n = 0;
+StripesSolver::StripesSolver(const string & _puzzle_folder, const int _stripes_n) :
+    puzzle_folder(_puzzle_folder),
+    stripes_n(_stripes_n) {
 
     ocr = new tesseract::TessBaseAPI();
     if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_TESSERACT_ONLY)) {
@@ -39,6 +39,29 @@ StripesSolver::StripesSolver() {
     fclose(file);
 #endif
 
+    // Read ground truth order.
+    ifstream fin(puzzle_folder + "order.txt", ios::in);
+    if (!fin.is_open()) {
+        cerr << "[ERRO] " << puzzle_folder + "order.txt" << " does not exist." << endl;
+        exit(-1);
+    }
+    cout << "[INFO] Import groundtruth order." << endl;
+    gt_order = vector<int>(stripes_n);
+    for (int i = 0; i < stripes_n; i++) fin >> gt_order[i];
+    fin.close();
+
+    // Import stripes.
+    cout << "[INFO] Import stripes." << endl;
+    for (int i = 0; i < stripes_n; i++) {
+        const string stripe_img_path = puzzle_folder + to_string(i) + ".png";
+        cv::Mat stripe_img = cv::imread(stripe_img_path);
+        if (stripe_img.empty()) {
+            cerr << "[ERR] Stripe img does not exist." << endl;
+            exit(-1); 
+        }
+        stripes.push_back(move(stripe_img));
+    }
+
 }
 
 StripesSolver::~StripesSolver() {
@@ -52,14 +75,14 @@ void StripesSolver::save_result(const string & case_name) {
         mkdir(result_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
     }
 
-    const string output_path = result_folder + case_name + ".png";
-    cv::imwrite(output_path, composition_img);
+    string output_path = 
+        result_folder + case_name + "_" + 
+        to_string(static_cast<int>(metric_mode)) + "_" + 
+        to_string(static_cast<int>(composition_mode));
+        
+    cv::imwrite(output_path + ".png", composition_img);
+    cv::imwrite(output_path + "_seams.png", composition_img_seams);
 
-}
-
-void StripesSolver::push(const cv::Mat & stripe_img) {
-    stripes.push_back(stripe_img.clone());
-    stripes_n = stripes.size();
 }
 
 bool StripesSolver::reassemble(Metric _metric_mode, Composition _composition_mode) {
@@ -81,6 +104,7 @@ bool StripesSolver::reassemble(Metric _metric_mode, Composition _composition_mod
     }
 
     composition_img = compose_img(composition_order);
+    composition_img_seams = add_seams(composition_img, composition_order);
 
     return true;
 
@@ -89,10 +113,39 @@ bool StripesSolver::reassemble(Metric _metric_mode, Composition _composition_mod
 cv::Mat StripesSolver::compose_img(const vector<int> & composition_order) {
     
     cv::Mat composition_img;
-    for (int order_idx: composition_order) {
-        composition_img = merge_imgs(composition_img, stripes[order_idx]);
+
+    for (int i = 0; i < composition_order.size(); i++) {
+        composition_img = merge_imgs(composition_img, stripes[composition_order[i]]);
     }
+
     return composition_img;
+
+}
+
+cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & composition_order) {
+
+    cv::Mat img_seams = img.clone();
+    int col = stripes[composition_order[0]].cols;
+    cv::Scalar seam_color;
+
+    for (int i = 1; i < composition_order.size(); i++) {
+
+        for (int j = 0; j < stripes_n; j++) {
+            if (gt_order[j] != composition_order[i-1]) continue;
+            if (j == stripes_n - 1 || gt_order[j+1] != composition_order[i]) {
+                seam_color = cv::Scalar(200, 200, 255);
+            } else {
+                seam_color = cv::Scalar(200, 255, 200);
+            }
+            break;
+        }
+
+        cv::line(img_seams, cv::Point(col, 0), cv::Point(col, img.rows), seam_color);
+        col += stripes[composition_order[i]].cols;
+
+    }
+
+    return img_seams;
 
 }
 
@@ -408,7 +461,6 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
     while (candidate_sols.size() < candidates_n) {
 
         vector<int> && sol = reassemble_greedy(true);
-        cout << sol.size() << endl;
         if (sol.size() != stripes_n) continue;
 
         // for (int i = 0; i < sol.size(); i++) cout << sol[i] << endl;
@@ -419,10 +471,17 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
 
     }
 
+    int sol_idx = 0;
+
     for (const auto & sol: candidate_sols) {
-        for (int i : sol) cout << i << endl;
         cv::Mat composition_img = compose_img(sol);
-        word_detection(composition_img);
+        cv::Mat tmp_img = word_detection(composition_img);
+#ifdef DEBUG
+        tmp_img = add_seams(tmp_img, sol);
+        cv::imshow("Tmp img", tmp_img);
+        cv::imwrite("tmp/sol_" + to_string(sol_idx++) + ".png", tmp_img);
+        cv::waitKey();
+#endif
     }
 
     vector<int> composition_order;
@@ -430,7 +489,7 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
 
 }
 
-void StripesSolver::word_detection(const cv::Mat & img) {
+cv::Mat StripesSolver::word_detection(const cv::Mat & img) {
 
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
 
@@ -440,9 +499,7 @@ void StripesSolver::word_detection(const cv::Mat & img) {
     tesseract::ResultIterator * word_iter = ocr->GetIterator();
 
     double m_metric_score = 0;
-#ifdef DEBUG
-    cv::Mat tmp_img = img.clone();
-#endif
+    cv::Mat img_bbox = img.clone();
 
     if (word_iter != 0) {
         do {
@@ -456,9 +513,9 @@ void StripesSolver::word_detection(const cv::Mat & img) {
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
             
             m_metric_score += conf * word.length();
+            cv::rectangle(img_bbox, o_bbox, cv::Scalar(200, 0, 0));
 
 #ifdef DEBUG
-            cv::rectangle(tmp_img, o_bbox, cv::Scalar(0, 0, 200));
             printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
                     word.c_str(), conf, word_iter->WordIsFromDictionary(), x0, y0, x1, y1);
 #endif
@@ -466,10 +523,6 @@ void StripesSolver::word_detection(const cv::Mat & img) {
         } while (word_iter->Next(tesseract_level));
     }
 
-#ifdef DEBUG
-    // cout << "m_metric_score " << m_metric_score << endl << endl;
-    cv::imshow("Tmp img", tmp_img);
-    cv::waitKey();
-#endif
+    return img_bbox;
 
 }
