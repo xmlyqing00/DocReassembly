@@ -349,8 +349,8 @@ void StripesSolver::m_metric() {
                         candidates[j].ac_prob = 1;
                     } else {
                         int mid_idx = (stripes_n + j) >> 1;
-                        double alpha = candidates[mid_idx].m_score / candidates[j].m_score - 1;
-                        candidates[j].ac_prob = exp(alpha * alpha) / (1 + exp(alpha * alpha));
+                        double alpha = 5 * (candidates[mid_idx].m_score / candidates[j].m_score - 1);
+                        candidates[j].ac_prob = exp(alpha) / (1 + exp(alpha));
                     }
 
                 }
