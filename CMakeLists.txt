@@ -71,8 +71,11 @@ target_link_libraries(ocr-extractor ${OpenCV_LIBRARIES})
 # solver
 set(SOLVER_PATH ${SRC_ROOT_PATH}/solver)
 aux_source_directory(${SOLVER_PATH} SOLVER_SRC)
+
+add_library(path_manager ${SOLVER_PATH}/path_manager.cpp)
+
 add_executable(solver ${SOLVER_SRC})
 target_compile_definitions(solver PUBLIC ${DEBUG_FLAG})
-target_link_libraries(solver ${OpenCV_LIBRARIES} ${TORCH_LIBRARIES} tesseract utils ocr-extractor compatibility-net)
+target_link_libraries(solver ${OpenCV_LIBRARIES} ${TORCH_LIBRARIES} tesseract utils ocr-extractor compatibility-net path_manager)
 
 

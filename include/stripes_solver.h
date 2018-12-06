@@ -14,6 +14,7 @@
 
 #include <ocr_extractor.h>
 #include <fragment.h>
+#include <path_manager.h>
 #include <utils.h>
 #include <compatibility_net.h>
 
@@ -59,6 +60,9 @@ public:
     cv::Mat composition_img;
     cv::Mat composition_img_seams;
 
+    // Path
+    PathManager path_manager;
+
     StripesSolver(const string & _puzzle_foler, const int _stripes_n);
     ~StripesSolver();
 
@@ -99,7 +103,7 @@ private:
     vector<int> reassemble_greedy(bool probability_flag=false);
     vector<int> reassemble_greedy_probability();
 
-    cv::Mat word_detection(const cv::Mat & img);
+    cv::Mat word_detection( const cv::Mat & img, const vector<int> & sol);
 
 };
 

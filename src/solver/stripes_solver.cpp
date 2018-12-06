@@ -1,10 +1,10 @@
 #include <stripes_solver.h>
 
-StripePair::StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score, double _ac_prob) {
-    stripe_idx0 = _stripe_idx0;
-    stripe_idx1 = _stripe_idx1;
-    m_score = _m_score;
-    ac_prob = _ac_prob;
+StripePair::StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score, double _ac_prob) :
+    stripe_idx0(_stripe_idx0),
+    stripe_idx1(_stripe_idx1),
+    m_score(_m_score),
+    ac_prob(_ac_prob) {
 }
 
 ostream & operator << (ostream & outs, const StripePair & sp) {
@@ -14,7 +14,8 @@ ostream & operator << (ostream & outs, const StripePair & sp) {
 
 StripesSolver::StripesSolver(const string & _puzzle_folder, const int _stripes_n) :
     puzzle_folder(_puzzle_folder),
-    stripes_n(_stripes_n) {
+    stripes_n(_stripes_n),
+    path_manager(_stripes_n) {
 
     ocr = new tesseract::TessBaseAPI();
     if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_TESSERACT_ONLY)) {
@@ -457,7 +458,7 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
 
  vector<int> StripesSolver::reassemble_greedy_probability() {
 
-    int candidates_n = 10;
+    int candidates_n = 100;
     vector< vector<int> > candidate_sols;
 
     while (candidate_sols.size() < candidates_n) {
@@ -476,8 +477,9 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
     int sol_idx = 0;
 
     for (const auto & sol: candidate_sols) {
+        cout << "calc " << sol_idx++ << endl;
         cv::Mat composition_img = compose_img(sol);
-        cv::Mat tmp_img = word_detection(composition_img);
+        cv::Mat tmp_img = word_detection(composition_img, sol);
 #ifdef DEBUG
         tmp_img = add_seams(tmp_img, sol);
         cv::imshow("Tmp img", tmp_img);
@@ -486,12 +488,14 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
 #endif
     }
 
+    path_manager.print_sol_paths();
+
     vector<int> composition_order;
     return candidate_sols[0];
 
 }
 
-cv::Mat StripesSolver::word_detection(const cv::Mat & img) {
+cv::Mat StripesSolver::word_detection(const cv::Mat & img, const vector<int> & sol) {
 
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
     const cv::Scalar color_blue(200, 0, 0);
@@ -503,6 +507,15 @@ cv::Mat StripesSolver::word_detection(const cv::Mat & img) {
 
     double m_metric_score = 0;
     cv::Mat img_bbox = img.clone();
+
+    vector<int> sol_x;
+    int cum_x = 0;
+    for (int i = 0; i < sol.size(); i++) {
+        sol_x.push_back(cum_x);
+        cum_x += stripes[sol[i]].cols;
+        cout << sol_x[i] << " ";
+    }
+    cout << endl;
 
     if (word_iter != 0) {
         do {
@@ -518,9 +531,17 @@ cv::Mat StripesSolver::word_detection(const cv::Mat & img) {
             m_metric_score += conf * word.length();
             cv::rectangle(img_bbox, o_bbox, color_blue);
 
+            int sol_path_st = upper_bound(sol_x.begin(), sol_x.end(), x0) - sol_x.begin() - 1;
+            int sol_path_ed = lower_bound(sol_x.begin(), sol_x.end(), x1) - sol_x.begin();
+            
+            if (sol_path_ed - sol_path_st > 1) {
+                path_manager.add_sol_path(vector<int>(sol.begin()+sol_path_st, sol.begin()+sol_path_ed));
+            }
+
 #ifdef DEBUG
             printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
                     word.c_str(), conf, word_iter->WordIsFromDictionary(), x0, y0, x1, y1);
+            cout << endl;
 #endif
 
         } while (word_iter->Next(tesseract_level));
