@@ -8,6 +8,7 @@
 #include <vector>
 #include <deque>
 #include <string>
+#include <map>
 #include <random>
 #include <tesseract/baseapi.h>
 #include <opencv2/opencv.hpp>
@@ -95,6 +96,9 @@ private:
     OcrExtractor ocr_ectractor;
     CompatibilityNet cp_net;
     Device device {kCPU};
+
+    // Metric word
+    map< vector<int>, int> fragment;
 
     double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1);
