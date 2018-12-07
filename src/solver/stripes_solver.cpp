@@ -458,7 +458,7 @@ vector<int> StripesSolver::reassemble_greedy(bool probability_flag) {
 
  vector<int> StripesSolver::reassemble_greedy_probability() {
 
-    int candidates_n = 100;
+    int candidates_n = 10;
     vector< vector<int> > candidate_sols;
 
     while (candidate_sols.size() < candidates_n) {
