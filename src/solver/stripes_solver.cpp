@@ -164,7 +164,7 @@ double StripesSolver::m_metric_pixel(const cv::Mat & piece0, const cv::Mat & pie
                                 piece1.at<cv::Vec3b>(y, x1));
     }
 
-    return -m_score / piece0.rows;
+    return U_c - m_score / piece0.rows;
 
 }
 
@@ -350,7 +350,7 @@ void StripesSolver::m_metric() {
                         candidates[j].ac_prob = 1;
                     } else {
                         int mid_idx = (stripes_n + j) >> 1;
-                        double alpha = 5 * (candidates[mid_idx].m_score / candidates[j].m_score - 1);
+                        double alpha = 5 * (candidates[j].m_score / candidates[mid_idx].m_score - 1);
                         candidates[j].ac_prob = exp(alpha) / (1 + exp(alpha));
                     }
 
