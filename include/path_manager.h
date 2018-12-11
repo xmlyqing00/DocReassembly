@@ -15,11 +15,12 @@ class PathManager {
 public:
     int nodes_n {0};
     int sols_n {0};
-    map< vector<int>, int> sol_paths;
+    map< vector<int>, pair<int,int> > sol_paths; // sol; word_cnt, sol_cnt;
 
     PathManager(int _vertices_n, int _sols_n);
     
-    void add_sol_path(const vector<int> & sol_path, int sol_cnt=1);
+    void add_sol_words( const map< vector<int>, int > & sol_words,
+                        int sol_cnt=1);
     void print_sol_paths();
 
     void build_path_graph();
@@ -28,7 +29,7 @@ public:
     vector<StripePair> build_stripe_pairs();
 
 private:
-    vector< vector< pair<int, int> > > path_graph;
+    vector< vector< pair<int, double> > > path_graph;
     vector<StripePair> stripe_pairs;
 
 };

@@ -48,7 +48,7 @@ public:
     // Path
     PathManager path_manager;
 
-    StripesSolver(const string & _puzzle_foler, const int _stripes_n);
+    StripesSolver(const string & _puzzle_foler, int _stripes_n, int _samples_n);
     ~StripesSolver();
 
     void m_metric();
@@ -83,18 +83,19 @@ private:
 
     // Metric word-path
     int sols_n = 10;
-    map< vector<int>, int> fragment;
+    vector< vector<double> > pixel_graph;
 
     double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     
     vector< vector<int> > reassemble_greedy(bool probability_flag=false);
-    vector<int> reassemble_greedy_probability();
+    void reassemble_greedy_probability();
 
     cv::Mat word_detection( const cv::Mat & img, 
                             const vector<int> & sol,
                             int sol_cnt=1);
+    void finetune_sols(const vector< vector<int> > & composition_orders);
 
 };
 

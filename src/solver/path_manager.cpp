@@ -5,9 +5,23 @@ PathManager::PathManager(int _nodes_n, int _sols_n) :
     sols_n(_sols_n) {
 }
 
-void PathManager::add_sol_path( const vector<int> & sol_path,
+void PathManager::add_sol_words(const map< vector<int>, int > & sol_words,
                                 int sol_cnt) {
-    sol_paths[sol_path] += sol_cnt;
+
+    for (const auto & iter: sol_words) {
+
+        const vector<int> sol_path = iter.first;
+        int word_cnt = iter.second;
+        if (sol_paths.find(sol_path) != sol_paths.end()) {
+            auto val = sol_paths[sol_path];
+            val.first += word_cnt;
+            val.second += sol_cnt;
+        } else {
+            sol_paths[sol_path] = make_pair(word_cnt, sol_cnt);
+        }
+
+    }                            
+    
 }
 
 void PathManager::print_sol_paths() {
@@ -15,14 +29,14 @@ void PathManager::print_sol_paths() {
     for (const auto & iter: sol_paths) {
         
         const vector<int> sol_path = iter.first;
-        int cnt = iter.second;
+        const auto val = iter.second;
         
         cout << "Path: ";
         for (int vertex_idx: sol_path) {
             cout << vertex_idx << " ";
         }
 
-        cout << endl << "Path cnt: " << cnt << endl;
+        cout << endl << "Word cnt: " << val.first << " Sol cnt: " << val.second << endl;
         
     }
 
@@ -30,24 +44,24 @@ void PathManager::print_sol_paths() {
 
 void PathManager::build_path_graph() {
 
-    path_graph = vector< vector< pair<int, int> > >(nodes_n);
+    path_graph = vector< vector< pair<int, double> > >(nodes_n);
 
     for (const auto & iter: sol_paths) {
         
         const vector<int> sol_path = iter.first;
-        int cnt = iter.second;
+        const auto val = iter.second;
 
-        int score = cnt * sol_path.size();
+        double score = (double)val.first * sol_path.size() / val.second;
         
         for (int i = 1; i < sol_path.size(); i++) {
-            
+
             bool found_flag = false;
             int cur_node = sol_path[i - 1];
             int next_node = sol_path[i];
 
-            for (auto edge: path_graph[cur_node]) {
+            for (auto & edge: path_graph[cur_node]) {
                 if (edge.first == next_node) {
-                    edge.second+=score;
+                    edge.second += score;
                     found_flag = true;
                     break;
                 }
@@ -66,7 +80,7 @@ void PathManager::print_path_graph() {
 
     for (int i = 0; i < nodes_n; i++) {
         cout << "Node " << i << ": " << endl;
-        for (const auto edge: path_graph[i]) {
+        for (const auto & edge: path_graph[i]) {
             cout << edge.first << " " << edge.second << endl;
         }
     }
@@ -75,29 +89,19 @@ void PathManager::print_path_graph() {
 
 vector<StripePair> PathManager::build_stripe_pairs() {
 
-    for (const auto & iter: sol_paths) {
-        
-        const vector<int> sol_path = iter.first;
-        int cnt = iter.second;
+    for (int i = 0; i < nodes_n; i++) {
+        for (const auto & edge: path_graph[i]) {
 
-        int score = cnt * sol_path.size();
-        
-        for (int i = 1; i < sol_path.size(); i++) {
-            
-            bool found_flag = false;
-            int cur_node = sol_path[i - 1];
-            int next_node = sol_path[i];
-
+            if (edge.second < 3) continue;
             stripe_pairs.push_back(StripePair(
-                cur_node,
-                next_node,
-                score,
+                i,
+                edge.first,
+                edge.second,
                 1,
                 false
             ));
-
+            
         }
-
     }
 
     sort(stripe_pairs.begin(), stripe_pairs.end());

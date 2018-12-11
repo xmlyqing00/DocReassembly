@@ -1,12 +1,18 @@
 #include <utils.h>
 
+double avg_vec3b(const cv::Vec3b &v) {
+    double avg = 0;
+    for (int i = 0; i < 3; i++) {
+        avg += v[i];
+    }
+    return avg / 3;
+}
+
 double diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
 
-    double diff = 0;
-    for (int i = 0; i < 3; i++) {
-        diff += abs(v0[i] - v1[i]);
-    }
-    return diff / 3;
+    double avg_vec3b0 = avg_vec3b(v0);
+    double avg_vec3b1 = avg_vec3b(v1);
+    return abs(avg_vec3b0 - avg_vec3b1);
 
 }
 
