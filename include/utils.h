@@ -15,7 +15,7 @@ enum class PuzzleType {
 };
 
 const double eps = 1e-8;
-const int U_c = 255;
+const int U_a = 5;
 
 const cv::Scalar boundary_color(50, 50, 255);
 

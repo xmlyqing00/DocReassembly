@@ -18,25 +18,9 @@
 #include <path_manager.h>
 #include <utils.h>
 #include <compatibility_net.h>
+#include <stripe_pair.h>
 
 using namespace std;
-
-class StripePair {
-
-public:
-    int stripe_idx0;
-    int stripe_idx1;
-    double m_score;
-    double ac_prob;
-
-    StripePair(int _stripe_idx0, int _stripe_idx1, double _m_score, double _ac_prob=1);
-    bool operator < (const StripePair & _sp) const {
-        return m_score > _sp.m_score;
-    }
-
-};
-
-ostream & operator << (ostream & outs, const StripePair & sp);
 
 class StripesSolver {
 
@@ -97,17 +81,20 @@ private:
     CompatibilityNet cp_net;
     Device device {kCPU};
 
-    // Metric word
+    // Metric word-path
+    int sols_n = 10;
     map< vector<int>, int> fragment;
 
     double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     
-    vector<int> reassemble_greedy(bool probability_flag=false);
+    vector< vector<int> > reassemble_greedy(bool probability_flag=false);
     vector<int> reassemble_greedy_probability();
 
-    cv::Mat word_detection( const cv::Mat & img, const vector<int> & sol);
+    cv::Mat word_detection( const cv::Mat & img, 
+                            const vector<int> & sol,
+                            int sol_cnt=1);
 
 };
 
