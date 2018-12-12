@@ -119,8 +119,6 @@ cv::Mat StripesSolver::compose_img(const vector<int> & composition_order) {
 
 cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & composition_order) {
 
-    const cv::Scalar color_red(100, 100, 200);
-    const cv::Scalar color_green(100, 200, 100);
     cv::Mat img_seams = img.clone();
     int col = stripes[composition_order[0]].cols;
     cv::Scalar seam_color;
@@ -130,9 +128,9 @@ cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & compos
         for (int j = 0; j < stripes_n; j++) {
             if (gt_order[j] != composition_order[i-1]) continue;
             if (j == stripes_n - 1 || gt_order[j+1] != composition_order[i]) {
-                seam_color = color_red;
+                seam_color = seam_color_red;
             } else {
-                seam_color = color_green;
+                seam_color = seam_color_green;
             }
             break;
         }
@@ -143,37 +141,6 @@ cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & compos
     }
 
     return img_seams;
-
-}
-
-
-double StripesSolver::m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1) {
-
-    assert(piece0.rows == piece1.rows);
-
-    int x0 = piece0.cols - 1;
-    int x1 = 0;
-
-    double m_score = 0;
-    double avg_pixel_color0 = 0;
-    double avg_pixel_color1 = 0;
-    for (int y = 0; y < piece0.rows; y++) {
-        double avg_vec3b0 = avg_vec3b(piece0.at<cv::Vec3b>(y, x0));
-        double avg_vec3b1 = avg_vec3b(piece1.at<cv::Vec3b>(y, x1));
-        m_score += abs(avg_vec3b0 - avg_vec3b1);
-        avg_pixel_color0 += avg_vec3b0;
-        avg_pixel_color1 += avg_vec3b1;
-    }
-
-    avg_pixel_color0 /= piece0.rows;
-    avg_pixel_color1 /= piece0.rows;
-    m_score /= piece0.rows;
-
-    if (max(avg_pixel_color0, avg_pixel_color1) < 15 ||
-        min(avg_pixel_color0, avg_pixel_color1) > 240) {
-        return -1;
-    }
-    return m_score;
 
 }
 

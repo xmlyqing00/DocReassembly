@@ -16,18 +16,33 @@ double diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
 
 }
 
-double m_metric_pixel(const cv::Mat & img0, const cv::Mat & img1) {
+double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1) {
 
-    int x0 = img0.cols - 1;
+    assert(piece0.rows == piece1.rows);
+
+    int x0 = piece0.cols - 1;
     int x1 = 0;
 
     double m_score = 0;
-    for (int y = 0; y < img0.rows; y++) {
-        m_score += diff_vec3b(  img0.at<cv::Vec3b>(y, x0), 
-                                img1.at<cv::Vec3b>(y, x1));
+    double avg_pixel_color0 = 0;
+    double avg_pixel_color1 = 0;
+    for (int y = 0; y < piece0.rows; y++) {
+        double avg_vec3b0 = avg_vec3b(piece0.at<cv::Vec3b>(y, x0));
+        double avg_vec3b1 = avg_vec3b(piece1.at<cv::Vec3b>(y, x1));
+        m_score += abs(avg_vec3b0 - avg_vec3b1);
+        avg_pixel_color0 += avg_vec3b0;
+        avg_pixel_color1 += avg_vec3b1;
     }
 
-    return -m_score / img0.rows;
+    avg_pixel_color0 /= piece0.rows;
+    avg_pixel_color1 /= piece0.rows;
+    m_score /= piece0.rows;
+
+    if (max(avg_pixel_color0, avg_pixel_color1) < 15 ||
+        min(avg_pixel_color0, avg_pixel_color1) > 240) {
+        return -1;
+    }
+    return m_score;
 
 }
 

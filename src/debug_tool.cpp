@@ -45,7 +45,7 @@ bool show_counter_example_pixel_metric( const cv::Mat & root_img,
     cv::line(   canvas, 
                 cv::Point(root_img.cols, 0),
                 cv::Point(root_img.cols, root_img.rows),
-                boundary_color,
+                seam_color_green,
                 1);
 
     // matching score between root and test.
@@ -68,7 +68,7 @@ bool show_counter_example_pixel_metric( const cv::Mat & root_img,
     cv::line(   canvas, 
                 cv::Point(root_img.cols * 3 + indication_width * 3 + 1, 0), 
                 cv::Point(root_img.cols * 3 + indication_width * 3 + 1, root_img.rows),
-                boundary_color, 
+                seam_color_red, 
                 1);
 
     // root
@@ -185,7 +185,7 @@ bool show_counter_example_ocr_char_metric(  const cv::Mat & root_img,
     cv::line(   canvas, 
                 cv::Point(root_img.cols, 0), 
                 cv::Point(root_img.cols, root_img.rows),
-                boundary_color, 
+                seam_color_red, 
                 1);
 
     // root

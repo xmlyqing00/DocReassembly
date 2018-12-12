@@ -85,7 +85,6 @@ private:
     int sols_n = 10;
     vector< vector<double> > pixel_graph;
 
-    double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     
