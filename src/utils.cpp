@@ -8,6 +8,11 @@ double avg_vec3b(const cv::Vec3b &v) {
     return avg / 3;
 }
 
+bool check_pure(int c) {
+    if (c < 10 || c > 245) return true;
+    return false;
+}
+
 double diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
 
     double avg_vec3b0 = avg_vec3b(v0);
@@ -38,8 +43,10 @@ double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1) {
     avg_pixel_color1 /= piece0.rows;
     m_score /= piece0.rows;
 
-    if (max(avg_pixel_color0, avg_pixel_color1) < 15 ||
-        min(avg_pixel_color0, avg_pixel_color1) > 240) {
+    if (check_pure(avg_pixel_color0) && check_pure(avg_pixel_color1)) {
+        return -2;
+    }
+    if (check_pure(avg_pixel_color0) || check_pure(avg_pixel_color1)) {
         return -1;
     }
     return m_score;

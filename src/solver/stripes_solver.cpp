@@ -66,7 +66,7 @@ void StripesSolver::save_result(const string & case_name) {
     }
 
     string output_path = 
-        result_folder + case_name + "_" + 
+        result_folder + case_name + "_" + to_string(stripes_n) + "_" +
         to_string(static_cast<int>(metric_mode)) + "_" + 
         to_string(static_cast<int>(composition_mode));
         
@@ -329,7 +329,7 @@ void StripesSolver::m_metric() {
                         candidates[j].ac_prob = 1;
                     } else {
                         double alpha = U_a * (candidates[mid_idx].m_score / candidates[j].m_score - 1);
-                        candidates[j].ac_prob = exp(alpha) / (1 + exp(alpha));
+                        candidates[j].ac_prob = (exp(alpha) - 1) / (exp(alpha) + 1);
                     }
 
                 }
@@ -564,9 +564,9 @@ void StripesSolver::finetune_sols(const vector< vector<int> > & composition_orde
     cout << "[INFO] Finetune composition orders." << endl;
 
     cout << endl << "Fragments:" << endl;
-    for (const auto & sol: composition_orders) {
-        cout << "[1]\t";
-        for (const int & x: sol) cout << x << " ";
+    for (int i = 0; i < composition_orders.size(); i++) {
+        cout << "[" << i << "]\t";
+        for (const int & x: composition_orders[i]) cout << x << " ";
         cout << endl;
     }
     cout << endl;

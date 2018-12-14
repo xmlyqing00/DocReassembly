@@ -16,7 +16,8 @@ using namespace std;
 
 enum class DebugType {
     Pixel,
-    OCR_char
+    OCRChar,
+    AddSeam
 };
 
 const string output_folder = "tmp/";

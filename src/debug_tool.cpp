@@ -5,11 +5,11 @@ bool show_counter_example_pixel_metric( const cv::Mat & root_img,
                                         const cv::Mat & test_img,
                                         const double & m_score_best,
                                         cv::Mat & canvas,
-                                        int operation) {
+                                        char operation) {
     
     double m_score_test = m_metric_pixel(root_img, test_img);
     cout << m_score_best << " " << m_score_test << endl;
-    if (operation == 0) {
+    if (operation == '0') {
         if (m_score_best > m_score_test) return false;
     } else {
         if (m_score_best <= m_score_test) return false;
@@ -296,6 +296,42 @@ void find_counter_example_ocr_char_metric(  const string & puzzle_folder,
 
 }
 
+void add_seams(const string & puzzle_name) {
+
+    cv::Mat sol_img = cv::imread("data/results/" + puzzle_name + "_GA_sol.png");
+
+    const string puzzle_folder = "data/stripes/" + puzzle_name + "/";
+    ifstream fin(puzzle_folder + "/order.txt");
+    vector<int> gt_order;
+    if (!fin.is_open()) {
+        cerr << "[ERRO] " << puzzle_name + "/order.txt" << " does not exist." << endl;
+        exit(-1);
+    }
+
+    while (!fin.eof()) {
+        int x;
+        fin >> x;
+        gt_order.push_back(x);
+    }
+    fin.close();
+
+    int n = gt_order.size();
+    vector<int> sol_order(n);
+    for (int i = 0; i < n; i++) {
+        cv::Mat stripe_img = cv::imread(puzzle_folder + to_string(i) + ".png");
+        for (int j = 0; j < n; j++) {
+            cv::Rect roi_rect(j * stripe_img.cols, 0, stripe_img.cols, stripe_img.rows);
+            cv::Mat diff_img = sol_img(roi_rect) - stripe_img;
+            cv::Scalar diff_mean = cv::mean(diff_mean);
+            if (diff_mean[0] + diff_mean[1] + diff_mean[2] < 10) {
+                cout << i << " " << j << " " << diff_mean << endl;
+            }
+        }
+    }
+
+
+}
+
 int main(int argc, char ** argv) {
 
     // Default parameters
@@ -303,7 +339,9 @@ int main(int argc, char ** argv) {
     PuzzleType puzzle_type = PuzzleType::STRIPES;
     int vertical_n = 20;
     DebugType debug_type = DebugType::Pixel;
-    int operation = 0;
+    string operation = "doc3_noise1_40";
+    // 0 | 1 for DebugType Pixel
+    // doc3_noise1_40 for DebugType AddSeam
 
     // Parse command line parameters
     const string opt_str = "t:n:sd:o:";
@@ -324,7 +362,7 @@ int main(int argc, char ** argv) {
                 debug_type = static_cast<DebugType>(atoi(optarg));
                 break;
             case 'o':
-                operation = atoi(optarg);
+                operation = string(optarg);
                 break;
         }
         
@@ -351,11 +389,15 @@ int main(int argc, char ** argv) {
     switch (debug_type) {
         case DebugType::Pixel:
             cout << "Pixel" << endl;
-            find_counter_example_pixel_metric(puzzle_folder, case_name, vertical_n, operation);
+            find_counter_example_pixel_metric(puzzle_folder, case_name, vertical_n, operation[0]);
             break;
-        case DebugType::OCR_char:
+        case DebugType::OCRChar:
             cout << "OCR Char" << endl;
             find_counter_example_ocr_char_metric(puzzle_folder, case_name, vertical_n);
+            break;
+        case DebugType::AddSeam:
+            cout << "Add Seams" << endl;
+            add_seams(operation);
             break;
         default:
             cout << "Unknown" << endl;
