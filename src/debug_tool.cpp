@@ -308,27 +308,56 @@ void add_seams(const string & puzzle_name) {
         exit(-1);
     }
 
-    while (!fin.eof()) {
-        int x;
-        fin >> x;
-        gt_order.push_back(x);
-    }
+    int x;
+    while (fin >> x) gt_order.push_back(x);
     fin.close();
 
     int n = gt_order.size();
     vector<int> sol_order(n);
+    cv::Size stripe_size(sol_img.cols / n, sol_img.rows);
+
     for (int i = 0; i < n; i++) {
+
         cv::Mat stripe_img = cv::imread(puzzle_folder + to_string(i) + ".png");
+        int best_pos = 0;
+        int best_diff = static_cast<int>(INFINITY);
+
         for (int j = 0; j < n; j++) {
-            cv::Rect roi_rect(j * stripe_img.cols, 0, stripe_img.cols, stripe_img.rows);
-            cv::Mat diff_img = sol_img(roi_rect) - stripe_img;
-            cv::Scalar diff_mean = cv::mean(diff_mean);
-            if (diff_mean[0] + diff_mean[1] + diff_mean[2] < 10) {
-                cout << i << " " << j << " " << diff_mean << endl;
+            cv::Rect roi_rect(j * stripe_size.width, 0, stripe_size.width, stripe_size.height);
+            cv::Mat diff_img;
+            cv::absdiff(sol_img(roi_rect), stripe_img, diff_img);
+            cv::Scalar diff_mean = cv::mean(diff_img);
+            
+            int tmp = diff_mean[0] + diff_mean[1] + diff_mean[2];
+            if (tmp < best_diff) {
+                best_diff = tmp;
+                best_pos = j;
             }
         }
+        sol_order[best_pos] = i;
     }
 
+    for (int i = 0; i < n; i++) {
+        cout << i << " " << sol_order[i] << endl;
+    }
+    cv::Scalar seam_color;
+    for (int i = 1; i < n; i++) {
+
+        for (int j = 0; j < n; j++) {
+            if (gt_order[j] != sol_order[i-1]) continue;
+            if (j == n - 1 || gt_order[j+1] != sol_order[i]) {
+                seam_color = seam_color_red;
+            } else {
+                seam_color = seam_color_green;
+            }
+            break;
+        }
+
+        cv::line(sol_img, cv::Point(stripe_size.width * i, 0), cv::Point(stripe_size.width * i, stripe_size.height), seam_color);
+
+    }
+
+    cv::imwrite("data/results/" + puzzle_name + "_GA_sol_seams.png", sol_img);
 
 }
 
