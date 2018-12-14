@@ -17,6 +17,7 @@
 #include <fragment.h>
 #include <path_manager.h>
 #include <utils.h>
+#include <KM.h>
 #include <compatibility_net.h>
 #include <stripe_pair.h>
 
@@ -94,6 +95,7 @@ private:
     cv::Mat word_detection( const cv::Mat & img, 
                             const vector<int> & sol,
                             int sol_cnt=1);
+    void merge_single_sol(vector< vector<int> > & composition_orders);
     void finetune_sols(const vector< vector<int> > & composition_orders);
 
 };

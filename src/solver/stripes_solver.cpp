@@ -495,6 +495,7 @@ void StripesSolver::reassemble_greedy_probability() {
     stripe_pairs = path_manager.build_stripe_pairs();
     vector< vector<int> > && composition_orders = reassemble_greedy(false);
 
+    merge_single_sol(composition_orders);
     finetune_sols(composition_orders);
 
 }
@@ -559,11 +560,59 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
 
 }
 
+void StripesSolver::merge_single_sol(vector< vector<int> > & composition_orders) {
+
+    cout << "[INFO] Merge single composition order." << endl;
+
+    cout << "Fragments:" << endl;
+    for (int i = 0; i < composition_orders.size(); i++) {
+        cout << "[" << i << "]\t";
+        for (const int & x: composition_orders[i]) cout << x << " ";
+        cout << endl;
+    }
+    cout << endl;
+
+    for (int i = 0; i < composition_orders.size(); i++) {
+
+        if (composition_orders[i].size() > 1) continue;
+        
+        double min_score = static_cast<double>(INFINITY);
+        int end_id = 0;
+        int single_node = composition_orders[i][0];
+
+        for (int j = 0; j < composition_orders.size(); j++) {
+            if (i == j) continue;
+            if (min_score > pixel_graph[single_node][composition_orders[j].front()]) {
+                min_score = pixel_graph[single_node][composition_orders[j].front()];                
+                end_id = -j;
+            }
+            if (min_score > pixel_graph[single_node][composition_orders[j].back()]) {
+                min_score = pixel_graph[single_node][composition_orders[j].back()];                
+                end_id = j;
+            }
+        }
+
+        cout << single_node << " " << end_id << endl;
+        int composition_idx = abs(end_id);
+        if (end_id > 0) {
+            composition_orders[composition_idx].push_back(single_node);
+        } else {
+            auto p_st = composition_orders[composition_idx].begin();
+            composition_orders[composition_idx].insert(p_st, single_node);
+        }
+
+        composition_orders.erase(composition_orders.begin() + i);
+        i--;
+
+    }
+
+}
+
 void StripesSolver::finetune_sols(const vector< vector<int> > & composition_orders) {
 
     cout << "[INFO] Finetune composition orders." << endl;
 
-    cout << endl << "Fragments:" << endl;
+    cout << "Fragments:" << endl;
     for (int i = 0; i < composition_orders.size(); i++) {
         cout << "[" << i << "]\t";
         for (const int & x: composition_orders[i]) cout << x << " ";
@@ -572,29 +621,24 @@ void StripesSolver::finetune_sols(const vector< vector<int> > & composition_orde
     cout << endl;
 
     vector<int> in_nodes, out_nodes;
-
     for (const auto & sol: composition_orders) {
-        // for (int i = 1; i < sol.size(); i++) {
-            // cout << sol[i - 1] << "\t->\t" << sol[i] << "\tpixel-level score: " << pixel_graph[sol[i-1]][sol[i]] << endl;
-        // }
         in_nodes.push_back(sol.front());
         out_nodes.push_back(sol.back());
     }
 
-    vector<StripePair> end_pairs;
+    int nodes_n = in_nodes.size();
+    vector< vector<int> > edges(nodes_n, vector<int>(nodes_n));
+
     for (int i = 0; i < out_nodes.size(); i++) {
         for (int j = 0; j < in_nodes.size(); j++) {
             if (i == j) continue;
-            StripePair sp(out_nodes[i], in_nodes[j], pixel_graph[out_nodes[i]][in_nodes[j]], 1, true);
-            end_pairs.push_back(sp);
+            if (pixel_graph[out_nodes[i]][in_nodes[j]] < -eps) continue;
+            edges[i][j] = pixel_graph[out_nodes[i]][in_nodes[j]];
         }
     }
 
-    sort(end_pairs.begin(), end_pairs.end());
-
-    for (const auto & sp: end_pairs) {
-        cout << sp << endl;
-    }
+    KM KM_solver(edges);
+    vector<int> && matches = KM_solver.solve();
 
     composition_order = composition_orders[0];
 
