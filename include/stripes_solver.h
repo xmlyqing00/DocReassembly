@@ -95,8 +95,8 @@ private:
     cv::Mat word_detection( const cv::Mat & img, 
                             const vector<int> & sol,
                             int sol_cnt=1);
-    void merge_single_sol(vector< vector<int> > & composition_orders);
-    void finetune_sols(const vector< vector<int> > & composition_orders);
+    void merge_single_sol(vector< vector<int> > & fragments);
+    void finetune_sols(const vector< vector<int> > & fragments);
 
 };
 
