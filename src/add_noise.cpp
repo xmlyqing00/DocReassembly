@@ -27,7 +27,7 @@ int main(int argc, char ** argv) {
         opt = getopt(argc, argv, opt_str.c_str());
     }
 
-    string out_name = case_name + "_noise_" + to_string(noise_level);
+    string out_name = case_name + "_noise_" + to_string(dense_level);
 
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Saved name:          \t" << out_name << endl;

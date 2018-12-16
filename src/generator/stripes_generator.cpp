@@ -18,7 +18,12 @@ cv::Mat StripesGenerator::get_puzzle_img(int gap=5) {
     for (const int idx: access_idx) {
         cv::Rect roi(puzzle_img_x, 0, stripes[idx].cols, stripes[idx].rows);
         stripes[idx].copyTo(puzzle_img(roi));
+
+        if (gap == 0 && puzzle_img_x > 0) {
+            cv::line(puzzle_img, cv::Point(puzzle_img_x, 0), cv::Point(puzzle_img_x, puzzle_img.rows), cv::Scalar(0, 0, 0));
+        }
         puzzle_img_x += stripes[idx].cols + gap;
+        
     }
 
     // cv::imwrite("tmp/puzzle_img.png", puzzle_img);
@@ -79,7 +84,7 @@ bool StripesGenerator::save_puzzle(const string & output_folder) {
     }
     fout.close();
 
-    cv::Mat && puzzle_img = get_puzzle_img(3);
+    cv::Mat && puzzle_img = get_puzzle_img(0);
     cv::imwrite(output_folder + "puzzle_img.png", puzzle_img);
 
     cout << "Stripes saved path:\t" << output_folder << endl;

@@ -97,6 +97,8 @@ void KM::print_edges() {
         }
         cout << endl;
     }
+    cout << endl;
+    
 }
 
 void KM::print_matches() {
@@ -105,6 +107,7 @@ void KM::print_matches() {
     for (int i = 0; i < nodes_n; i++) {
         cout << match_x[i] << "\t-->\t" << i << endl;
     }
+    cout << endl;
 
 }
 

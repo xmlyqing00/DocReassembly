@@ -68,7 +68,8 @@ void StripesSolver::save_result(const string & case_name) {
     string output_path = 
         result_folder + case_name + "_" + to_string(stripes_n) + "_" +
         to_string(static_cast<int>(metric_mode)) + "_" + 
-        to_string(static_cast<int>(composition_mode));
+        to_string(static_cast<int>(composition_mode)) +
+        (composition_mode == Composition::GREEDY_PROBABILITY ? "_s" + to_string(sols_n) : "");
         
     cv::imwrite(output_path + ".png", composition_img);
     cv::imwrite(output_path + "_seams.png", composition_img_seams);
@@ -442,10 +443,6 @@ vector< vector<int> > StripesSolver::reassemble_greedy(bool probability_flag) {
 
         fragments.push_back(move(sol));
 
-        if (probability_flag) continue;
-        for (int i = 0; i < stripes_n; i++) cout << i << " " << visited[i] << endl;
-        cout << endl;
-
     }
 
     return fragments;
@@ -581,24 +578,33 @@ void StripesSolver::merge_single_sol(vector< vector<int> > & fragments) {
 
         if (fragments[i].size() > 1) continue;
         
-        double min_score = static_cast<double>(INFINITY);
+        double min_score = numeric_limits<double>::max();
         int end_id = 0;
         int single_node = fragments[i][0];
 
         for (int j = 0; j < fragments.size(); j++) {
             if (i == j) continue;
+            if (pixel_graph[single_node][fragments[j].front()] < -eps) continue;
             if (min_score > pixel_graph[single_node][fragments[j].front()]) {
                 min_score = pixel_graph[single_node][fragments[j].front()];                
                 end_id = -j;
             }
-            if (min_score > pixel_graph[single_node][fragments[j].back()]) {
-                min_score = pixel_graph[single_node][fragments[j].back()];                
+
+            if (pixel_graph[fragments[j].back()][single_node] < -eps) continue;
+            if (min_score > pixel_graph[fragments[j].back()][single_node]) {
+                min_score = pixel_graph[fragments[j].back()][single_node];                
                 end_id = j;
             }
         }
 
         cout << single_node << " " << end_id << endl;
         int composition_idx = abs(end_id);
+
+        if (end_id == 0) {
+            cout << "Single node: " << single_node << " preserved." << endl;
+            continue;
+        }
+
         if (end_id > 0) {
             fragments[composition_idx].push_back(single_node);
         } else {
@@ -642,8 +648,12 @@ void StripesSolver::finetune_sols(const vector< vector<int> > & fragments) {
     for (int i = 0; i < out_nodes.size(); i++) {
         for (int j = 0; j < in_nodes.size(); j++) {
             if (i == j) continue;
-            if (pixel_graph[out_nodes[i]][in_nodes[j]] < -eps) continue;
-            edges[i][j] = -pixel_graph[out_nodes[i]][in_nodes[j]];
+            if (pixel_graph[out_nodes[i]][in_nodes[j]] < -eps) {
+                edges[i][j] = -100;
+            } else {
+                edges[i][j] = -pixel_graph[out_nodes[i]][in_nodes[j]];
+            }
+            
         }
     }
 
@@ -662,6 +672,12 @@ void StripesSolver::finetune_sols(const vector< vector<int> > & fragments) {
             fragments[frag_idx].end()
         );
     }
+
+    cout << "Final sol metric scores:" << endl;
+    for (int i = 1; i < stripes_n; i++) {
+        cout << final_sol[i-1] << "\t->\t" << final_sol[i] << "\t" << pixel_graph[final_sol[i-1]][final_sol[i]] << endl;
+    }
+    cout << endl;
 
     composition_order = final_sol;
 
