@@ -92,7 +92,7 @@ vector<StripePair> PathManager::build_stripe_pairs() {
     for (int i = 0; i < nodes_n; i++) {
         for (const auto & edge: path_graph[i]) {
 
-            if (edge.second < 3) continue;
+            // if (edge.second < 3) continue;
             stripe_pairs.push_back(StripePair(
                 i,
                 edge.first,

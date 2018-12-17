@@ -69,11 +69,15 @@ void StripesSolver::save_result(const string & case_name) {
         result_folder + case_name + "_" + to_string(stripes_n) + "_" +
         to_string(static_cast<int>(metric_mode)) + "_" + 
         to_string(static_cast<int>(composition_mode)) +
-        (composition_mode == Composition::GREEDY_PROBABILITY ? "_s" + to_string(sols_n) : "");
+        (composition_mode == Composition::GCOM ? "_s" + to_string(sols_n) : "");
         
     cv::imwrite(output_path + ".png", composition_img);
     cv::imwrite(output_path + "_seams.png", composition_img_seams);
 
+    ofstream fout("data/scores/" + case_name + ".txt", ios::app);
+    fout << composition_score << " ";
+    fout.close();
+    
 }
 
 bool StripesSolver::reassemble(Metric _metric_mode, Composition _composition_mode) {
@@ -89,11 +93,17 @@ bool StripesSolver::reassemble(Metric _metric_mode, Composition _composition_mod
         case Composition::GREEDY:
             cout << "[INFO] Composition: Greedy." << endl;
             fragments = reassemble_greedy();
-            composition_order = fragments[0];
+            for (const auto & frag: fragments) {
+                composition_order.insert(
+                    composition_order.end(), 
+                    frag.begin(),
+                    frag.end()
+                );
+            }
             break;
-        case Composition::GREEDY_PROBABILITY:
+        case Composition::GCOM:
             cout << "[INFO] Composition: Greedy in probability." << endl;
-            reassemble_greedy_probability();
+            reassemble_GCOM();
             break;
         default:
             return false;
@@ -124,6 +134,8 @@ cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & compos
     int col = stripes[composition_order[0]].cols;
     cv::Scalar seam_color;
 
+    int correct_cnt = 0;
+
     for (int i = 1; i < composition_order.size(); i++) {
 
         for (int j = 0; j < stripes_n; j++) {
@@ -132,6 +144,7 @@ cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & compos
                 seam_color = seam_color_red;
             } else {
                 seam_color = seam_color_green;
+                correct_cnt++;
             }
             break;
         }
@@ -141,57 +154,60 @@ cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & compos
 
     }
 
+    composition_score = (double)correct_cnt / composition_order.size();
+    printf("Composition Score: %.3lf\n", composition_score);
+
     return img_seams;
 
 }
 
-double StripesSolver::m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1) {
+double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1) {
 
     cv::Mat && merged_img = merge_imgs(piece0, piece1);
 
     const int seam_x = piece0.cols;
     const int max_m_width = min(piece0.cols, piece1.cols);
-    const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
+    const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_SYMBOL};
 
     ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
     ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, piece0.rows);
     ocr->Recognize(0);
     
-    tesseract::ResultIterator * word_iter = ocr->GetIterator();
+    tesseract::ResultIterator * ocr_iter = ocr->GetIterator();
 
     double m_metric_score = 0;
 
-    if (word_iter != 0) {
+    if (ocr_iter != 0) {
         do {
 
-            const float conf = word_iter->Confidence(tesseract_level);
-            if (conf < conf_thres || !word_iter->WordIsFromDictionary()) continue;
+            const float conf = ocr_iter->Confidence(tesseract_level);
+            if (conf < conf_thres) continue;
 
             // Boundary cross constraint
             int x0, y0, x1, y1;
-            word_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
+            ocr_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
             if (!cross_seam(o_bbox, seam_x)) continue;
 
-            const string word = word_iter->GetUTF8Text(tesseract_level);
-            m_metric_score += conf * word.length();
+            const string ocr_char = ocr_iter->GetUTF8Text(tesseract_level);
+            m_metric_score += conf * ocr_char.length();
 
 #ifdef DEBUG
-            cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 200));
-            printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
-                    word.c_str(), conf, word_iter->WordIsFromDictionary(), x0, y0, x1, y1);
+            // cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 200));
+            // printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d;\n",
+                    // ocr_char.c_str(), conf, x0, y0, x1, y1);
 #endif
 
-        } while (word_iter->Next(tesseract_level));
+        } while (ocr_iter->Next(tesseract_level));
     }
 
 #ifdef DEBUG
-    cout << "m_metric_score " << m_metric_score << endl << endl;
-    cv::imshow("Merged", merged_img);
-    cv::waitKey();
+    // cout << "m_metric_score " << m_metric_score << endl << endl;
+    // cv::imshow("Merged", merged_img);
+    // cv::waitKey();
 #endif
 
-    return m_metric_score;
+    return -m_metric_score;
 
 }
 
@@ -238,7 +254,8 @@ void StripesSolver::m_metric() {
     // Compute matching score for each pair
     cout << "[INFO] Compute matching score for each pair." << endl;
 
-    int filters_n = min(int(stripes_n * filter_rate), stripes_n - 1);
+    // int filters_n = min(int(stripes_n * filter_rate), stripes_n - 1);
+    int filters_n = stripes_n - 1;
 
     cout << "Preserve stripes:    \t" << filters_n << endl;
 
@@ -306,10 +323,11 @@ void StripesSolver::m_metric() {
                 double m_score = 0;
                 switch (metric_mode) {
                     case Metric::PIXEL:
+                    case Metric::WORD:
                         m_score = m_metric_pixel(stripes[i], stripes[j]);
                         break;
-                    case Metric::WORD:
-                        m_score = m_metric_word(stripes[i], stripes[j]);
+                    case Metric::CHAR:
+                        m_score = m_metric_char(stripes[i], stripes[j]);
                         break;
                     default:
                         break;
@@ -320,7 +338,7 @@ void StripesSolver::m_metric() {
 
             }
 
-            if (composition_mode == Composition::GREEDY_PROBABILITY) {
+            if (metric_mode == Metric::WORD) {
                 
                 sort(candidates.begin(), candidates.end());
 
@@ -346,12 +364,72 @@ void StripesSolver::m_metric() {
     }
 
     sort(stripe_pairs.begin(), stripe_pairs.end());
-
 #ifdef DEBUG
     for (const StripePair & sp : stripe_pairs) {
         cout << sp << endl;
     }
 #endif
+
+    if (metric_mode == Metric::WORD) {
+
+        vector< vector<int> > candidate_sols;
+        map< vector<int>, int > sols_cnt;
+
+        cout << "Run greedy algorithm. Prob: True. ";
+        while (candidate_sols.size() < sols_n) {
+            
+            cout << int(candidate_sols.size())+1 << " " << flush;
+
+            vector< vector<int> > && fragments = reassemble_greedy(true);
+            vector<int> composition_order;
+            for (const auto & frag: fragments) {
+                composition_order.insert(
+                    composition_order.end(), 
+                    frag.begin(),
+                    frag.end()
+                );
+            }
+
+            sols_cnt[composition_order]++; 
+            
+            // Check if it appears at the first time;
+            if (sols_cnt[composition_order] == 1) {
+                candidate_sols.push_back(move(composition_order));
+            }
+
+        }
+        cout << endl;
+
+        int sol_idx = 0;
+
+        cout << "Detect words on solution: ";
+        for (const auto & sol: candidate_sols) {
+            
+            cout << ++sol_idx << " " << flush;
+            
+            cv::Mat composition_img = compose_img(sol);
+            cv::Mat tmp_img = word_detection(composition_img, sol, sols_cnt[sol]);
+
+    #ifdef DEBUG
+            tmp_img = add_seams(tmp_img, sol);
+            cv::imwrite("tmp/sol_" + to_string(sol_idx) + ".png", tmp_img);
+            // cv::imshow("Tmp img", tmp_img);
+            // cv::waitKey();
+    #endif
+        }
+        cout << endl;
+
+        path_manager.build_path_graph();
+
+#ifdef DEBUG
+        path_manager.print_sol_paths();
+        path_manager.print_path_graph();
+#endif
+
+        stripe_pairs_pixel = stripe_pairs;
+        stripe_pairs = path_manager.build_stripe_pairs();
+        
+    }
 
 }
 
@@ -367,9 +445,32 @@ vector< vector<int> > StripesSolver::reassemble_greedy(bool probability_flag) {
     int merged_cnt = 0;
     vector<StripePair> stripe_pairs_rest;
 
+    double thres_score = 0;
+    if (composition_mode == Composition::GCOM) {
+        if (metric_mode == Metric::PIXEL || metric_mode == Metric::CHAR) {
+            thres_score = 0.7 * stripe_pairs.back().m_score;
+        } else if (probability_flag == false) {
+            thres_score = stripe_pairs.back().m_score;
+        }
+#ifdef DEBUG
+        cout << "Threshold score: " << thres_score << endl;
+#endif
+    }
+
     for (const StripePair & sp: stripe_pairs) {
 
-        if (abs(sp.m_score + 1) < eps) continue;
+        if (sp.m_score < -eps) continue;
+
+        if (abs(thres_score) > eps) {
+            if (composition_mode == Composition::GCOM) {
+                if (metric_mode == Metric::PIXEL || metric_mode == Metric::CHAR) {
+                    if (sp.m_score > thres_score) break;
+                } else if (probability_flag == false) {
+                    if (sp.m_score <= thres_score) break;
+                }
+            }
+        }
+        
 
         if (stripe_right[sp.stripe_idx0] != -1) continue;
         if (stripe_left[sp.stripe_idx1] != -1) continue;
@@ -449,52 +550,8 @@ vector< vector<int> > StripesSolver::reassemble_greedy(bool probability_flag) {
 
 }
 
-void StripesSolver::reassemble_greedy_probability() {
+void StripesSolver::reassemble_GCOM() {
 
-    vector< vector<int> > candidate_sols;
-    map< vector<int>, int > sols_cnt;
-
-    while (candidate_sols.size() < sols_n) {
-        
-        printf("Run greedy algorithm:\t%d/%d.\tProb: True.\n", int(candidate_sols.size())+1, sols_n);
-
-        vector< vector<int> > && fragments = reassemble_greedy(true);
-        const vector<int> & sol = fragments[0];
-        if (sol.size() != stripes_n) continue;
-
-        sols_cnt[sol]++; 
-        
-        // Check if it appears at the first time;
-        if (sols_cnt[sol] == 1) {
-            candidate_sols.push_back(move(sol));
-        }
-
-    }
-
-    int sol_idx = 0;
-
-    for (const auto & sol: candidate_sols) {
-        
-        printf("Detect words on solution:\t%d/%d.\n", ++sol_idx, sols_n);
-        
-        cv::Mat composition_img = compose_img(sol);
-        cv::Mat tmp_img = word_detection(composition_img, sol, sols_cnt[sol]);
-
-#ifdef DEBUG
-        tmp_img = add_seams(tmp_img, sol);
-        cv::imwrite("tmp/sol_" + to_string(sol_idx) + ".png", tmp_img);
-        // cv::imshow("Tmp img", tmp_img);
-        // cv::waitKey();
-#endif
-    }
-
-    path_manager.print_sol_paths();
-
-    path_manager.build_path_graph();
-    path_manager.print_path_graph();
-
-    vector<StripePair> stripe_pairs_pixel = stripe_pairs;
-    stripe_pairs = path_manager.build_stripe_pairs();
     vector< vector<int> > && fragments = reassemble_greedy(false);
 
     merge_single_sol(fragments);
@@ -512,7 +569,7 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
     ocr->SetImage(img.data, img.cols, img.rows, 3, img.step);
     ocr->Recognize(0);
     
-    tesseract::ResultIterator * word_iter = ocr->GetIterator();
+    tesseract::ResultIterator * ocr_iter = ocr->GetIterator();
 
     double m_metric_score = 0;
     cv::Mat img_bbox = img.clone();
@@ -526,15 +583,15 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
 
     map< vector<int>, int > sol_words;
 
-    if (word_iter != 0) {
+    if (ocr_iter != 0) {
         do {
-            const float conf = word_iter->Confidence(tesseract_level);
-            const string word = word_iter->GetUTF8Text(tesseract_level);
-            if (word.length() < 2 || conf < conf_thres || !word_iter->WordIsFromDictionary()) continue;
+            const float conf = ocr_iter->Confidence(tesseract_level);
+            const string word = ocr_iter->GetUTF8Text(tesseract_level);
+            if (word.length() < 2 || conf < conf_thres || !ocr_iter->WordIsFromDictionary()) continue;
 
             // Boundary cross constraint
             int x0, y0, x1, y1;
-            word_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
+            ocr_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
             
             m_metric_score += conf * word.length();
@@ -549,11 +606,11 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
 
 #ifdef DEBUG
             printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
-                    word.c_str(), conf, word_iter->WordIsFromDictionary(), x0, y0, x1, y1);
+                    word.c_str(), conf, ocr_iter->WordIsFromDictionary(), x0, y0, x1, y1);
             cout << endl;
 #endif
 
-        } while (word_iter->Next(tesseract_level));
+        } while (ocr_iter->Next(tesseract_level));
     }
 
     path_manager.add_sol_words(sol_words, sol_cnt);
@@ -565,7 +622,7 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
 void StripesSolver::merge_single_sol(vector< vector<int> > & fragments) {
 
     cout << "[INFO] Merge single composition order." << endl;
-
+#ifdef DEBUG
     cout << "Fragments:" << endl;
     for (int i = 0; i < fragments.size(); i++) {
         cout << "[" << i << "]\t";
@@ -573,6 +630,7 @@ void StripesSolver::merge_single_sol(vector< vector<int> > & fragments) {
         cout << endl;
     }
     cout << endl;
+#endif
 
     for (int i = 0; i < fragments.size(); i++) {
 
@@ -661,8 +719,10 @@ void StripesSolver::finetune_sols(const vector< vector<int> > & fragments) {
     KM_solver.solve();
     vector<int> arr = KM_solver.cut_loops();
 
+#ifdef DEBUG
     KM_solver.print_edges();
     KM_solver.print_matches();
+#endif 
 
     vector<int> final_sol;
     for (int frag_idx: arr) {
@@ -673,11 +733,13 @@ void StripesSolver::finetune_sols(const vector< vector<int> > & fragments) {
         );
     }
 
+#ifdef DEBUG
     cout << "Final sol metric scores:" << endl;
     for (int i = 1; i < stripes_n; i++) {
         cout << final_sol[i-1] << "\t->\t" << final_sol[i] << "\t" << pixel_graph[final_sol[i-1]][final_sol[i]] << endl;
     }
     cout << endl;
+#endif
 
     composition_order = final_sol;
 

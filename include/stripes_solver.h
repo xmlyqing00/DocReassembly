@@ -29,13 +29,14 @@ public:
 
     enum Metric {
         PIXEL,
+        CHAR,
         WORD,
         COMP_EVA
     };
 
     enum Composition {
         GREEDY,
-        GREEDY_PROBABILITY
+        GCOM,
     };
 
     const string puzzle_folder;
@@ -45,6 +46,7 @@ public:
     vector<int> composition_order;
     cv::Mat composition_img;
     cv::Mat composition_img_seams;
+    double composition_score;
 
     // Path
     PathManager path_manager;
@@ -65,6 +67,7 @@ private:
     Composition composition_mode;
 
     vector<StripePair> stripe_pairs;
+    vector<StripePair> stripe_pairs_pixel;
 
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
@@ -86,11 +89,11 @@ private:
     int sols_n = 10;
     vector< vector<double> > pixel_graph;
 
-    double m_metric_word(const cv::Mat & piece0, const cv::Mat & piece1);
+    double m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     
     vector< vector<int> > reassemble_greedy(bool probability_flag=false);
-    void reassemble_greedy_probability();
+    void reassemble_GCOM();
 
     cv::Mat word_detection( const cv::Mat & img, 
                             const vector<int> & sol,

@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string>
 #include <fstream>
+#include <ctime>
 #include <opencv2/opencv.hpp>
 
 #include <stripes_solver.h>

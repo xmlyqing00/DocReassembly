@@ -11,6 +11,7 @@ void solve_stripes( const string & stripes_folder,
     stripes_solver.reassemble(metric_mode, composition_mode);
     stripes_solver.save_result(case_name);
 
+#ifdef DEBUG
     for (int idx: stripes_solver.composition_order) {
         cout << idx << endl;
     }
@@ -18,7 +19,7 @@ void solve_stripes( const string & stripes_folder,
     cv::imshow("Composition Image", stripes_solver.composition_img);
     cv::imshow("Composition Image Seams", stripes_solver.composition_img_seams);
     cv::waitKey();
-
+#endif
 }
 
 void solve_squares (const string & squares_folder, 
@@ -112,6 +113,8 @@ int main(int argc, char ** argv) {
     cout << "Samples times:       \t" << samples_n << endl;
     cout << "Composition mode:    \t" << (composition_mode == StripesSolver::Composition::GREEDY ? "Greedy" : "Greedy Probability") << endl;
 
+    clock_t start_time = clock();
+
     // Import stripes
     if (puzzle_type == PuzzleType::STRIPES) {
 
@@ -124,6 +127,10 @@ int main(int argc, char ** argv) {
         solve_squares(puzzle_folder, case_name, vertical_n);
 
     }
+
+    clock_t end_time = clock();
+
+    cout << "Time used: " << double(end_time - start_time) / CLOCKS_PER_SEC << " s" << endl << endl;
 
     return 0;
 }
