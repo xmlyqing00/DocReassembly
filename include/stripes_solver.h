@@ -37,6 +37,7 @@ public:
     enum Composition {
         GREEDY,
         GCOM,
+        GREEDY_GCOM,
     };
 
     const string puzzle_folder;
@@ -55,11 +56,13 @@ public:
     ~StripesSolver();
 
     void m_metric();
-    bool reassemble(Metric _metric_mode, Composition _composition_mode);
+    bool reassemble(Metric _metric_mode, 
+                    Composition _composition_mode,
+                    const string & case_name, 
+                    bool benchmark_flag);
 
     cv::Mat compose_img(const vector<int> & composition_order);
     cv::Mat add_seams(const cv::Mat & img, const vector<int> & composition_order);
-    void save_result(const string & case_name);
 
 private:
 
@@ -68,6 +71,8 @@ private:
 
     vector<StripePair> stripe_pairs;
     vector<StripePair> stripe_pairs_pixel;
+
+    void save_result(const string & case_name, bool benchmark_flag);
 
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
@@ -86,18 +91,20 @@ private:
     Device device {kCPU};
 
     // Metric word-path
-    int sols_n = 10;
+    int sols_n {10};
+    int candidate_len {10};
     vector< vector<double> > pixel_graph;
+    vector< vector<double> > pixel_graph2;
 
     double m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1);
     double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
+    void m_metric_word();
     
     vector< vector<int> > reassemble_greedy(bool probability_flag=false);
     void reassemble_GCOM();
 
-    cv::Mat word_detection( const cv::Mat & img, 
-                            const vector<int> & sol,
-                            int sol_cnt=1);
+    void stochastic_search( vector<int> & sol, const vector< vector<StripePair> > & compose_next);
+    cv::Mat word_detection( const cv::Mat & img, const vector<int> & sol);
     void merge_single_sol(vector< vector<int> > & fragments);
     void finetune_sols(const vector< vector<int> > & fragments);
 

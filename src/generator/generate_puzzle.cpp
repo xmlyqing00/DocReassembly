@@ -6,9 +6,10 @@ int main(int argc, char ** argv) {
     string case_name = "test0";
     int vertical_n = 4;
     PuzzleType puzzle_type = PuzzleType::STRIPES;
+    bool updown_flag = false;
 
     // Parse command line parameters
-    const string opt_str = "t:T:n:N:gGsS";
+    const string opt_str = "t:T:n:N:gGsSU";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -22,6 +23,9 @@ int main(int argc, char ** argv) {
             case 's': case 'S':
                 puzzle_type = PuzzleType::SQUARES;
                 break;
+            case 'U':
+                updown_flag = true;
+                break;
         }
         
         opt = getopt(argc, argv, opt_str.c_str());
@@ -29,6 +33,7 @@ int main(int argc, char ** argv) {
 
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Vertical cut num:    \t" << vertical_n << endl;
+    cout << "Up down flag:        \t" << updown_flag << endl;
     cout << "Puzzle type:         \t" << (puzzle_type == PuzzleType::SQUARES ? "Squares": "Stripes") << endl;
 
     // Generate new puzzle
@@ -43,7 +48,11 @@ int main(int argc, char ** argv) {
         mkdir(puzzle_folder.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
     }
 
-    puzzle_folder += case_name + "_" + to_string(vertical_n) + "/";
+    if (updown_flag) {
+        puzzle_folder += case_name + "_" + to_string(vertical_n * 2) + "/";    
+    } else {
+        puzzle_folder += case_name + "_" + to_string(vertical_n) + "/";
+    }
 
     const string gt_folder = "data/gt/";
     const string gt_img_path = gt_folder + case_name + ".png";
@@ -55,7 +64,7 @@ int main(int argc, char ** argv) {
     }
 
     if (puzzle_type == PuzzleType::STRIPES) {
-        StripesGenerator stripes_generator(gt_img_path, vertical_n);
+        StripesGenerator stripes_generator(gt_img_path, vertical_n, updown_flag);
         stripes_generator.save_puzzle(puzzle_folder);
     } else {
         SquaresGenerator squares_generator(gt_img_path, vertical_n);

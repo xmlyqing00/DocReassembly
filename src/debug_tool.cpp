@@ -341,6 +341,7 @@ void add_seams(const string & puzzle_name) {
         cout << i << " " << sol_order[i] << endl;
     }
     cv::Scalar seam_color;
+    int correct_cnt = 0;
     for (int i = 1; i < n; i++) {
 
         for (int j = 0; j < n; j++) {
@@ -349,6 +350,7 @@ void add_seams(const string & puzzle_name) {
                 seam_color = seam_color_red;
             } else {
                 seam_color = seam_color_green;
+                correct_cnt++;
             }
             break;
         }
@@ -356,6 +358,16 @@ void add_seams(const string & puzzle_name) {
         cv::line(sol_img, cv::Point(stripe_size.width * i, 0), cv::Point(stripe_size.width * i, stripe_size.height), seam_color);
 
     }
+
+    double score = (double)correct_cnt / (n - 1);
+    printf("Score: %.3lf\n", score);
+    size_t pos = puzzle_name.find_last_of('_');
+    ofstream fout("data/scores/" + puzzle_name.substr(0, pos) + ".txt", ios::app);
+    fout << score << " ";
+    if (n == 80) {
+        fout << endl;
+    }
+    fout.close();
 
     cv::imwrite("data/results/" + puzzle_name + "_GA_sol_seams.png", sol_img);
 

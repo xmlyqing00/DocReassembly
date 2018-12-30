@@ -5,8 +5,7 @@ PathManager::PathManager(int _nodes_n, int _sols_n) :
     sols_n(_sols_n) {
 }
 
-void PathManager::add_sol_words(const map< vector<int>, int > & sol_words,
-                                int sol_cnt) {
+void PathManager::add_sol_words(const map< vector<int>, int > & sol_words) {
 
     for (const auto & iter: sol_words) {
 
@@ -15,9 +14,9 @@ void PathManager::add_sol_words(const map< vector<int>, int > & sol_words,
         if (sol_paths.find(sol_path) != sol_paths.end()) {
             auto val = sol_paths[sol_path];
             val.first += word_cnt;
-            val.second += sol_cnt;
+            val.second++;
         } else {
-            sol_paths[sol_path] = make_pair(word_cnt, sol_cnt);
+            sol_paths[sol_path] = make_pair(word_cnt, 1);
         }
 
     }                            

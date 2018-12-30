@@ -19,8 +19,7 @@ public:
 
     PathManager(int _vertices_n, int _sols_n);
     
-    void add_sol_words( const map< vector<int>, int > & sol_words,
-                        int sol_cnt=1);
+    void add_sol_words( const map< vector<int>, int > & sol_words);
     void print_sol_paths();
 
     void build_path_graph();

@@ -1,6 +1,7 @@
 #include <stripes_generator.h>
 
-StripesGenerator::StripesGenerator(const string & img_path, int _stripes_n) {
+StripesGenerator::StripesGenerator(const string & img_path, int _stripes_n, bool _updown_flag) :
+    updown_flag(_updown_flag) {
     
     ori_img = cv::imread(img_path);
     ori_img_size = ori_img.size();
@@ -12,7 +13,11 @@ StripesGenerator::StripesGenerator(const string & img_path, int _stripes_n) {
 
 cv::Mat StripesGenerator::get_puzzle_img(int gap=5) {
 
-    cv::Mat puzzle_img = cv::Mat::zeros(ori_img_size.height, ori_img_size.width + (stripes_n - 1) * gap, CV_8UC3);
+    cv::Size img_size(ori_img_size.width + (stripes_n - 1) * gap, ori_img.rows);
+    if (updown_flag) {
+        img_size.width <<= 1;
+    }
+    cv::Mat puzzle_img = cv::Mat::zeros(img_size, CV_8UC3);
     
     int puzzle_img_x = 0;
     for (const int idx: access_idx) {
@@ -53,9 +58,30 @@ bool StripesGenerator::seg_stripes() {
         
     }
 
-    access_idx = vector<int>(stripes_n);
+    if (updown_flag) {
+        int n = stripes.size();
+        for (int i = n - 1; i >= 0; i--) {
+            cv::Mat flipped_img = stripes[i].clone();
+            cv::flip(flipped_img, flipped_img, -1);
+            stripes.push_back(move(flipped_img));
+        }
+    }
+
+    access_idx.clear();
     default_random_engine rand_engine(time(0));
 
+    for (int i = 0; i < stripes_n; i++) {
+        access_idx.push_back(i);
+    }
+
+    if (updown_flag) {
+        for (int i = stripes_n - 1; i >= 0; i--) {
+            access_idx.push_back(i);
+        }
+        stripes_n <<= 1;
+    }
+    
+    
     iota(access_idx.begin(), access_idx.end(), 0);
     shuffle(access_idx.begin(), access_idx.end(), rand_engine);
 

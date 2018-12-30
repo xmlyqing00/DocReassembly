@@ -9,7 +9,7 @@ double avg_vec3b(const cv::Vec3b &v) {
 }
 
 bool check_pure(int c) {
-    if (c < 10 || c > 245) return true;
+    if (c < 5 || c > 250) return true;
     return false;
 }
 

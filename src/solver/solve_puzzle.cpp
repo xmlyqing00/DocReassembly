@@ -5,11 +5,11 @@ void solve_stripes( const string & stripes_folder,
                     int vertical_n,
                     int samples_n,
                     StripesSolver::Metric metric_mode,
-                    StripesSolver::Composition composition_mode) {
+                    StripesSolver::Composition composition_mode,
+                    bool benchmark_flag) {
     
     StripesSolver stripes_solver(stripes_folder, vertical_n, samples_n);
-    stripes_solver.reassemble(metric_mode, composition_mode);
-    stripes_solver.save_result(case_name);
+    stripes_solver.reassemble(metric_mode, composition_mode, case_name, benchmark_flag);
 
 #ifdef DEBUG
     for (int idx: stripes_solver.composition_order) {
@@ -68,9 +68,10 @@ int main(int argc, char ** argv) {
     int samples_n = 10;
     StripesSolver::Composition composition_mode = StripesSolver::GREEDY;
     StripesSolver::Metric metric_mode = StripesSolver::PIXEL;
+    bool benchmark_flag = false;
 
     // Parse command line parameters
-    const string opt_str = "t:n:Sc:m:s:";
+    const string opt_str = "t:n:Sc:m:s:b";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -93,6 +94,9 @@ int main(int argc, char ** argv) {
             case 's':
                 samples_n = atoi(optarg);
                 break;
+            case 'b':
+                benchmark_flag = true;
+                break;
             default:
                 cerr << "[ ERR] Unknon options " << opt << endl;
                 exit(-1);
@@ -111,7 +115,7 @@ int main(int argc, char ** argv) {
     cout << "Puzzle type:         \t" << (puzzle_type == PuzzleType::SQUARES ? "Squares": "Stripes") << endl;
     cout << "Metric mode:         \t" << metric_mode_str << endl;
     cout << "Samples times:       \t" << samples_n << endl;
-    cout << "Composition mode:    \t" << (composition_mode == StripesSolver::Composition::GREEDY ? "Greedy" : "Greedy Probability") << endl;
+    cout << "Composition mode:    \t" << static_cast<int>(composition_mode) << endl;
 
     clock_t start_time = clock();
 
@@ -119,7 +123,7 @@ int main(int argc, char ** argv) {
     if (puzzle_type == PuzzleType::STRIPES) {
 
         const string puzzle_folder = "data/stripes/" + case_name + "_" + to_string(vertical_n) + "/";
-        solve_stripes(puzzle_folder, case_name, vertical_n, samples_n, metric_mode, composition_mode);
+        solve_stripes(puzzle_folder, case_name, vertical_n, samples_n, metric_mode, composition_mode, benchmark_flag);
 
     } else {
 
