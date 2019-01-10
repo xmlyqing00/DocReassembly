@@ -8,10 +8,11 @@ def calibrate_imgs():
 
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img_canny = cv2.Canny(img_gray, 200, 300)
-    a, b = cv2.findContours(img_canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    print(len(a))
-    print(b.shape)
-    cv2.imshow('img', img_canny)
+    img2, contours, hierarchy = cv2.findContours(img_canny, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(img, contours, -1, (0, 255, 0))
+    print(len(contours))
+    # print(b.shape)
+    cv2.imshow('img', img)
     cv2.waitKey()
 
 if __name__ == '__main__':
