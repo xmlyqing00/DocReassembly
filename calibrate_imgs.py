@@ -39,10 +39,35 @@ def calibrate_imgs():
 
     print(left_top_point, left_bottom_point, right_top_point, right_bottom_point)
 
-    height = (3938 - 151 + 3948 - 163) / 2
+    dst_height = 3800
+    src_height = (left_bottom_point[1] - left_top_point[1] + right_bottom_point[1] - right_top_point[1]) / 2
+    src_width = (right_top_point[0] - left_top_point[0] + right_bottom_point[0] - left_bottom_point[0]) / 2
+    dst_width = int(round(src_width * src_height / dst_height))
+
+    src_anchor = np.float32([left_top_point, left_bottom_point, right_top_point, right_bottom_point])
+    # dst_anchor = np.float32( \
+    #     [left_top_point, \
+    #     [left_top_point[0], left_top_point[1] + dst_height], \
+    #     [left_top_point[0] + dst_width, left_top_point[1]], \
+    #     [left_top_point[0] + dst_width, left_top_point[1] + dst_height]])
+    dst_anchor = np.float32( \
+        [[0, 0], \
+        [0, dst_height], \
+        [dst_width, 0], \
+        [dst_width, dst_height]])
+    print(src_anchor)
+    print(dst_anchor)
+
+    mat = cv2.getPerspectiveTransform(src_anchor, dst_anchor)
+    print(mat)
+    stripe = cv2.warpPerspective(img, mat, (dst_width, dst_height))
+    stripe = cv2.resize(stripe, None, None, 0.3, 0.3)
+
+    cv2.imwrite('data/stripes/real0_21/19.png', stripe)
+    cv2.imshow('stripe', stripe)
     # cv2.imshow('img', img)
     # cv2.imshow('canvas', img_canny)
-    # cv2.waitKey()
+    cv2.waitKey()
 
 if __name__ == '__main__':
     calibrate_imgs()
