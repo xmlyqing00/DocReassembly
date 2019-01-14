@@ -97,8 +97,10 @@ bool StripesSolver::reassemble( Metric _metric_mode,
     m_metric();
 
     vector< vector<int> > fragments;
+    vector<int> sol_x;
 
     switch (composition_mode) {
+        // 0
         case Composition::GREEDY:
             cout << "[INFO] Composition: Greedy." << endl;
 
@@ -116,18 +118,20 @@ bool StripesSolver::reassemble( Metric _metric_mode,
 
             save_result(case_name, benchmark_flag);
             break;
-
+        
+        // 1
         case Composition::GCOM:
             cout << "[INFO] Composition: GCOM." << endl;
 
             reassemble_GCOM();
-
-            composition_img = compose_img(composition_order);
-            composition_img_seams = add_seams(composition_img, composition_order);
+            
+            composition_img = compose_img(composition_order, real_flag, &sol_x);
+            composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
 
             save_result(case_name, benchmark_flag);
             break;
         
+        // 2
         case Composition::GREEDY_GCOM:
 
             // Greedy part
@@ -154,16 +158,27 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             composition_mode = Composition::GCOM;
             reassemble_GCOM();
 
-            composition_img = compose_img(composition_order);
-            composition_img_seams = add_seams(composition_img, composition_order);
+            composition_img = compose_img(composition_order, real_flag, &sol_x);
+            composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
             
             save_result(case_name, benchmark_flag);
             break;
 
+        // 3
         case Composition::GT:
 
-            composition_img = compose_img(gt_order);
-            composition_img_seams = add_seams(composition_img, gt_order);
+            composition_img = compose_img(gt_order, real_flag, &sol_x);
+            composition_img_seams = add_seams(composition_img, gt_order, false, &sol_x);
+            save_result(case_name, false);
+            break;
+
+        // 4
+        case Composition::USER:
+            // composition_order = vector<int>({19,21,24,26,11,14,2,6,8,1,22,23,15,12,4,17,10,13,16,9,0,7,25,18,3,5});
+            composition_order = vector<int>({8,0,5,7,9,10,26,6,17,11,14,15,16,12,18,13,3,19,20,1,23,22,21,24,4,2,25});
+            
+            composition_img = compose_img(composition_order, true, &sol_x);
+            composition_img_seams = add_seams(composition_img, composition_order, false, &sol_x);
             save_result(case_name, false);
             break;
 
@@ -182,6 +197,7 @@ cv::Mat StripesSolver::compose_img( const vector<int> & composition_order,
     cv::Mat composition_img;
     int x0, x1;
     for (int i = 0; i < composition_order.size(); i++) {
+        cout << composition_order[i] << endl;
         composition_img = merge_imgs(composition_img, stripes[composition_order[i]], shift_flag, &x0, &x1);
         if (shift_flag) sol_x->push_back(x0);
     }

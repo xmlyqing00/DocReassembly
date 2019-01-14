@@ -39,6 +39,7 @@ public:
         GCOM,
         GREEDY_GCOM,
         GT,
+        USER,
     };
 
     const string puzzle_folder;

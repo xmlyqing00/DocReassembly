@@ -81,8 +81,8 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
     if (shift_flag) {
         int shift_x0 = 0;
         int shift_x1 = 0;
-        int block_h = in_img1.cols;
-        int detected_w = in_img1.cols * 0.6;
+        int block_h = in_img1.cols * 3;
+        int detected_w = in_img1.cols * 0.8;
         int block_cnt = 0;
         int out_width = 0;
 
