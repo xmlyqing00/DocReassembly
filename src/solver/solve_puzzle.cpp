@@ -6,9 +6,10 @@ void solve_stripes( const string & stripes_folder,
                     int samples_n,
                     StripesSolver::Metric metric_mode,
                     StripesSolver::Composition composition_mode,
-                    bool benchmark_flag) {
+                    bool benchmark_flag,
+                    bool real_flag) {
     
-    StripesSolver stripes_solver(stripes_folder, vertical_n, samples_n);
+    StripesSolver stripes_solver(stripes_folder, vertical_n, samples_n, real_flag);
     stripes_solver.reassemble(metric_mode, composition_mode, case_name, benchmark_flag);
 
 #ifdef DEBUG
@@ -69,9 +70,10 @@ int main(int argc, char ** argv) {
     StripesSolver::Composition composition_mode = StripesSolver::GREEDY;
     StripesSolver::Metric metric_mode = StripesSolver::PIXEL;
     bool benchmark_flag = false;
+    bool real_flag = false;
 
     // Parse command line parameters
-    const string opt_str = "t:n:Sc:m:s:b";
+    const string opt_str = "t:n:Sc:m:s:br";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -97,6 +99,9 @@ int main(int argc, char ** argv) {
             case 'b':
                 benchmark_flag = true;
                 break;
+            case 'r':
+                real_flag = true;
+                break;
             default:
                 cerr << "[ ERR] Unknon options " << opt << endl;
                 exit(-1);
@@ -116,6 +121,7 @@ int main(int argc, char ** argv) {
     cout << "Metric mode:         \t" << metric_mode_str << endl;
     cout << "Samples times:       \t" << samples_n << endl;
     cout << "Composition mode:    \t" << static_cast<int>(composition_mode) << endl;
+    cout << "Real-world case:     \t" << real_flag << endl;
 
     clock_t start_time = clock();
 
@@ -123,7 +129,7 @@ int main(int argc, char ** argv) {
     if (puzzle_type == PuzzleType::STRIPES) {
 
         const string puzzle_folder = "data/stripes/" + case_name + "_" + to_string(vertical_n) + "/";
-        solve_stripes(puzzle_folder, case_name, vertical_n, samples_n, metric_mode, composition_mode, benchmark_flag);
+        solve_stripes(puzzle_folder, case_name, vertical_n, samples_n, metric_mode, composition_mode, benchmark_flag, real_flag);
 
     } else {
 

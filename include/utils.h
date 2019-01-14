@@ -25,9 +25,13 @@ bool check_pure(int c);
 
 double diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1);
 
-double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1);
+double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift_flag=false);
 
-cv::Mat merge_imgs(const cv::Mat & in_img0, const cv::Mat & in_img1);
+cv::Mat merge_imgs( const cv::Mat & in_img0, 
+                    const cv::Mat & in_img1, 
+                    bool shift_flag=false,
+                    int * splice_x0=nullptr,
+                    int * splice_x1=nullptr);
 
 bool cross_seam(const cv::Rect & bbox, int seam_x);
 

@@ -1,10 +1,11 @@
 #include <stripes_solver.h>
 
-StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int _samples_n) :
+StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int _samples_n, bool _real_flag) :
     puzzle_folder(_puzzle_folder),
     stripes_n(_stripes_n),
     sols_n(_samples_n),
-    path_manager(_stripes_n, sols_n) {
+    path_manager(_stripes_n, sols_n),
+    real_flag(_real_flag) {
 
     ocr = new tesseract::TessBaseAPI();
     if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_TESSERACT_ONLY)) {
@@ -159,6 +160,13 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             save_result(case_name, benchmark_flag);
             break;
 
+        case Composition::GT:
+
+            composition_img = compose_img(gt_order);
+            composition_img_seams = add_seams(composition_img, gt_order);
+            save_result(case_name, false);
+            break;
+
         default:
             return false;
     }
@@ -167,19 +175,25 @@ bool StripesSolver::reassemble( Metric _metric_mode,
 
 }
 
-cv::Mat StripesSolver::compose_img(const vector<int> & composition_order) {
+cv::Mat StripesSolver::compose_img( const vector<int> & composition_order, 
+                                    bool shift_flag, 
+                                    vector<int> * sol_x) {
     
     cv::Mat composition_img;
-
+    int x0, x1;
     for (int i = 0; i < composition_order.size(); i++) {
-        composition_img = merge_imgs(composition_img, stripes[composition_order[i]]);
+        composition_img = merge_imgs(composition_img, stripes[composition_order[i]], shift_flag, &x0, &x1);
+        if (shift_flag) sol_x->push_back(x0);
     }
 
     return composition_img;
 
 }
 
-cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & composition_order) {
+cv::Mat StripesSolver::add_seams(   const cv::Mat & img, 
+                                    const vector<int> & composition_order, 
+                                    bool print_flag,
+                                    const vector<int> * sol_x) {
 
     cv::Mat img_seams = img.clone();
     int col = stripes[composition_order[0]].cols;
@@ -200,13 +214,20 @@ cv::Mat StripesSolver::add_seams(const cv::Mat & img, const vector<int> & compos
             break;
         }
 
-        cv::line(img_seams, cv::Point(col, 0), cv::Point(col, img.rows), seam_color);
-        col += stripes[composition_order[i]].cols;
+        if (sol_x->size() == 0) {
+            cv::line(img_seams, cv::Point(col, 0), cv::Point(col, img.rows), seam_color);
+            col += stripes[composition_order[i]].cols;
+        } else {
+            cv::line(img_seams, cv::Point((*sol_x)[i], 0), cv::Point((*sol_x)[i], img.rows), seam_color);
+        }
+        
 
     }
 
-    composition_score = (double)correct_cnt / (int(composition_order.size()) - 1);
-    printf("Composition Score: %.3lf\n", composition_score);
+    if (print_flag) {
+        composition_score = (double)correct_cnt / (int(composition_order.size()) - 1);
+        printf("Composition Score: %.3lf\n", composition_score);
+    }
 
     return img_seams;
 
@@ -396,7 +417,7 @@ void StripesSolver::m_metric_word() {
     map< vector<int>, bool > sol_visited;
     vector< vector<int> > candidate_sols;
 
-    candidate_len = stripes_n / 5;
+    candidate_len = stripes_n / candidate_factor;
     cout << "Candidate length:   \t" << candidate_len << endl;
     cout << "[INFO] Search candidate sols." << endl;
     
@@ -414,16 +435,20 @@ void StripesSolver::m_metric_word() {
     int sol_idx = 0;
 
     cout << "Detect words on solution: ";
+
+    vector<int> sol_x;
     for (const auto & sol: candidate_sols) {
         
         ++sol_idx;
         if (sol_idx % 20 == 0) cout << sol_idx << " " << flush;
         
-        cv::Mat composition_img = compose_img(sol);
-        cv::Mat tmp_img = word_detection(composition_img, sol);
+        sol_x.clear();
+        cv::Mat composition_img = compose_img(sol, real_flag, &sol_x);
+        cv::Mat tmp_img = word_detection(composition_img, sol, sol_x);
 
 #ifdef DEBUG
-        tmp_img = add_seams(tmp_img, sol);
+        cout << sol_idx << endl;
+        tmp_img = add_seams(tmp_img, sol, false, &sol_x);
         cv::imwrite("tmp/sol_" + to_string(sol_idx) + ".png", tmp_img);
         // cv::imshow("Tmp img", tmp_img);
         // cv::waitKey();
@@ -518,7 +543,7 @@ void StripesSolver::m_metric() {
                 switch (metric_mode) {
                     case Metric::PIXEL:
                     case Metric::WORD:
-                        m_score = m_metric_pixel(stripes[i], stripes[j]);
+                        m_score = m_metric_pixel(stripes[i], stripes[j], real_flag);
                         break;
                     case Metric::CHAR:
                         m_score = m_metric_char(stripes[i], stripes[j]);
@@ -705,7 +730,9 @@ void StripesSolver::stochastic_search(  vector<int> & sol, const vector< vector<
 
 }
 
-cv::Mat StripesSolver::word_detection(const cv::Mat & img, const vector<int> & sol) {
+cv::Mat StripesSolver::word_detection(  const cv::Mat & img, 
+                                        const vector<int> & sol,
+                                        vector<int> & sol_x) {
 
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_WORD};
     const cv::Scalar color_blue(200, 0, 0);
@@ -718,12 +745,14 @@ cv::Mat StripesSolver::word_detection(const cv::Mat & img, const vector<int> & s
     double m_metric_score = 0;
     cv::Mat img_bbox = img.clone();
 
-    vector<int> sol_x;
-    int cum_x = 0;
-    for (int i = 0; i < sol.size(); i++) {
-        sol_x.push_back(cum_x);
-        cum_x += stripes[sol[i]].cols;
+    if (sol_x.size() == 0) {
+        int cum_x = 0;
+        for (int i = 0; i < sol.size(); i++) {
+            sol_x.push_back(cum_x);
+            cum_x += stripes[sol[i]].cols;
+        }
     }
+    
 
     map< vector<int>, int > sol_words;
 
@@ -736,20 +765,22 @@ cv::Mat StripesSolver::word_detection(const cv::Mat & img, const vector<int> & s
             // Boundary cross constraint
             int x0, y0, x1, y1;
             ocr_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
-            const cv::Rect bbox(x0+1, y0, x1 - x0-2, y1 - y0);
+            const cv::Rect bbox(x0 + 3, y0, x1 - x0 - 6, y1 - y0);
 
             int sol_path_st = upper_bound(sol_x.begin(), sol_x.end(), x0) - sol_x.begin() - 1;
             int sol_path_ed = lower_bound(sol_x.begin(), sol_x.end(), x1) - sol_x.begin();
             
             if (sol_path_ed - sol_path_st > 1) {
                 sol_words[vector<int>(sol.begin()+sol_path_st, sol.begin()+sol_path_ed)]++;
+#ifdef DEBUG
+                printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
+                        word.c_str(), conf, ocr_iter->WordIsFromDictionary(), x0, y0, x1, y1);
+                cout << endl;
+#endif
             }
 
 #ifdef DEBUG
             cv::rectangle(img_bbox, bbox, color_blue);
-            printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
-                    word.c_str(), conf, ocr_iter->WordIsFromDictionary(), x0, y0, x1, y1);
-            cout << endl;
 #endif
 
         } while (ocr_iter->Next(tesseract_level));

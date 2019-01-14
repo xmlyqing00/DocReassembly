@@ -1,73 +1,88 @@
 import numpy as np
 import cv2
+import os
 
 INF = 10000000
-def calibrate_imgs():
+def calibrate_imgs(img, crop_flag=False):
 
-    img = cv2.imread('data/real_test/real0_raw_21/19.jpg')
+    if crop_flag:
+        width_margin = 140
+        height_margin = 110
+        height = img.shape[0]
+        width = img.shape[1]
+        img = img[height_margin:height - height_margin, width_margin:width - width_margin]
 
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img_canny = cv2.Canny(img_gray, 70, 150)
-    lines = cv2.HoughLinesP(img_canny, 1, np.pi/180, 80, 30, 10)
+    img_x = cv2.Sobel(img_gray, cv2.CV_16S, 1, 0)
+    img_absx = cv2.convertScaleAbs(img_x)
+    _, img_bin = cv2.threshold(img_absx, 128, 255, cv2.THRESH_BINARY)
+    lines = cv2.HoughLinesP(img_bin, 1, np.pi/180, 80, 30, 10)
 
-    left_top_point = [INF, INF]
-    left_bottom_point = [INF, 0]
-    right_top_point = [0, INF]
-    right_bottom_point = [0, 0]
+    x_left = INF
+    x_right = 0
     for i in range(len(lines)):
         x0, y0, x1, y1 = lines[i][0]
 
-        delta = (left_top_point[0] - x0) + (left_top_point[1] - y0)
-        if delta > 0:
-            left_top_point[0] = x0
-            left_top_point[1] = y0
+        if abs(x0 - x1) > 20:
+            continue
         
-        delta = (x0 - right_top_point[0]) + (right_top_point[1] - y0)
-        if delta > 0:
-            right_top_point[0] = x0
-            right_top_point[1] = y0
-        
-        delta = (left_bottom_point[0] - x0) + (y0 - left_bottom_point[1])
-        if delta > 0:
-            left_bottom_point[0] = x0
-            left_bottom_point[1] = y0
-        
-        delta = (x0 - right_bottom_point[0]) + (y0 - right_bottom_point[1])
-        if delta > 0:
-            right_bottom_point[0] = x0
-            right_bottom_point[1] = y0
+        if abs(y0 - y1) < 20:
+            continue
 
-    print(left_top_point, left_bottom_point, right_top_point, right_bottom_point)
+        x_left = min(x_left, x0)
+        x_right = max(x_right, x0)
 
-    dst_height = 3800
-    src_height = (left_bottom_point[1] - left_top_point[1] + right_bottom_point[1] - right_top_point[1]) / 2
-    src_width = (right_top_point[0] - left_top_point[0] + right_bottom_point[0] - left_bottom_point[0]) / 2
-    dst_width = int(round(src_width * src_height / dst_height))
 
-    src_anchor = np.float32([left_top_point, left_bottom_point, right_top_point, right_bottom_point])
+    # print(left_top_point, left_bottom_point, right_top_point, right_bottom_point)
+
+    dst_height = 1800 # 6450
+    src_height = img.shape[0]
+    src_width = x_right - x_left
+    dst_width = int(round(src_width * dst_height / src_height))
+
+    # src_anchor = np.float32([left_top_point, left_bottom_point, right_top_point, right_bottom_point])
+    # # dst_anchor = np.float32( \
+    # #     [left_top_point, \
+    # #     [left_top_point[0], left_top_point[1] + dst_height], \
+    # #     [left_top_point[0] + dst_width, left_top_point[1]], \
+    # #     [left_top_point[0] + dst_width, left_top_point[1] + dst_height]])
     # dst_anchor = np.float32( \
-    #     [left_top_point, \
-    #     [left_top_point[0], left_top_point[1] + dst_height], \
-    #     [left_top_point[0] + dst_width, left_top_point[1]], \
-    #     [left_top_point[0] + dst_width, left_top_point[1] + dst_height]])
-    dst_anchor = np.float32( \
-        [[0, 0], \
-        [0, dst_height], \
-        [dst_width, 0], \
-        [dst_width, dst_height]])
-    print(src_anchor)
-    print(dst_anchor)
+    #     [[0, 0], \
+    #     [0, dst_height], \
+    #     [dst_width, 0], \
+    #     [dst_width, dst_height]])
+    # print(src_anchor)
+    # print(dst_anchor)
 
-    mat = cv2.getPerspectiveTransform(src_anchor, dst_anchor)
-    print(mat)
-    stripe = cv2.warpPerspective(img, mat, (dst_width, dst_height))
-    stripe = cv2.resize(stripe, None, None, 0.3, 0.3)
+    # mat = cv2.getPerspectiveTransform(src_anchor, dst_anchor)
+    # print(mat)
+    # stripe = cv2.warpPerspective(img, mat, (dst_width, dst_height))
 
-    cv2.imwrite('data/stripes/real0_21/19.png', stripe)
-    cv2.imshow('stripe', stripe)
-    # cv2.imshow('img', img)
-    # cv2.imshow('canvas', img_canny)
-    cv2.waitKey()
+    stripe = img[:, x_left:x_right]
+    stripe = cv2.resize(stripe, (dst_width, dst_height))
+
+    return stripe
 
 if __name__ == '__main__':
-    calibrate_imgs()
+
+    test_case = 'real1_31/'
+    img_num = 31
+    in_folder = 'data/real_test/' + test_case
+    out_folder = 'data/stripes/' + test_case
+    if not os.path.isdir(out_folder):
+        os.mkdir(out_folder)
+
+    order_path = out_folder + 'order.txt'
+    order_file = open(order_path, 'w')
+    for img_id in range(img_num):
+        order_file.write(str(img_id) + '\n')
+    order_file.close()
+
+    for img_id in range(img_num):
+
+        print('current img:', img_id)
+
+        img_path = in_folder + str(img_id+1) + '.XSM/' + '00000001.jpg'
+        img = cv2.imread(img_path)
+        stripe = calibrate_imgs(img, crop_flag=True)
+        cv2.imwrite(out_folder + str(img_id) + '.png', stripe)

@@ -38,6 +38,7 @@ public:
         GREEDY,
         GCOM,
         GREEDY_GCOM,
+        GT,
     };
 
     const string puzzle_folder;
@@ -52,7 +53,7 @@ public:
     // Path
     PathManager path_manager;
 
-    StripesSolver(const string & _puzzle_foler, int _stripes_n, int _samples_n);
+    StripesSolver(const string & _puzzle_foler, int _stripes_n, int _samples_n, bool _real_flag);
     ~StripesSolver();
 
     void m_metric();
@@ -61,13 +62,19 @@ public:
                     const string & case_name, 
                     bool benchmark_flag);
 
-    cv::Mat compose_img(const vector<int> & composition_order);
-    cv::Mat add_seams(const cv::Mat & img, const vector<int> & composition_order);
+    cv::Mat compose_img(const vector<int> & composition_order, 
+                        bool shift_flag=false,
+                        vector<int> * sol_x=nullptr);
+    cv::Mat add_seams(  const cv::Mat & img, 
+                        const vector<int> & composition_order, 
+                        bool print_flag=true,
+                        const vector<int> * sol_x=nullptr);
 
 private:
 
     Metric metric_mode;
     Composition composition_mode;
+    bool real_flag;
 
     vector<StripePair> stripe_pairs;
     vector<StripePair> stripe_pairs_pixel;
@@ -93,6 +100,7 @@ private:
     // Metric word-path
     int sols_n {10};
     int candidate_len {10};
+    const int candidate_factor {5};
     vector< vector<double> > pixel_graph;
     vector< vector<double> > pixel_graph2;
 
@@ -104,7 +112,9 @@ private:
     void reassemble_GCOM();
 
     void stochastic_search( vector<int> & sol, const vector< vector<StripePair> > & compose_next);
-    cv::Mat word_detection( const cv::Mat & img, const vector<int> & sol);
+    cv::Mat word_detection( const cv::Mat & img, 
+                            const vector<int> & sol,
+                            vector<int> & sol_x);
     void merge_single_sol(vector< vector<int> > & fragments);
     void finetune_sols(const vector< vector<int> > & fragments);
 
