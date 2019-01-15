@@ -197,7 +197,6 @@ cv::Mat StripesSolver::compose_img( const vector<int> & composition_order,
     cv::Mat composition_img;
     int x0, x1;
     for (int i = 0; i < composition_order.size(); i++) {
-        cout << composition_order[i] << endl;
         composition_img = merge_imgs(composition_img, stripes[composition_order[i]], shift_flag, &x0, &x1);
         if (shift_flag) sol_x->push_back(x0);
     }

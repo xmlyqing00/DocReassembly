@@ -78,11 +78,17 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
     cv::Rect in_img0_roi(0, 0, in_img0.cols, in_img0.rows);
     in_img0.copyTo(out_img(in_img0_roi));
 
+    // cout << in_img0.size() << endl;
+    // cout << in_img1.size() << endl;
+
     if (shift_flag) {
+
+        const int detected_w = 40;
+        const int color_thres = 230;
+        
+        int block_h = 5;
         int shift_x0 = 0;
         int shift_x1 = 0;
-        int block_h = in_img1.cols * 3;
-        int detected_w = in_img1.cols * 0.8;
         int block_cnt = 0;
         int out_width = 0;
 
@@ -92,11 +98,15 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
                 int x0;
                 for (x0 = in_img0.cols - detected_w; x0 < in_img0.cols; x0++) {
                     const cv::Vec3b & color = in_img0.at<cv::Vec3b>(y, x0);
-                    if (color[0] < 200 || color[1] < 200 || color[2] < 200) break;
+                    if (color[0] < color_thres || color[1] < color_thres || color[2] < color_thres) break;
                 }
-                if (double(in_img0.cols - x0) / in_img1.cols < 0.3) {
+                if (double(in_img0.cols - x0) / detected_w < 0.5) {
                     if (y > 0) {
-                        shift_x0 = int(round(0.5 * shift_x0 + 0.5 * x0));
+                        for (x0 = in_img0.cols - 1; x0 > in_img0.cols - detected_w; x0--) {
+                            const cv::Vec3b & color = in_img0.at<cv::Vec3b>(y, x0);
+                            if (!(color[0] < color_thres || color[1] < color_thres || color[2] < color_thres)) break;
+                        }
+                        shift_x0 = int(round(0.8 * shift_x0 + 0.2 * x0));
                     } else {
                         shift_x0 = x0;
                     }
@@ -108,14 +118,18 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
             
             if (in_img1.cols > 0) {
                 int x1;
-                for (x1 = detected_w; x1 >= 0; x1--) {
+                for (x1 = min(detected_w, in_img1.cols - 1); x1 >= 0; x1--) {
                     const cv::Vec3b & color = in_img1.at<cv::Vec3b>(y, x1);
-                    if (color[0] < 200 || color[1] < 200 || color[2] < 200) break;
+                    if (color[0] < color_thres || color[1] < color_thres || color[2] < color_thres) break;
                 }
                 x1++;
-                if (double(x1) / in_img1.cols < 0.3) {
+                if (double(x1) / detected_w < 0.5) {
                     if (y > 0) {
-                        shift_x1 = int(round(0.5 * shift_x1 + 0.5 * x1));
+                        for (x1 = 0; x1 < min(detected_w, in_img1.cols); x1++) {
+                            const cv::Vec3b & color = in_img1.at<cv::Vec3b>(y, x1);
+                            if (!(color[0] < color_thres || color[1] < color_thres || color[2] < color_thres)) break;
+                        }
+                        shift_x1 = int(round(0.8 * shift_x1 + 0.2 * x1));
                     } else {
                         shift_x1 = x1;
                     }
@@ -139,12 +153,6 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
             // cout << roi_dst << endl;
             in_img1(roi_src).copyTo(out_img(roi_dst));
 
-            // cv::imshow("in0", in_img0);
-            // cv::imshow("in1", in_img1);
-            // cv::imshow("out", out_img);
-            // cv::waitKey();
-
-
         }
 
         if (shift_flag) {
@@ -152,6 +160,11 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
             *splice_x1 /= block_cnt;
         }
         out_img = out_img(cv::Rect(0, 0, out_width, out_img.rows));
+
+        // cv::imshow("in0", in_img0);
+        // cv::imshow("in1", in_img1);
+        // cv::imshow("out", out_img);
+        // cv::waitKey();
 
     } else {
 

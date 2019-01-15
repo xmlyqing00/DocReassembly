@@ -65,21 +65,23 @@ def calibrate_imgs(img, crop_flag=False):
 
 if __name__ == '__main__':
 
-    test_case = 'real1_31/'
-    img_num = 31
-    in_folder = 'data/real_test/' + test_case
-    out_folder = 'data/stripes/' + test_case
+    test_case = 'real1'
+    img_num = 27
+    in_folder = 'data/real_test/' + test_case + '_31/'
+    out_folder = 'data/stripes/' + test_case + '_' + str(img_num) + '/'
     if not os.path.isdir(out_folder):
         os.mkdir(out_folder)
 
-    order_path = out_folder + 'order.txt'
-    order_file = open(order_path, 'w')
-    for img_id in range(img_num):
-        order_file.write(str(img_id) + '\n')
-    order_file.close()
+    # order_path = out_folder + 'order.txt'
+    # order_file = open(order_path, 'w')
+    # for img_id in range(img_num):
+    #     order_file.write(str(img_id) + '\n')
+    # order_file.close()
 
     for img_id in range(img_num):
-
+        
+        # if img_id != 23 and img_id != 7:
+            # continue
         print('current img:', img_id)
 
         img_path = in_folder + str(img_id+1) + '.XSM/' + '00000001.jpg'
