@@ -113,8 +113,8 @@ bool StripesSolver::reassemble( Metric _metric_mode,
                 );
             }
 
-            composition_img = compose_img(composition_order);
-            composition_img_seams = add_seams(composition_img, composition_order);
+            composition_img = compose_img(composition_order, real_flag, &sol_x);
+            composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
 
             save_result(case_name, benchmark_flag);
             break;
@@ -147,8 +147,8 @@ bool StripesSolver::reassemble( Metric _metric_mode,
                 );
             }
 
-            composition_img = compose_img(composition_order);
-            composition_img_seams = add_seams(composition_img, composition_order);
+            composition_img = compose_img(composition_order, real_flag, &sol_x);
+            composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
 
             save_result(case_name, benchmark_flag);
 
@@ -250,9 +250,11 @@ cv::Mat StripesSolver::add_seams(   const cv::Mat & img,
 
 double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1) {
 
-    cv::Mat && merged_img = merge_imgs(piece0, piece1);
+    int seam_x = piece0.cols;
+    int margin_piece1;
+    cv::Mat && merged_img = merge_imgs(piece0, piece1, real_flag, &seam_x, &margin_piece1);
 
-    const int seam_x = piece0.cols;
+    
     const int max_m_width = min(piece0.cols, piece1.cols);
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_SYMBOL};
 
@@ -407,20 +409,22 @@ void StripesSolver::m_metric_word() {
         
         vector<StripePair> next_pairs;
         for (int j = 0; j < stripes_n; j++) {
+            if (i == j) continue;
             next_pairs.push_back(StripePair(i, j, pixel_graph2[i][j]));
         }
 
         sort(next_pairs.begin(), next_pairs.end());
         
-        double mid_score = next_pairs[stripes_n/2].m_score;
-        if (abs(mid_score) < eps) {
+        // double mid_score = next_pairs[stripes_n/2].m_score;
+        double worst_score = next_pairs.back().m_score;
+        if (abs(worst_score) < eps) {
             compose_next.push_back(vector<StripePair>());
             continue;
         }
 
-        next_pairs.erase(next_pairs.begin() + stripes_n / 2, next_pairs.end());
+        // next_pairs.erase(next_pairs.begin() + stripes_n / 2, next_pairs.end());
         for (int j = 0; j < next_pairs.size(); j++) {
-            double alpha = U_a * (next_pairs[j].m_score / mid_score - 1);
+            double alpha = U_a * (next_pairs[j].m_score / worst_score - 1);
             double exp_alpha = exp(alpha);
             next_pairs[j].ac_prob = (exp_alpha - 1) / (exp_alpha + 1);
         }
@@ -436,6 +440,8 @@ void StripesSolver::m_metric_word() {
     cout << "Candidate length:   \t" << candidate_len << endl;
     cout << "[INFO] Search candidate sols." << endl;
     
+    vector< vector<int> > composition_cnt(stripes_n, vector<int>(stripes_n, 0));
+
     while (candidate_sols.size() < sols_n) {
 
         vector<int> sol;
@@ -444,6 +450,16 @@ void StripesSolver::m_metric_word() {
         if (sol.size() > candidate_len / 2 && sol_visited[sol] == false) {
             sol_visited[sol] = true;
             candidate_sols.push_back(sol);
+            for (int i = 1; i < sol.size(); i++) {
+                composition_cnt[sol[i-1]][sol[i]]++;
+            }
+        }
+    }
+
+    for (int i = 0; i < stripes_n; i++) {
+        for (int j = 0; j < stripes_n; j++) {
+            if (composition_cnt[i][j] == 0) continue;
+            cout << i << " " << j << " " << composition_cnt[i][j] << endl;
         }
     }
 
@@ -489,8 +505,8 @@ void StripesSolver::m_metric() {
     // Compute matching score for each pair
     cout << "[INFO] Compute matching score for each pair." << endl;
 
-    // int filters_n = min(int(stripes_n * filter_rate), stripes_n - 1);
-    int filters_n = stripes_n - 1;
+    int filters_n = min(int(stripes_n * filter_rate), stripes_n - 1);
+    // int filters_n = stripes_n - 1;
 
     cout << "Preserve stripes:    \t" << filters_n << endl;
 
@@ -547,21 +563,29 @@ void StripesSolver::m_metric() {
     } else {
 
         pixel_graph = vector< vector<double> >(stripes_n, vector<double>(stripes_n, 0));
-
+        double m_score_p, m_score_c;
         for (int i = 0; i < stripes_n; i++) {
             
             for (int j = 0; j < stripes_n; j++) {
                 
                 if (i == j) continue;
-
+#ifdef DEBUG
+                cout << "Init " << i << " " << j << " ";
+#endif
                 double m_score = 0;
                 switch (metric_mode) {
                     case Metric::PIXEL:
-                    case Metric::WORD:
                         m_score = m_metric_pixel(stripes[i], stripes[j], real_flag);
                         break;
                     case Metric::CHAR:
                         m_score = m_metric_char(stripes[i], stripes[j]);
+                    case Metric::WORD:
+                        m_score_p = m_metric_pixel(stripes[i], stripes[j], real_flag);
+                        m_score_c = m_metric_char(stripes[i], stripes[j]);
+                        m_score = m_score_p * 2 + m_score_c;
+#ifdef DEBUG
+                        cout << m_score << endl;
+#endif
                         break;
                     default:
                         break;

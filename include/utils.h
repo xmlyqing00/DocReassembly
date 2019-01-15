@@ -15,7 +15,7 @@ enum class PuzzleType {
 };
 
 const double eps = 1e-8;
-const int U_a = 2;
+const int U_a = 1.2;
 const cv::Scalar seam_color_red(100, 100, 200);
 const cv::Scalar seam_color_green(100, 200, 100);
 
