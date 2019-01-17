@@ -430,7 +430,7 @@ void StripesSolver::m_metric_word() {
     }
 
     // Compute stripe_pairs
-    double U_a = 1.1;
+    double U_a = 1;
     if (real_flag) U_a = 1.1;
 
     vector< vector<StripePair> > compose_next;
@@ -618,12 +618,12 @@ void StripesSolver::m_metric() {
                         m_score = m_metric_char(stripes[i], stripes[j]);
                     case Metric::WORD:
                         m_score_p = m_metric_pixel(stripes[i], stripes[j], real_flag);
-                        // if (real_flag) {
+                        if (real_flag) {
                             m_score_c = m_metric_char(stripes[i], stripes[j]);
                             m_score = m_score_p * 2 + m_score_c;
-                        // } else {
-                            // m_score = m_score_p;
-                        // }
+                        } else {
+                            m_score = m_score_p;
+                        }
 #ifdef DEBUG
                         cout << "Init " << i << " " << j << " " << m_score << endl;
 #endif
