@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <atomic>
 #include <algorithm>
 
 #include <stripe_pair.h>
@@ -18,6 +19,7 @@ public:
     map< vector<int>, pair<int,int> > sol_paths; // sol; word_cnt, sol_cnt;
 
     PathManager(int _vertices_n, int _sols_n);
+    ~PathManager();
     
     void add_sol_words( const map< vector<int>, int > & sol_words);
     void print_sol_paths();

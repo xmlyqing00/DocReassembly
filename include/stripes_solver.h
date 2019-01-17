@@ -8,6 +8,7 @@
 #include <vector>
 #include <deque>
 #include <string>
+#include <omp.h>
 #include <map>
 #include <random>
 #include <tesseract/baseapi.h>
@@ -72,7 +73,8 @@ public:
                         const vector<int> * sol_x=nullptr);
 
 private:
-
+    
+    omp_lock_t lock;
     Metric metric_mode;
     Composition composition_mode;
     bool real_flag;
@@ -84,7 +86,7 @@ private:
 
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
-    tesseract::TessBaseAPI * ocr;
+    // tesseract::TessBaseAPI * ocr;
     const double conf_thres {80};
 
     // Compatibility 
