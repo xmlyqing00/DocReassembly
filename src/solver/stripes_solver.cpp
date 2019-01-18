@@ -245,7 +245,7 @@ cv::Mat StripesSolver::add_seams(   const cv::Mat & img,
 
     if (print_flag) {
         composition_score = (double)correct_cnt / (int(composition_order.size()) - 1);
-        printf("Composition Score: %.3lf\n", composition_score);
+        printf("Composition Score: %.6lf\n", composition_score);
     }
 
     return img_seams;
@@ -376,7 +376,7 @@ void StripesSolver::m_metric_word() {
 
         for (int j = 0; j < stripes_n; j++) {
             if (i == j) continue;
-            // if (!real_flag && pixel_graph[i][j] < 0) continue;
+            if (!real_flag && pixel_graph[i][j] < 0) continue;
             score_max = max(score_max, pixel_graph[i][j]);
             score_min = min(score_min, pixel_graph[i][j]);
             valid_flag = true;
@@ -387,7 +387,8 @@ void StripesSolver::m_metric_word() {
         double score_delta = score_max - score_min;
         for (int j = 0; j < stripes_n; j++) {
             if (i == j) continue;
-            // if (!real_flag && pixel_graph[i][j] < 0) continue;
+            if (!real_flag && pixel_graph[i][j] < 0) continue;
+            if (abs(score_delta) < eps) continue;
             double score = (pixel_graph[i][j] - score_min) / score_delta;
             s_l[i][j] = exp(-score);
         }
@@ -403,7 +404,7 @@ void StripesSolver::m_metric_word() {
 
         for (int i = 0; i < stripes_n; i++) {
             if (i == j) continue;
-            // if (!real_flag && pixel_graph[i][j] < 0) continue;
+            if (!real_flag && pixel_graph[i][j] < 0) continue;
             score_max = max(score_max, pixel_graph[i][j]);
             score_min = min(score_min, pixel_graph[i][j]);
             valid_flag = true;
@@ -414,7 +415,8 @@ void StripesSolver::m_metric_word() {
         double score_delta = score_max - score_min;
         for (int i = 0; i < stripes_n; i++) {
             if (i == j) continue;
-            // if (!real_flag && pixel_graph[i][j] < 0) continue;
+            if (!real_flag && pixel_graph[i][j] < 0) continue;
+            if (abs(score_delta) < eps) continue;
             double score = (pixel_graph[i][j] - score_min) / score_delta;
             s_r[i][j] = exp(-score);
         }
@@ -430,7 +432,7 @@ void StripesSolver::m_metric_word() {
     }
 
     // Compute stripe_pairs
-    double U_a = 1;
+    double U_a = 2;
     if (real_flag) U_a = 1.1;
 
     vector< vector<StripePair> > compose_next;
@@ -445,7 +447,13 @@ void StripesSolver::m_metric_word() {
         sort(next_pairs.begin(), next_pairs.end());
         
         // double mid_score = next_pairs[stripes_n/2].m_score;
-        double worst_score = next_pairs.back().m_score;
+        double worst_score;
+        for (int j = next_pairs.size() - 1; j >= 0; j--) {
+            if (next_pairs[j].m_score > eps) {
+                worst_score = next_pairs[j].m_score;
+                break; 
+            }
+        }
         if (abs(worst_score) < eps) {
             compose_next.push_back(vector<StripePair>());
             continue;
@@ -513,12 +521,15 @@ void StripesSolver::m_metric_word() {
 
 #ifdef DEBUG
         cout << sol_idx << endl;
-        tmp_img = add_seams(tmp_img, sol, false, &sol_x);
+        tmp_img = add_seams(tmp_img, sol, true, &sol_x);
         cv::imwrite("tmp/sol_" + to_string(sol_idx) + ".png", tmp_img);
         // cv::imshow("Tmp img", tmp_img);
         // cv::waitKey();
 #else
-        if (sol_idx % 20 == 0) cout << sol_idx << " " << flush;
+        if (sol_idx % 100 == 0) {
+            cout << sol_idx << " " << flush;
+        }
+
 #endif
     }
     cout << endl;
@@ -618,9 +629,12 @@ void StripesSolver::m_metric() {
                         m_score = m_metric_char(stripes[i], stripes[j]);
                     case Metric::WORD:
                         m_score_p = m_metric_pixel(stripes[i], stripes[j], real_flag);
+                        //if (m_score_p < -eps) {
+                        //    m_score_p = 100;
+                        //}
                         if (real_flag) {
                             m_score_c = m_metric_char(stripes[i], stripes[j]);
-                            m_score = m_score_p * 2 + m_score_c;
+                            m_score = 2 * m_score_p + m_score_c;
                         } else {
                             m_score = m_score_p;
                         }

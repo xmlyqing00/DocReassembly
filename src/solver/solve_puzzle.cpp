@@ -123,7 +123,7 @@ int main(int argc, char ** argv) {
     cout << "Composition mode:    \t" << static_cast<int>(composition_mode) << endl;
     cout << "Real-world case:     \t" << real_flag << endl;
 
-    clock_t start_time = clock();
+    time_t start_time = time(0);
 
     // Import stripes
     if (puzzle_type == PuzzleType::STRIPES) {
@@ -138,9 +138,10 @@ int main(int argc, char ** argv) {
 
     }
 
-    clock_t end_time = clock();
+    time_t end_time = time(0);
+    double total_time = difftime(end_time, start_time);
 
-    cout << "Time used: " << double(end_time - start_time) / CLOCKS_PER_SEC << " s" << endl << endl;
+    cout << "Time used: " << total_time << " s" << endl << endl;
 
     return 0;
 }
