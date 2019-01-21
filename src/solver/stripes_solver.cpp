@@ -53,14 +53,14 @@ StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int 
         stripes.push_back(move(stripe_img));
     }
 
-    omp_init_lock(&lock);
+    omp_init_lock(&omp_lock);
 
 }
 
 StripesSolver::~StripesSolver() {
     // ocr->End();
 
-    omp_destroy_lock(&lock);
+    omp_destroy_lock(&omp_lock);
 }
 
 void StripesSolver::save_result(const string & case_name, bool benchmark_flag) {
@@ -432,7 +432,7 @@ void StripesSolver::m_metric_word() {
     }
 
     // Compute stripe_pairs
-    double U_a = 2;
+    double U_a = 3;
     if (real_flag) U_a = 1.1;
 
     vector< vector<StripePair> > compose_next;
@@ -446,24 +446,24 @@ void StripesSolver::m_metric_word() {
 
         sort(next_pairs.begin(), next_pairs.end());
         
-        // double mid_score = next_pairs[stripes_n/2].m_score;
-        double worst_score;
-        for (int j = next_pairs.size() - 1; j >= 0; j--) {
-            if (next_pairs[j].m_score > eps) {
-                worst_score = next_pairs[j].m_score;
-                break; 
-            }
-        }
+        double worst_score = next_pairs[stripes_n/2].m_score;
+        //double worst_score;
+        //for (int j = next_pairs.size() - 1; j >= 0; j--) {
+        //    if (next_pairs[j].m_score > eps) {
+        //        worst_score = next_pairs[j].m_score;
+        //        break; 
+        //    }
+        //}
         if (abs(worst_score) < eps) {
             compose_next.push_back(vector<StripePair>());
             continue;
         }
 
-        // next_pairs.erase(next_pairs.begin() + stripes_n / 2, next_pairs.end());
+        next_pairs.erase(next_pairs.begin() + stripes_n / 2, next_pairs.end());
         for (int j = 0; j < next_pairs.size(); j++) {
             double alpha = U_a * (next_pairs[j].m_score / worst_score - 1);
             double exp_alpha = exp(alpha);
-            next_pairs[j].ac_prob = max((double)0, (exp_alpha - 1)) / (exp_alpha + 1);
+            next_pairs[j].ac_prob = (exp_alpha - 1) / (exp_alpha + 1);
         }
 
         compose_next.push_back(move(next_pairs));
@@ -521,7 +521,7 @@ void StripesSolver::m_metric_word() {
 
 #ifdef DEBUG
         cout << sol_idx << endl;
-        tmp_img = add_seams(tmp_img, sol, true, &sol_x);
+        tmp_img = add_seams(tmp_img, sol, false, &sol_x);
         cv::imwrite("tmp/sol_" + to_string(sol_idx) + ".png", tmp_img);
         // cv::imshow("Tmp img", tmp_img);
         // cv::waitKey();
@@ -646,12 +646,12 @@ void StripesSolver::m_metric() {
                         break;
                 }   
 
-                omp_set_lock(&lock);
+                omp_set_lock(&omp_lock);
                 pixel_graph[i][j] = m_score;
                 if (m_score_p > -eps) {
                     stripe_pairs.push_back(StripePair(i, j, m_score, 1.0, true));
                 }
-                omp_unset_lock(&lock);
+                omp_unset_lock(&omp_lock);
 
             }
 
@@ -900,9 +900,9 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
         } while (ocr_iter->Next(tesseract_level));
     }
 
-    omp_set_lock(&lock);
+    omp_set_lock(&omp_lock);
     path_manager.add_sol_words(sol_words);
-    omp_unset_lock(&lock);
+    omp_unset_lock(&omp_lock);
 
     ocr->End();
 

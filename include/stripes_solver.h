@@ -74,7 +74,6 @@ public:
 
 private:
     
-    omp_lock_t lock;
     Metric metric_mode;
     Composition composition_mode;
     bool real_flag;
@@ -122,5 +121,7 @@ private:
     void finetune_sols(const vector< vector<int> > & fragments);
 
 };
+
+static omp_lock_t omp_lock;
 
 #endif
