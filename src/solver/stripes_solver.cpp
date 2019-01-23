@@ -30,6 +30,12 @@ StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int 
 //     fclose(file);
 // #endif
 
+    white_chars = "";
+    for (int i = 0; i < 10; i++) white_chars += to_string(i);
+    for (int i = 0; i < 26; i++) white_chars += char(int('A') + i);
+    for (int i = 0; i < 26; i++) white_chars += char(int('a') + i);
+    black_chars = ",<.>/?;:\'\"[{]}\\|";
+
     // Read ground truth order.
     ifstream fin(puzzle_folder + "order.txt", ios::in);
     if (!fin.is_open()) {
@@ -478,6 +484,7 @@ void StripesSolver::m_metric_word() {
     cout << "[INFO] Search candidate sols." << endl;
     
     vector< vector<int> > composition_cnt(stripes_n, vector<int>(stripes_n, 0));
+    candidate_sols.push_back({4, 0, 16, 3});
 
     while (candidate_sols.size() < sols_n) {
 
@@ -514,6 +521,11 @@ void StripesSolver::m_metric_word() {
         const auto & sol = candidate_sols[i];
         
         ++sol_idx;
+
+        // for (int j = 0; j < sol.size(); j++) {
+        //     cout << sol[j] << " ";
+        // }
+        // cout << endl;
         
         vector<int> sol_x;
         cv::Mat composition_img = compose_img(sol, real_flag, &sol_x);
@@ -840,12 +852,7 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
         exit(-1);
     }
 
-    string white_chars = "";
-    for (int i = 0; i < 10; i++) white_chars += to_string(i);
-    for (int i = 0; i < 26; i++) white_chars += char(int('A') + i);
-    for (int i = 0; i < 26; i++) white_chars += char(int('a') + i);
-    bool x = ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
-    string black_chars = ",<.>/?;:\'\"[{]}\\|";
+    ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
     ocr->SetVariable("tessedit_char_blacklist", black_chars.c_str());
 
     ocr->SetVariable("language_model_penalty_non_freq_dict_word", "5");
@@ -866,9 +873,9 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
             cum_x += stripes[sol[i]].cols;
         }
     }
-    
 
     map< vector<int>, int > sol_words;
+    int bias = real_flag ? 3 : 1;
 
     if (ocr_iter != 0) {
         do {
@@ -879,23 +886,22 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
             // Boundary cross constraint
             int x0, y0, x1, y1;
             ocr_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
-            const cv::Rect bbox(x0 + 3, y0, x1 - x0 - 6, y1 - y0);
+            const cv::Rect bbox(x0 + bias, y0, x1 - x0 - bias * 2, y1 - y0);
 
             int sol_path_st = upper_bound(sol_x.begin(), sol_x.end(), x0) - sol_x.begin() - 1;
             int sol_path_ed = lower_bound(sol_x.begin(), sol_x.end(), x1) - sol_x.begin();
             
             if (sol_path_ed - sol_path_st > 1) {
                 sol_words[vector<int>(sol.begin()+sol_path_st, sol.begin()+sol_path_ed)]++;
+            }
 #ifdef DEBUG
+                cv::rectangle(img_bbox, bbox, color_blue);
                 printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
                         word.c_str(), conf, ocr_iter->WordIsFromDictionary(), x0, y0, x1, y1);
                 cout << endl;
 #endif
-            }
+            
 
-#ifdef DEBUG
-            cv::rectangle(img_bbox, bbox, color_blue);
-#endif
 
         } while (ocr_iter->Next(tesseract_level));
     }

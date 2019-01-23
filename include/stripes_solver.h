@@ -86,7 +86,7 @@ private:
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
     // tesseract::TessBaseAPI * ocr;
-    const double conf_thres {80};
+    const double conf_thres {70};
 
     // Compatibility 
     const double filter_rate = 1;
@@ -100,6 +100,8 @@ private:
     Device device {kCPU};
 
     // Metric word-path
+    string white_chars, black_chars;
+
     int sols_n {10};
     int candidate_len {10};
     const int candidate_factor {5};

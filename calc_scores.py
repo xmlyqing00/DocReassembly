@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 folder_name = 'data/scores/'
 scores_list = os.listdir(folder_name)
 nums = [20, 30, 40, 60]
-method_names = ['Pixel + Greedy', 'Pixel + GCOM', 'Word + Greedy', 'Word + GCOM', 'GA']
+method_names = ['P-Greedy', 'P-GCOM', 'W-Greedy', 'W-GCOM', 'P-GA']
 method_colors = ['teal', 'olive', 'aqua', 'orchid', 'orange']
 order = [4, 0, 1, 2, 3]
 # order = [0, 1, 2, 3]
