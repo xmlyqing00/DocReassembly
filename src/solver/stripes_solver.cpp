@@ -185,7 +185,7 @@ bool StripesSolver::reassemble( Metric _metric_mode,
         // 4
         case Composition::USER:
             // composition_order = vector<int>({19,21,24,26,11,14,2,6,8,1,22,23,15,12,4,17,10,13,16,9,0,7,25,18,3,5});
-            composition_order = vector<int>({8,0,5,7,9,10,26,6,17,11,14,15,16,12,18,13,3,19,20,1,23,22,21,24,4,2,25});
+            composition_order = vector<int>({7,2, 18, 16, 15, 10, 25, 0, 1, 20, 23, 22, 21, 24, 11, 14, 17, 13, 9, 12, 4, 3, 8, 5, 26, 6, 19 });
             
             composition_img = compose_img(composition_order, true, &sol_x);
             composition_img_seams = add_seams(composition_img, composition_order, false, &sol_x);
@@ -207,6 +207,10 @@ cv::Mat StripesSolver::compose_img( const vector<int> & composition_order,
     cv::Mat composition_img;
     int x0, x1;
     for (int i = 0; i < composition_order.size(); i++) {
+        if (i == 8) {
+            cv::imshow("comp", composition_img);
+            cv::waitKey();
+        }
         composition_img = merge_imgs(composition_img, stripes[composition_order[i]], shift_flag, &x0, &x1);
         if (shift_flag) sol_x->push_back(x0);
     }
@@ -439,7 +443,7 @@ void StripesSolver::m_metric_word() {
 
     // Compute stripe_pairs
     double U_a = 3;
-    if (real_flag) U_a = 1.1;
+    if (real_flag) U_a = 1.5;
 
     vector< vector<StripePair> > compose_next;
     for (int i = 0; i < stripes_n; i++) {
@@ -453,19 +457,24 @@ void StripesSolver::m_metric_word() {
         sort(next_pairs.begin(), next_pairs.end());
         
         double worst_score = next_pairs[stripes_n/2].m_score;
-        //double worst_score;
-        //for (int j = next_pairs.size() - 1; j >= 0; j--) {
-        //    if (next_pairs[j].m_score > eps) {
-        //        worst_score = next_pairs[j].m_score;
-        //        break; 
-        //    }
-        //}
+        if (real_flag) {
+            for (int j = next_pairs.size() - 1; j >= 0; j--) {
+                if (next_pairs[j].m_score > eps) {
+                    worst_score = next_pairs[j].m_score;
+                    break; 
+                }
+            }
+        }
+
         if (abs(worst_score) < eps) {
             compose_next.push_back(vector<StripePair>());
             continue;
         }
 
-        next_pairs.erase(next_pairs.begin() + stripes_n / 2, next_pairs.end());
+        if (!real_flag) {
+            next_pairs.erase(next_pairs.begin() + stripes_n / 2, next_pairs.end());
+        }
+        
         for (int j = 0; j < next_pairs.size(); j++) {
             double alpha = U_a * (next_pairs[j].m_score / worst_score - 1);
             double exp_alpha = exp(alpha);
@@ -519,25 +528,20 @@ void StripesSolver::m_metric_word() {
     for (int i = 0; i < candidate_sols.size(); i++) {
 
         const auto & sol = candidate_sols[i];
-        
-        ++sol_idx;
-
-        // for (int j = 0; j < sol.size(); j++) {
-        //     cout << sol[j] << " ";
-        // }
-        // cout << endl;
-        
         vector<int> sol_x;
         cv::Mat composition_img = compose_img(sol, real_flag, &sol_x);
         cv::Mat tmp_img = word_detection(composition_img, sol, sol_x);
+        // cv::Mat tmp_img = composition_img.clone();
 
 #ifdef DEBUG
         cout << sol_idx << endl;
         tmp_img = add_seams(tmp_img, sol, false, &sol_x);
+        ++sol_idx;
         cv::imwrite("tmp/sol_" + to_string(sol_idx) + ".png", tmp_img);
         // cv::imshow("Tmp img", tmp_img);
         // cv::waitKey();
 #else
+        ++sol_idx;
         if (sol_idx % 100 == 0) {
             cout << sol_idx << " " << flush;
         }
@@ -641,9 +645,6 @@ void StripesSolver::m_metric() {
                         m_score = m_metric_char(stripes[i], stripes[j]);
                     case Metric::WORD:
                         m_score_p = m_metric_pixel(stripes[i], stripes[j], real_flag);
-                        //if (m_score_p < -eps) {
-                        //    m_score_p = 100;
-                        //}
                         if (real_flag) {
                             m_score_c = m_metric_char(stripes[i], stripes[j]);
                             m_score = 2 * m_score_p + m_score_c;

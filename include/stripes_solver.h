@@ -86,7 +86,7 @@ private:
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
     // tesseract::TessBaseAPI * ocr;
-    const double conf_thres {70};
+    const double conf_thres {75};
 
     // Compatibility 
     const double filter_rate = 1;
