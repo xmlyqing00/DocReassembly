@@ -18,7 +18,13 @@ void solve_stripes( const string & stripes_folder,
     }
 
     cv::imshow("Composition Image", stripes_solver.composition_img);
-    cv::imshow("Composition Image Seams", stripes_solver.composition_img_seams);
+    if (!stripes_solver.composition_img_seams.empty()) {
+        cv::imshow("Composition Image Seams", stripes_solver.composition_img_seams);
+    }
+    if (!stripes_solver.composition_img_bar.empty()) {
+        cv::imshow("Composition Image Bar", stripes_solver.composition_img_bar);
+    }
+    
     cv::waitKey();
 #endif
 }

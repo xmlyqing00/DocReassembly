@@ -50,6 +50,7 @@ public:
     vector<int> composition_order;
     cv::Mat composition_img;
     cv::Mat composition_img_seams;
+    cv::Mat composition_img_bar;
     double composition_score;
 
     // Path
@@ -71,6 +72,10 @@ public:
                         const vector<int> & composition_order, 
                         bool print_flag=true,
                         const vector<int> * sol_x=nullptr);
+    cv::Mat add_colorbar(   const cv::Mat & img, 
+                            const vector<int> & composition_order, 
+                            bool print_flag,
+                            const vector<int> * sol_x=nullptr);
 
 private:
     
@@ -86,7 +91,7 @@ private:
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
     // tesseract::TessBaseAPI * ocr;
-    const double conf_thres {75};
+    const double conf_thres {70};
 
     // Compatibility 
     const double filter_rate = 1;

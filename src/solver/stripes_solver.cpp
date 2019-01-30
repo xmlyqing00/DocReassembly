@@ -83,7 +83,13 @@ void StripesSolver::save_result(const string & case_name, bool benchmark_flag) {
         (composition_mode == Composition::GCOM ? "_s" + to_string(sols_n) : "");
         
     cv::imwrite(output_path + ".png", composition_img);
-    cv::imwrite(output_path + "_seams.png", composition_img_seams);
+    if (!composition_img_seams.empty()) {
+        cv::imwrite(output_path + "_seams.png", composition_img_seams);
+    }
+    if (!composition_img_bar.empty()) {
+        cv::imwrite(output_path + "_bar.png", composition_img_bar);
+    }
+    
 
     if (benchmark_flag) {
         ofstream fout("data/scores_ori/" + case_name + ".txt", ios::app);
@@ -188,7 +194,8 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             composition_order = vector<int>({7,2, 18, 16, 15, 10, 25, 0, 1, 20, 23, 22, 21, 24, 11, 14, 17, 13, 9, 12, 4, 3, 8, 5, 26, 6, 19 });
             
             composition_img = compose_img(composition_order, true, &sol_x);
-            composition_img_seams = add_seams(composition_img, composition_order, false, &sol_x);
+            // composition_img_seams = add_seams(composition_img, composition_order, false, &sol_x);
+            composition_img_bar = add_colorbar(composition_img, composition_order, true, &sol_x);
             save_result(case_name, false);
             break;
 
@@ -207,10 +214,10 @@ cv::Mat StripesSolver::compose_img( const vector<int> & composition_order,
     cv::Mat composition_img;
     int x0, x1;
     for (int i = 0; i < composition_order.size(); i++) {
-        if (i == 8) {
-            cv::imshow("comp", composition_img);
-            cv::waitKey();
-        }
+        // if (i == 8) {
+            // cv::imshow("comp", composition_img);
+            // cv::waitKey();
+        // }
         composition_img = merge_imgs(composition_img, stripes[composition_order[i]], shift_flag, &x0, &x1);
         if (shift_flag) sol_x->push_back(x0);
     }
@@ -261,6 +268,59 @@ cv::Mat StripesSolver::add_seams(   const cv::Mat & img,
     return img_seams;
 
 }
+
+cv::Mat StripesSolver::add_colorbar(const cv::Mat & img, 
+                                    const vector<int> & composition_order, 
+                                    bool print_flag,
+                                    const vector<int> * sol_x) {
+
+    const int bar_h = 30;
+    const int indicator_w = bar_h;
+
+    cv::Size img_size = img.size();
+    img_size.height += bar_h;
+    cv::Mat img_colorbar(img_size, CV_8UC3, cv::Scalar(255, 255, 255));
+    img.copyTo(img_colorbar(cv::Rect(0, bar_h, img.cols, img.rows)));
+    
+    int col = stripes[composition_order[0]].cols;
+    cv::Scalar bar_color;
+
+    int correct_cnt = 0;
+
+    for (int i = 1; i < composition_order.size(); i++) {
+
+        for (int j = 0; j < stripes_n; j++) {
+            if (gt_order[j] != composition_order[i-1]) continue;
+            if (j == stripes_n - 1 || gt_order[j+1] != composition_order[i]) {
+                bar_color = seam_color_red;
+            } else {
+                bar_color = seam_color_green;
+                correct_cnt++;
+            }
+            break;
+        }
+
+        if (sol_x->size() == 0) {
+            img_colorbar(cv::Rect(col-indicator_w/2, 0, indicator_w, bar_h)) = bar_color;
+            col += stripes[composition_order[i]].cols;
+        } else {
+            img_colorbar(cv::Rect((*sol_x)[i]-indicator_w/2, 0, indicator_w, bar_h)) = bar_color;
+        }
+        
+        cv::imshow("bar", img_colorbar);
+        cv::waitKey();
+
+    }
+
+    if (print_flag) {
+        composition_score = (double)correct_cnt / (int(composition_order.size()) - 1);
+        printf("Composition Score: %.6lf\n", composition_score);
+    }
+
+    return img_colorbar;
+
+}
+
 
 double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1) {
 
