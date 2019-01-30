@@ -14,12 +14,12 @@
 #include <tesseract/baseapi.h>
 #include <opencv2/opencv.hpp>
 
-#include <ocr_extractor.h>
+// #include <ocr_extractor.h>
 #include <fragment.h>
 #include <path_manager.h>
 #include <utils.h>
 #include <KM.h>
-#include <compatibility_net.h>
+// #include <compatibility_net.h>
 #include <stripe_pair.h>
 
 using namespace std;
@@ -32,7 +32,7 @@ public:
         PIXEL,
         CHAR,
         WORD,
-        COMP_EVA
+        // COMP_EVA
     };
 
     enum Composition {
@@ -93,16 +93,17 @@ private:
     // tesseract::TessBaseAPI * ocr;
     const double conf_thres {70};
 
-    // Compatibility 
     const double filter_rate = 1;
-    const int symbols_n = 64;
-    const cv::Size cp_net_img_size {64, 64};
-    const string saved_model_folder = "data/saved_models/";
+
+    // Compatibility 
+    // const int symbols_n = 64;
+    // const cv::Size cp_net_img_size {64, 64};
+    // const string saved_model_folder = "data/saved_models/";
     vector<char> symbols;
 
-    OcrExtractor ocr_ectractor;
-    CompatibilityNet cp_net;
-    Device device {kCPU};
+    // OcrExtractor ocr_ectractor;
+    // CompatibilityNet cp_net;
+    // Device device {kCPU};
 
     // Metric word-path
     string white_chars, black_chars;
@@ -114,7 +115,7 @@ private:
     vector< vector<double> > pixel_graph2;
 
     double m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1);
-    double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
+    // double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     void m_metric_word();
     
     vector< vector<int> > reassemble_greedy(bool probability_flag=false);

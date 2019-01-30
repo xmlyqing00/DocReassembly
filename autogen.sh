@@ -11,8 +11,9 @@ if [ "$1" == "release" ]; then
     mkdir -p build/release
     cd build/release
 
-    echo "[ cmd] cmake -DLibtorch_REL_PATH=../libtorch/ -DCMAKE_BUILD_TYPE=Release ../../"
-    cmake -DLibtorch_REL_PATH=../libtorch/ -DCMAKE_BUILD_TYPE=Release ../../
+    echo "[ cmd] cmake -DCMAKE_BUILD_TYPE=Release ../../"
+    # cmake -DLibtorch_REL_PATH=../libtorch/ -DCMAKE_BUILD_TYPE=Release ../../
+    cmake -DCMAKE_BUILD_TYPE=Release ../../
 
     echo "[ cmd] make -j12"
     make -j12
@@ -25,8 +26,9 @@ if [ "$1" == "debug" ]; then
     mkdir -p build/debug
     cd build/debug
 
-    echo "[ cmd] cmake -DLibtorch_REL_PATH=../libtorch/ -DCMAKE_BUILD_TYPE=Debug ../../"
-    cmake -DLibtorch_REL_PATH=../libtorch/ -DCMAKE_BUILD_TYPE=Debug ../..
+    echo "[ cmd] -DCMAKE_BUILD_TYPE=Debug ../../"
+    # cmake -DLibtorch_REL_PATH=../libtorch/ -DCMAKE_BUILD_TYPE=Debug ../..
+    cmake -DCMAKE_BUILD_TYPE=Debug ../..
 
     echo "[ cmd] make -j12"
     make -j12
