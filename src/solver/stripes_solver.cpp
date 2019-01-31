@@ -142,8 +142,7 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             reassemble_GCOM();
             
             composition_img = compose_img(composition_order, real_flag, &sol_x);
-            composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
-
+            
             save_result(case_name, benchmark_flag);
             break;
         
@@ -164,7 +163,11 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             }
 
             composition_img = compose_img(composition_order, real_flag, &sol_x);
-            composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
+            if (real_flag) {
+                composition_img_bar = add_colorbar(composition_img, composition_order, true, &sol_x);
+            } else {
+                composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
+            }
 
             save_result(case_name, benchmark_flag);
 
@@ -175,7 +178,11 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             reassemble_GCOM();
 
             composition_img = compose_img(composition_order, real_flag, &sol_x);
-            composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
+            if (real_flag) {
+                composition_img_bar = add_colorbar(composition_img, composition_order, true, &sol_x);
+            } else {
+                composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
+            }
             
             save_result(case_name, benchmark_flag);
             break;
@@ -190,8 +197,9 @@ bool StripesSolver::reassemble( Metric _metric_mode,
 
         // 4
         case Composition::USER:
+        
             // composition_order = vector<int>({19,21,24,26,11,14,2,6,8,1,22,23,15,12,4,17,10,13,16,9,0,7,25,18,3,5});
-            composition_order = vector<int>({7,2, 18, 16, 15, 10, 25, 0, 1, 20, 23, 22, 21, 24, 11, 14, 17, 13, 9, 12, 4, 3, 8, 5, 26, 6, 19 });
+            composition_order = vector<int>({19, 20, 23, 22, 21, 17, 10, 13, 9, 12, 3, 26, 18, 16, 15, 8, 5, 7, 25, 24, 6, 11, 14, 0, 1, 2, 4});
             
             composition_img = compose_img(composition_order, true, &sol_x);
             // composition_img_seams = add_seams(composition_img, composition_order, false, &sol_x);
@@ -307,9 +315,6 @@ cv::Mat StripesSolver::add_colorbar(const cv::Mat & img,
             img_colorbar(cv::Rect((*sol_x)[i]-indicator_w/2, 0, indicator_w, bar_h)) = bar_color;
         }
         
-        cv::imshow("bar", img_colorbar);
-        cv::waitKey();
-
     }
 
     if (print_flag) {
@@ -582,7 +587,6 @@ void StripesSolver::m_metric_word() {
 
     cout << "Detect words on solution: ";
 
-    
     #pragma omp parallel for
     // for (const auto & sol: candidate_sols) {
     for (int i = 0; i < candidate_sols.size(); i++) {

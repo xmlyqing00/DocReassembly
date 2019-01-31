@@ -93,10 +93,12 @@ void PathManager::print_path_graph() {
 
 vector<StripePair> PathManager::build_stripe_pairs() {
 
+    int T_w = 2;
+
     for (int i = 0; i < nodes_n; i++) {
         for (const auto & edge: path_graph[i]) {
 
-            // if (edge.second < 3) continue;
+            if (edge.second < T_w) continue;
             stripe_pairs.push_back(StripePair(
                 i,
                 edge.first,
