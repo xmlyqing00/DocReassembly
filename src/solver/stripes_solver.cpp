@@ -172,7 +172,7 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             save_result(case_name, benchmark_flag);
 
             // GCOM Part
-            cout << "[INFO] Composition: GCOM." << endl;
+            cout << "[INFO] Composition: Greedy + GCOM: GCOM." << endl;
 
             composition_mode = Composition::GCOM;
             reassemble_GCOM();
