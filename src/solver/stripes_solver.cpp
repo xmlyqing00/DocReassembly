@@ -94,7 +94,7 @@ void StripesSolver::save_result(const string & case_name, bool benchmark_flag) {
     if (benchmark_flag) {
         ofstream fout("data/scores_ori/" + case_name + ".txt", ios::app);
         fout << composition_score << " ";
-        if ((sols_n == 3200 || sols_n == 4000) && composition_mode == Composition::GCOM) {
+        if ((stripes_n == 40 || stripes_n == 60) && composition_mode == Composition::GCOM) {
             fout << endl;
         }
         fout.close();
@@ -163,11 +163,11 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             }
 
             composition_img = compose_img(composition_order, real_flag, &sol_x);
-            if (real_flag) {
+            // if (real_flag) {
                 composition_img_bar = add_colorbar(composition_img, composition_order, true, &sol_x);
-            } else {
-                composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
-            }
+            // } else {
+                // composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
+            // }
 
             save_result(case_name, benchmark_flag);
 
@@ -178,11 +178,11 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             reassemble_GCOM();
 
             composition_img = compose_img(composition_order, real_flag, &sol_x);
-            if (real_flag) {
+            // if (real_flag) {
                 composition_img_bar = add_colorbar(composition_img, composition_order, true, &sol_x);
-            } else {
-                composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
-            }
+            // } else {
+                // composition_img_seams = add_seams(composition_img, composition_order, true, &sol_x);
+            // }
             
             save_result(case_name, benchmark_flag);
             break;
@@ -282,7 +282,7 @@ cv::Mat StripesSolver::add_colorbar(const cv::Mat & img,
                                     bool print_flag,
                                     const vector<int> * sol_x) {
 
-    const int bar_h = 30;
+    const int bar_h = min(30, stripes[composition_order[0]].cols - 2);
     const int indicator_w = bar_h;
 
     cv::Size img_size = img.size();
@@ -594,8 +594,8 @@ void StripesSolver::m_metric_word() {
         const auto & sol = candidate_sols[i];
         vector<int> sol_x;
         cv::Mat composition_img = compose_img(sol, real_flag, &sol_x);
+        // cv::imwrite("tmp/comp_" + to_string(sol_idx + 1) + ".png", composition_img);
         cv::Mat tmp_img = word_detection(composition_img, sol, sol_x);
-        // cv::Mat tmp_img = composition_img.clone();
 
 #ifdef DEBUG
         cout << sol_idx << endl;
