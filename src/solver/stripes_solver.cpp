@@ -4,31 +4,8 @@ StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int 
     puzzle_folder(_puzzle_folder),
     stripes_n(_stripes_n),
     sols_n(_samples_n),
-    path_manager(_stripes_n, sols_n),
+    path_manager(_stripes_n, _samples_n),
     real_flag(_real_flag) {
-
-    // ocr = new tesseract::TessBaseAPI();
-    // if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_TESSERACT_ONLY)) {
-    //     cerr << "Could not initialize tesseract." << endl;
-    //     exit(-1);
-    // }
-
-//     string white_chars = "";
-//     for (int i = 0; i < 10; i++) white_chars += to_string(i);
-//     for (int i = 0; i < 26; i++) white_chars += char(int('A') + i);
-//     for (int i = 0; i < 26; i++) white_chars += char(int('a') + i);
-//     bool x = ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
-//     string black_chars = ",<.>/?;:\'\"[{]}\\|";
-//     ocr->SetVariable("tessedit_char_blacklist", black_chars.c_str());
-
-//     ocr->SetVariable("language_model_penalty_non_freq_dict_word", "5");
-//     ocr->SetVariable("language_model_penalty_non_dict_word", "1");
-
-// #ifdef DEBUG
-//     FILE * file = fopen("tmp/variables.txt", "w");
-//     ocr->PrintVariables(file);
-//     fclose(file);
-// #endif
 
     white_chars = "";
     for (int i = 0; i < 10; i++) white_chars += to_string(i);
@@ -226,7 +203,7 @@ cv::Mat StripesSolver::compose_img( const vector<int> & composition_order,
             // cv::imshow("comp", composition_img);
             // cv::waitKey();
         // }
-        composition_img = merge_imgs(composition_img, stripes[composition_order[i]], shift_flag, &x0, &x1);
+        composition_img = merge_imgs(composition_img, stripes[composition_order[i]], x0, x1, shift_flag);
         if (shift_flag) sol_x->push_back(x0);
     }
 
@@ -327,31 +304,13 @@ cv::Mat StripesSolver::add_colorbar(const cv::Mat & img,
 }
 
 
-double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1) {
+double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1, tesseract::TessBaseAPI * ocr) {
 
     int seam_x = piece0.cols;
     int margin_piece1;
-    cv::Mat && merged_img = merge_imgs(piece0, piece1, real_flag, &seam_x, &margin_piece1);
-
-    tesseract::TessBaseAPI * ocr = new tesseract::TessBaseAPI();
-    if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_TESSERACT_ONLY)) {
-        cerr << "Could not initialize tesseract." << endl;
-        exit(-1);
-    }
-
-    string white_chars = "";
-    for (int i = 0; i < 10; i++) white_chars += to_string(i);
-    for (int i = 0; i < 26; i++) white_chars += char(int('A') + i);
-    for (int i = 0; i < 26; i++) white_chars += char(int('a') + i);
-    bool x = ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
-    string black_chars = ",<.>/?;:\'\"[{]}\\|";
-    ocr->SetVariable("tessedit_char_blacklist", black_chars.c_str());
-
-    ocr->SetVariable("language_model_penalty_non_freq_dict_word", "5");
-    ocr->SetVariable("language_model_penalty_non_dict_word", "1");
+    cv::Mat && merged_img = merge_imgs(piece0, piece1, seam_x, margin_piece1, real_flag);
 
     const int max_m_width = min(piece0.cols, piece1.cols);
-    const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_SYMBOL};
 
     ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
     ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, piece0.rows);
@@ -364,76 +323,38 @@ double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piec
     if (ocr_iter != 0) {
         do {
 
-            const float conf = ocr_iter->Confidence(tesseract_level);
+            const float conf = ocr_iter->Confidence(tesseract::RIL_SYMBOL);
             if (conf < conf_thres) continue;
 
             // Boundary cross constraint
             int x0, y0, x1, y1;
-            ocr_iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
+            ocr_iter->BoundingBox(tesseract::RIL_SYMBOL, &x0, &y0, &x1, &y1);
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
             if (!cross_seam(o_bbox, seam_x)) continue;
 
-            const string ocr_char = ocr_iter->GetUTF8Text(tesseract_level);
-            m_metric_score += conf * ocr_char.length();
+            const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_SYMBOL);
+            m_metric_score += conf;
 
-#ifdef DEBUG
-            // cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 200));
-            // printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d;\n",
-                    // ocr_char.c_str(), conf, x0, y0, x1, y1);
-#endif
+// #ifdef DEBUG
+            cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 200));
+            printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d;\n",
+                    ocr_char.c_str(), conf, x0, y0, x1, y1);
+// #endif
 
-        } while (ocr_iter->Next(tesseract_level));
+        } while (ocr_iter->Next(tesseract::RIL_SYMBOL));
     }
+
+    m_metric_score = -m_metric_score;
 
 #ifdef DEBUG
     // cout << "m_metric_score " << m_metric_score << endl << endl;
-    // cv::imshow("Merged", merged_img);
-    // cv::waitKey();
+    cv::imshow("Merged", merged_img);
+    cv::waitKey();
 #endif
 
-    ocr->End();
-
-    return -m_metric_score;
+    return m_metric_score;
 
 }
-
-// double StripesSolver::m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1) {
-
-//     double m_pixel_score = m_metric_pixel(piece0, piece1);
-
-//     cv::Mat && merged_img = merge_imgs(piece0, piece1);
-//     const int seam_x = piece0.cols;
-
-//     cv::imshow("merged", merged_img);
-
-//     ocr_ectractor.extract_img(merged_img);
-
-//     int idx = 0;
-//     while (ocr_ectractor.has_next()) {
-
-//         cv::Mat ocr = ocr_ectractor.next_roi();
-//         cv::resize(ocr, ocr, cp_net_img_size);
-
-//         Tensor img_tensor = torch::from_blob(ocr.data, {ocr.rows, ocr.cols, 3}, kByte);
-//         img_tensor = img_tensor.permute({2, 0, 1}).toType(kFloat32).div_(255).unsqueeze(0);
-//         img_tensor = img_tensor.to(device);
-        
-
-//         Tensor output = cp_net.forward(img_tensor);
-//         int class_idx = output.argmax(1).item<int>();
-
-//         cout << output << endl;
-//         cout << "pred " << class_idx << " " << symbols[class_idx] << endl;
-
-//         cv::imshow("ocr", ocr);
-//         cv::imwrite("tmp/ocr_" + to_string(idx++) + ".png", ocr);
-//         cv::waitKey();
-
-//     }
-
-//     return 0;
-
-// }
 
 void StripesSolver::m_metric_word() {
 
@@ -637,65 +558,24 @@ void StripesSolver::m_metric() {
 
     cout << "Preserve stripes:    \t" << filters_n << endl;
 
-    // if (metric_mode == COMP_EVA) {
-
-        // const string model_path = saved_model_folder + "best.pt";
-        // if (access(model_path.c_str(), 0) == -1) {
-        //     cerr << "Model file: " << model_path << " does not exist!" << endl;
-        //     exit(-1);
-        // }
-        // serialize::InputArchive input_archive;
-        // input_archive.load_from(model_path);
-
-        // cp_net.load(input_archive);
-
-        // for (int i = 0; i < 10; i++) symbols.push_back('0' + i);
-        // for (int i = 0; i < 26; i++) symbols.push_back('A' + i);
-        // for (int i = 0; i < 26; i++) symbols.push_back('a' + i);
-        // symbols.push_back('.');
-        // symbols.push_back('?');
-
-        // DeviceType device_type;
-        // if (cuda::is_available()) {
-        //     cout << "CUDA available! Training on GPU" << endl;
-        //     device_type = kCUDA;
-        // } else {
-        //     cout << "Training on CPU" << endl;
-        //     device_type = kCPU;
-        // }
-        // device = Device(device_type);
-        // cp_net.to(device);
-
-        // for (int i = 0; i < stripes_n; i++) {
-
-        //     vector<StripePair> candidates;
-        //     for (int j = 0; j < stripes_n; j++) {
-        //         if (i == j) continue;
-        //         double m_score = m_metric_pixel(stripes[i], stripes[j]);
-        //         candidates.push_back(StripePair(i, j, m_score));
-        //     }
-
-        //     sort(candidates.begin(), candidates.end());
-
-        //     for (int j = 0; j < filters_n; j++) {
-        //         cout << j << " " << candidates[j].m_score << endl;
-        //         double m_score = m_metric_comp_eva(stripes[i], stripes[candidates[j].stripe_idx1]);
-        //         StripePair sp(i, candidates[j].stripe_idx1, m_score);
-        //         stripe_pairs.push_back(sp);
-        //     }
-
-        // }
-
-    
-    // } else {
-
     pixel_graph = vector< vector<double> >(stripes_n, vector<double>(stripes_n, 0));
     double m_score_p, m_score_c;
 
     #pragma omp parallel for
     for (int i = 0; i < stripes_n; i++) {
         
-        #pragma omp parallel for
+        tesseract::TessBaseAPI * ocr = new tesseract::TessBaseAPI();
+        if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_TESSERACT_ONLY)) {
+            cerr << "Could not initialize tesseract." << endl;
+            exit(-1);
+        }
+
+        ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
+        ocr->SetVariable("tessedit_char_blacklist", black_chars.c_str());
+
+        ocr->SetVariable("language_model_penalty_non_freq_dict_word", "5");
+        ocr->SetVariable("language_model_penalty_non_dict_word", "1");
+
         for (int j = 0; j < stripes_n; j++) {
             
             if (i == j) continue;
@@ -706,18 +586,16 @@ void StripesSolver::m_metric() {
                     m_score = m_metric_pixel(stripes[i], stripes[j], real_flag);
                     break;
                 case Metric::CHAR:
-                    m_score = m_metric_char(stripes[i], stripes[j]);
+                    m_score = m_metric_char(stripes[i], stripes[j], ocr);
                 case Metric::WORD:
                     m_score_p = m_metric_pixel(stripes[i], stripes[j], real_flag);
-                    if (real_flag) {
-                        m_score_c = m_metric_char(stripes[i], stripes[j]);
-                        m_score = 2 * m_score_p + m_score_c;
-                    } else {
-                        m_score = m_score_p;
-                    }
-#ifdef DEBUG
-                    cout << "Init " << i << " " << j << " " << m_score << endl;
-#endif
+                    m_score_c = m_metric_char(stripes[i], stripes[j], ocr);
+
+
+                    m_score = lambda_ * m_score_c + (1 - lambda_) * m_score_p;
+// #ifdef DEBUG
+                    printf("Metric (%d, %d)\tc: %.3lf, p: %.3lf, low: %.3lf\n", i, j, m_score_c, m_score_p, m_score);
+// #endif
                     break;
                 default:
                     break;
@@ -731,6 +609,8 @@ void StripesSolver::m_metric() {
             omp_unset_lock(&omp_lock);
 
         }
+
+        ocr->End();
 
     }
     // }
@@ -846,9 +726,11 @@ vector< vector<int> > StripesSolver::reassemble_greedy(bool probability_flag) {
         sol.push_back(cur_idx);
         visited[cur_idx] = true;
 
+        int splice_x0, splice_x1;
+
         while (stripe_right[cur_idx] != -1) {
             cur_idx = stripe_right[cur_idx];
-            composition_img = merge_imgs(composition_img, stripes[cur_idx]);
+            composition_img = merge_imgs(composition_img, stripes[cur_idx], splice_x0, splice_x1);
             sol.push_back(cur_idx);
             visited[cur_idx] = true;
         }

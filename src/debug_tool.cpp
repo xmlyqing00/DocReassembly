@@ -170,7 +170,8 @@ bool show_counter_example_ocr_char_metric(  const cv::Mat & root_img,
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_SYMBOL};
     out_imgs.clear();
 
-    cv::Mat && merged_img = merge_imgs(root_img, test_img);
+    int x0, x1;
+    cv::Mat && merged_img = merge_imgs(root_img, test_img, x0, x1);
 
     ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
     ocr->Recognize(0);

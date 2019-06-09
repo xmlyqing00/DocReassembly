@@ -81,6 +81,10 @@ target_link_libraries(utils ${OpenCV_LIBRARIES})
 # add_executable(test-realdata ${EVALUATOR_PATH}/test_realdata.cpp)
 # target_link_libraries(test-realdata ${TORCH_LIBRARIES} ${OpenCV_LIBRARIES} compatibility-net)
 
+# ocr-extractor
+# add_library(ocr-extractor ${SRC_ROOT_PATH}/ocr_extractor.cpp)
+# target_link_libraries(ocr-extractor ${OpenCV_LIBRARIES})
+
 # add-noise
 add_executable(add-noise ${SRC_ROOT_PATH}/add_noise.cpp)
 target_link_libraries(add-noise ${OpenCV_LIBRARIES})
@@ -94,10 +98,6 @@ set(GENERATOR_PATH ${SRC_ROOT_PATH}/generator)
 aux_source_directory(${GENERATOR_PATH} GENERATOR_SRC)
 add_executable(generator ${GENERATOR_SRC})
 target_link_libraries(generator ${OpenCV_LIBRARIES} tesseract utils)
-
-# ocr-extractor
-# add_library(ocr-extractor ${SRC_ROOT_PATH}/ocr_extractor.cpp)
-# target_link_libraries(ocr-extractor ${OpenCV_LIBRARIES})
 
 # solver
 set(SOLVER_PATH ${SRC_ROOT_PATH}/solver)

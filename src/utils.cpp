@@ -29,7 +29,7 @@ double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift
     int x1 = 0;
 
     if (shift_flag) {
-        merge_imgs(piece0, piece1, shift_flag, &x0, &x1);
+        merge_imgs(piece0, piece1, x0, x1, shift_flag);
     }
 
     double m_score = 0;
@@ -59,14 +59,9 @@ double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift
 
 cv::Mat merge_imgs( const cv::Mat & in_img0, 
                     const cv::Mat & in_img1, 
-                    bool shift_flag,
-                    int * splice_x0, 
-                    int * splice_x1) {
-
-    if (shift_flag) {
-        *splice_x0 = 0;
-        *splice_x1 = 0;
-    }
+                    int & splice_x0, 
+                    int & splice_x1,
+                    bool shift_flag) {
 
     if (in_img0.empty()) return in_img1;
 
@@ -86,6 +81,9 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
         const double white_thres = 0.8;
         const int color_thres = 200;
         
+        splice_x0 = 0;
+        splice_x1 = 0;
+
         int block_h = 20;
         int shift_x0 = 0;
         int shift_x1 = 0;
@@ -126,11 +124,9 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
                 }
             }
 
-            if (shift_flag) {
-                *splice_x0 += shift_x0 - 1;
-                *splice_x1 += shift_x1;
-                block_cnt++;
-            }
+            splice_x0 += shift_x0 - 1;
+            splice_x1 += shift_x1;
+            block_cnt++;
 
             block_h = min(block_h, in_img1.rows - y);
             cv::Rect roi_src(shift_x1, y, in_img1.cols-shift_x1, block_h);
@@ -143,10 +139,9 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
 
         }
 
-        if (shift_flag) {
-            *splice_x0 /= block_cnt;
-            *splice_x1 /= block_cnt;
-        }
+        splice_x0 /= block_cnt;
+        splice_x1 /= block_cnt;
+        
         out_img = out_img(cv::Rect(0, 0, out_width, out_img.rows));
 
         // cv::imshow("in0", in_img0);

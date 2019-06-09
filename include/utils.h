@@ -28,9 +28,9 @@ double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift
 
 cv::Mat merge_imgs( const cv::Mat & in_img0, 
                     const cv::Mat & in_img1, 
-                    bool shift_flag=false,
-                    int * splice_x0=nullptr,
-                    int * splice_x1=nullptr);
+                    int & splice_x0,
+                    int & splice_x1,
+                    bool shift_flag=false);
 
 bool cross_seam(const cv::Rect & bbox, int seam_x);
 

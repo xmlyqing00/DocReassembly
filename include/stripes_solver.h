@@ -92,8 +92,9 @@ private:
     const string tesseract_model_path {"data/tesseract_model/"};
     // tesseract::TessBaseAPI * ocr;
     const double conf_thres {70};
+    const double lambda_ = 0.7;
+    const double filter_rate = 0.3;
 
-    const double filter_rate = 1;
 
     // Compatibility 
     // const int symbols_n = 64;
@@ -114,7 +115,7 @@ private:
     vector< vector<double> > pixel_graph;
     vector< vector<double> > pixel_graph2;
 
-    double m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1);
+    double m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1, tesseract::TessBaseAPI * ocr);
     // double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     void m_metric_word();
     
