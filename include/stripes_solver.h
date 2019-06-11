@@ -92,9 +92,8 @@ private:
     const string tesseract_model_path {"data/tesseract_model/"};
     // tesseract::TessBaseAPI * ocr;
     const double conf_thres {70};
-    const double lambda_ = 0.7;
+    const double lambda_ = 0.3;
     const double filter_rate = 0.3;
-
 
     // Compatibility 
     // const int symbols_n = 64;
@@ -112,20 +111,22 @@ private:
     int sols_n {10};
     int candidate_len {10};
     const int candidate_factor {5};
-    vector< vector<double> > pixel_graph;
-    vector< vector<double> > pixel_graph2;
+    vector< vector<double> > low_level_graph;
 
-    double m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1, tesseract::TessBaseAPI * ocr);
+
+    double m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1, tesseract::TessBaseAPI * ocr, int idx=0);
     // double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     void m_metric_word();
     
     vector< vector<int> > reassemble_greedy(bool probability_flag=false);
     void reassemble_GCOM();
 
+    void compute_mutual_graph(vector< vector<double> > & mutual_graph);
     void stochastic_search( vector<int> & sol, const vector< vector<StripePair> > & compose_next);
     cv::Mat word_detection( const cv::Mat & img, 
                             const vector<int> & sol,
-                            vector<int> & sol_x);
+                            vector<int> & sol_x, 
+                            tesseract::TessBaseAPI * ocr);
     void merge_single_sol(vector< vector<int> > & fragments);
     void finetune_sols(const vector< vector<int> > & fragments);
 

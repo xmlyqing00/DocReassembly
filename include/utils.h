@@ -20,11 +20,11 @@ const cv::Scalar seam_color_green(100, 200, 100);
 
 double avg_vec3b(const cv::Vec3b &v);
 
-bool check_pure(int c);
+int check_pure(double c);
 
 double diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1);
 
-double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift_flag=false);
+double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift_flag=false, int idx=0);
 
 cv::Mat merge_imgs( const cv::Mat & in_img0, 
                     const cv::Mat & in_img1, 

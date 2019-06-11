@@ -8,20 +8,24 @@ double avg_vec3b(const cv::Vec3b &v) {
     return avg / 3;
 }
 
-bool check_pure(int c) {
-    if (c < 5 || c > 250) return true;
-    return false;
+int check_pure(double c) {
+    if (c < 5) return -1;
+    if (c > 250) return 1;
+    return 0;
 }
 
 double diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
 
-    double avg_vec3b0 = avg_vec3b(v0);
-    double avg_vec3b1 = avg_vec3b(v1);
-    return abs(avg_vec3b0 - avg_vec3b1);
+    double avg = 0;
+    for (int i = 0; i < 3; i++) {
+        avg += (v0[i] - v1[i]) * (v0[i] - v1[i]);
+    }
+    return sqrt(avg);
 
 }
 
-double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift_flag) {
+double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift_flag, int idx)
+ {
 
     assert(piece0.rows == piece1.rows);
 
@@ -36,24 +40,31 @@ double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift
     double avg_pixel_color0 = 0;
     double avg_pixel_color1 = 0;
     for (int y = 0; y < piece0.rows; y++) {
-        double avg_vec3b0 = avg_vec3b(piece0.at<cv::Vec3b>(y, x0));
-        double avg_vec3b1 = avg_vec3b(piece1.at<cv::Vec3b>(y, x1));
-        m_score += abs(avg_vec3b0 - avg_vec3b1);
-        avg_pixel_color0 += avg_vec3b0;
-        avg_pixel_color1 += avg_vec3b1;
+        m_score += diff_vec3b(piece0.at<cv::Vec3b>(y, x0), piece1.at<cv::Vec3b>(y, x1));
+        avg_pixel_color0 += avg_vec3b(piece0.at<cv::Vec3b>(y, x0));
+        avg_pixel_color1 += avg_vec3b(piece1.at<cv::Vec3b>(y, x1));
     }
 
     avg_pixel_color0 /= piece0.rows;
     avg_pixel_color1 /= piece0.rows;
     m_score /= piece0.rows;
 
-    if (check_pure(avg_pixel_color0) && check_pure(avg_pixel_color1)) {
-        return -2;
+#ifdef DEBUG
+    printf("IdxP: %d, metric (%d, %d), avg0: %.3lf, avg1: %.3lf\n", idx, idx / 60, idx % 60, avg_pixel_color0, avg_pixel_color1);            
+#endif
+    
+    if (abs(check_pure(avg_pixel_color0) + check_pure(avg_pixel_color1)) == 2) {
+        return 3;
     }
-    if (check_pure(avg_pixel_color0) || check_pure(avg_pixel_color1)) {
-        return -1;
+    if (abs(check_pure(avg_pixel_color0) + check_pure(avg_pixel_color1)) == 1) {
+        return 2;
     }
-    return m_score;
+
+#ifdef DEBUG
+    // cout << "pixel metric: " << m_score << endl;
+#endif
+
+    return exp(-max(0.0, m_score / 20 - 1.5));
 
 }
 
@@ -162,7 +173,7 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
 
 bool cross_seam(const cv::Rect & bbox, int seam_x) {
 
-    if (bbox.x < seam_x && bbox.x + bbox.width >= seam_x) {
+    if (bbox.x < seam_x && bbox.x + bbox.width > seam_x) {
         return true;
     } else {
         return false;
