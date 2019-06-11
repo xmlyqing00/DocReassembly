@@ -672,7 +672,7 @@ void StripesSolver::reassemble_GCOM() {
 
     vector< vector<int> > && fragments = reassemble_greedy();
 
-    merge_single_sol(fragments);
+    pair_merge_frags(fragments);
     finetune_sols(fragments);
 
 }
@@ -846,11 +846,11 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
 
 }
 
-void StripesSolver::merge_single_sol(vector< vector<int> > & fragments) {
+void StripesSolver::pair_merge_frags(vector< vector<int> > & fragments) {
 
     cout << "[INFO] Merge single composition order." << endl;
 #ifdef DEBUG
-    cout << "Fragments:" << endl;
+    cout << "Fragments before:" << endl;
     for (int i = 0; i < fragments.size(); i++) {
         cout << "[" << i << "]\t";
         for (const int & x: fragments[i]) cout << x << " ";
@@ -859,6 +859,11 @@ void StripesSolver::merge_single_sol(vector< vector<int> > & fragments) {
     cout << endl;
 #endif
 
+    vector<cv::Mat> frag_imgs;
+    for (const auto & fragment: fragments) {
+        cv::Mat frag_img = compose_img(fragment, real_flag);
+        frag_imgs.push_back(frag_img);
+    }
     for (int i = 0; i < fragments.size(); i++) {
 
         if (fragments[i].size() > 1) continue;

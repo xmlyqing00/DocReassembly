@@ -127,6 +127,7 @@ private:
                             const vector<int> & sol,
                             vector<int> & sol_x, 
                             tesseract::TessBaseAPI * ocr);
+    void pair_merge_frags(vector< vector<int> > & fragments);
     void merge_single_sol(vector< vector<int> > & fragments);
     void finetune_sols(const vector< vector<int> > & fragments);
 
