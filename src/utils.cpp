@@ -53,18 +53,14 @@ double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift
     printf("IdxP: %d, metric (%d, %d), avg0: %.3lf, avg1: %.3lf\n", idx, idx / 60, idx % 60, avg_pixel_color0, avg_pixel_color1);            
 #endif
     
-    if (abs(check_pure(avg_pixel_color0) + check_pure(avg_pixel_color1)) == 2) {
+    if (abs(check_pure(avg_pixel_color0) + check_pure(avg_pixel_color1)) >= 1) {
         return 3;
-    }
-    if (abs(check_pure(avg_pixel_color0) + check_pure(avg_pixel_color1)) == 1) {
-        return 2;
-    }
-
+    } else {
 #ifdef DEBUG
     // cout << "pixel metric: " << m_score << endl;
 #endif
-
-    return exp(-max(0.0, m_score / 20 - 1.5));
+        return exp(-max(0.0, m_score / 20 - 1.5));
+    }
 
 }
 

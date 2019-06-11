@@ -118,7 +118,7 @@ private:
     // double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     void m_metric_word();
     
-    vector< vector<int> > reassemble_greedy(bool probability_flag=false);
+    vector< vector<int> > reassemble_greedy();
     void reassemble_GCOM();
 
     void compute_mutual_graph(vector< vector<double> > & mutual_graph);

@@ -603,7 +603,7 @@ void StripesSolver::m_metric() {
 
 }
 
-vector< vector<int> > StripesSolver::reassemble_greedy(bool probability_flag) {
+vector< vector<int> > StripesSolver::reassemble_greedy() {
 
     random_device rand_device;
     default_random_engine rand_engine(rand_device());
@@ -613,40 +613,13 @@ vector< vector<int> > StripesSolver::reassemble_greedy(bool probability_flag) {
     vector<int> stripe_right(stripes_n, -1);
 
     int merged_cnt = 0;
-    vector<StripePair> stripe_pairs_rest;
-
-    double thres_score = 0;
-    if (composition_mode == Composition::GCOM) {
-        if (metric_mode == Metric::PIXEL || metric_mode == Metric::CHAR) {
-            thres_score = 0.8 * stripe_pairs.back().m_score;
-        }
-#ifdef DEBUG
-        cout << "Threshold score: " << thres_score << endl;
-#endif
-    }
 
     for (const StripePair & sp: stripe_pairs) {
 
-        if (sp.m_score < -eps) continue;
-
-        if (abs(thres_score) > eps) {
-            if (composition_mode == Composition::GCOM) {
-                if (metric_mode == Metric::PIXEL || metric_mode == Metric::CHAR) {
-                    if (sp.m_score > thres_score) break;
-                }
-            }
-        }
+        if (composition_mode == Composition::GREEDY && sp.m_score > 2) continue;
 
         if (stripe_right[sp.stripe_idx0] != -1) continue;
         if (stripe_left[sp.stripe_idx1] != -1) continue;
-
-        if (probability_flag) {
-            double rand_f = uniform_unit_dist(rand_engine);
-            if (rand_f > sp.ac_prob) {
-                stripe_pairs_rest.push_back(sp);
-                continue;
-            }
-        }
 
         int left_most = sp.stripe_idx0;
         while (stripe_left[left_most] != -1) {
@@ -661,27 +634,6 @@ vector< vector<int> > StripesSolver::reassemble_greedy(bool probability_flag) {
 
         if (merged_cnt == stripes_n - 1) break;
         
-    }
-
-    if (probability_flag && merged_cnt < stripes_n - 1) {
-        for (const StripePair & sp: stripe_pairs_rest) {
-
-            if (stripe_right[sp.stripe_idx0] != -1) continue;
-            if (stripe_left[sp.stripe_idx1] != -1) continue;
-
-            int left_most = sp.stripe_idx0;
-            while (stripe_left[left_most] != -1) {
-                left_most = stripe_left[left_most];
-            }
-
-            if (left_most == sp.stripe_idx1) continue;
-
-            stripe_right[sp.stripe_idx0] = sp.stripe_idx1;
-            stripe_left[sp.stripe_idx1] = sp.stripe_idx0;
-            merged_cnt++;
-
-            if (merged_cnt == stripes_n - 1) break;
-        }
     }
 
     vector< vector<int> > fragments;
@@ -704,7 +656,6 @@ vector< vector<int> > StripesSolver::reassemble_greedy(bool probability_flag) {
 
         while (stripe_right[cur_idx] != -1) {
             cur_idx = stripe_right[cur_idx];
-            composition_img = merge_imgs(composition_img, stripes[cur_idx], splice_x0, splice_x1);
             sol.push_back(cur_idx);
             visited[cur_idx] = true;
         }
@@ -719,7 +670,7 @@ vector< vector<int> > StripesSolver::reassemble_greedy(bool probability_flag) {
 
 void StripesSolver::reassemble_GCOM() {
 
-    vector< vector<int> > && fragments = reassemble_greedy(false);
+    vector< vector<int> > && fragments = reassemble_greedy();
 
     merge_single_sol(fragments);
     finetune_sols(fragments);
