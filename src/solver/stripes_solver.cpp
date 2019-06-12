@@ -196,10 +196,11 @@ double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piec
             const cv::Rect o_bbox(x0 + bias, y0, x1 - x0 - bias * 2, y1 - y0);
             if (!cross_seam(o_bbox, seam_x)) continue;
 
-            const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_SYMBOL);
             m_metric_score += conf;
 
 #ifdef DEBUG
+            const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_SYMBOL);
+
             cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 255));
             printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d; Seam: %d\n",
                     ocr_char.c_str(), conf, x0, y0, x1, y1, seam_x);
@@ -486,6 +487,7 @@ void StripesSolver::m_metric_word() {
             next_pairs.erase(next_pairs.begin() + filters_n, next_pairs.end());
         }
 
+#ifdef DEBUG
         int gt_next_idx = -1;
         for (int j = 0; j < stripes_n - 1; j++) {
             if (gt_order[j] == i) {
@@ -493,17 +495,19 @@ void StripesSolver::m_metric_word() {
                 break;
             }
         }
+#endif
         
         for (auto & stripe_pair: next_pairs) {
             double alpha = U_a * (stripe_pair.m_score / worst_score - 1);
             double exp_alpha = exp(alpha);
             stripe_pair.ac_prob = (exp_alpha - 1) / (exp_alpha + 1);
 
-
+#ifdef DEBUG
             if (gt_next_idx == stripe_pair.stripe_idx1) {
                 occur_cnt++;
                 cout << stripe_pair << endl;
             }
+#endif
 
         }
 
@@ -511,7 +515,9 @@ void StripesSolver::m_metric_word() {
             
     }
 
+#ifdef DEBUG
     printf("Stripe pairs in searching space: %d / %d\n", occur_cnt, stripes_n-1);
+#endif
 
     map< vector<int>, bool > seq_visited;
     vector< vector<int> > candidate_seqs;
@@ -536,6 +542,7 @@ void StripesSolver::m_metric_word() {
         }
     }
 
+#ifdef DEBUG
     occur_cnt = 0;
     for (int i = 0; i < stripes_n; i++) {
         for (int j = 0; j < stripes_n - 1; j++) {
@@ -548,8 +555,9 @@ void StripesSolver::m_metric_word() {
     }
 
     printf("Candidate sequence in word detection: %d / %d\n", occur_cnt, stripes_n-1);
+#endif
+
     compute_word_scores(candidate_seqs);
-    
 
     cout << endl;
 
@@ -727,7 +735,7 @@ vector< vector<int> > StripesSolver::reassemble_greedy() {
 
 ****************** */
 
-void StripesSolver::pair_merge_frags(vector< vector<int> > & fragments) {
+void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
 
     cout << "[INFO] Pair merge fragments." << endl;
 #ifdef DEBUG
@@ -751,19 +759,75 @@ void StripesSolver::pair_merge_frags(vector< vector<int> > & fragments) {
 #endif
     }
 
-
-
-
-
+    // #pragma omp parallel for
     for (int i = 0; i < fragments.size(); i++) {
+
+        tesseract::TessBaseAPI * ocr = new tesseract::TessBaseAPI();
+        if (ocr->Init(tesseract_model_path.c_str(), "eng", tesseract::OEM_TESSERACT_ONLY)) {
+            cerr << "Could not initialize tesseract." << endl;
+            exit(-1);
+        }
+
+        ocr->SetVariable("tessedit_char_whitelist", white_chars.c_str());
+        ocr->SetVariable("tessedit_char_blacklist", black_chars.c_str());
+
+        ocr->SetVariable("language_model_penalty_non_freq_dict_word", "5");
+        ocr->SetVariable("language_model_penalty_non_dict_word", "1");
 
         for (int j = 0; j < fragments.size(); j++) {
 
             if (i == j) continue;
 
+            int seam_x = frag_imgs[j].cols;
+            int margin_piece1;
+            cv::Mat merged_img = merge_imgs(frag_imgs[i], frag_imgs[j], seam_x, margin_piece1, real_flag);
 
+            const int max_m_width = min(frag_imgs[i].cols, frag_imgs[j].cols);
+            const int bias = real_flag ? 3 : 1;
+
+            ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
+            ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, frag_imgs[0].rows);
+            ocr->Recognize(0);
+    
+            tesseract::ResultIterator * ocr_iter = ocr->GetIterator();
+            double word_path_score = 0;
+
+            if (ocr_iter != 0) {
+                do {
+                    const float conf = ocr_iter->Confidence(tesseract::RIL_WORD);
+                    const string word = ocr_iter->GetUTF8Text(tesseract::RIL_WORD);
+                    if (word.length() < 3 || conf < conf_thres || !ocr_iter->WordIsFromDictionary()) continue;
+
+                    // Boundary cross constraint
+                    int x0, y0, x1, y1;
+                    ocr_iter->BoundingBox(tesseract::RIL_WORD, &x0, &y0, &x1, &y1);
+                    const cv::Rect bbox(x0 + bias, y0, x1 - x0 - bias * 2, y1 - y0);
+                    if (!cross_seam(bbox, seam_x)) continue;
+
+                    word_path_score += conf;
+
+#ifdef DEBUG
+                    const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_SYMBOL);
+
+                    cv::rectangle(merged_img, bbox, cv::Scalar(0, 0, 255));
+                    printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d; Seam: %d\n",
+                            ocr_char.c_str(), conf, x0, y0, x1, y1, seam_x);
+
+#endif
+                } while (ocr_iter->Next(tesseract::RIL_WORD));
+            }
+
+#ifdef DEBUG
+            printf("word-path score: (%d, %d), %.3lf\n", i, j, word_path_score);
+
+            cv::line(merged_img, cv::Point(seam_x, 0), cv::Point(seam_x, merged_img.rows-1), cv::Scalar(255, 0, 0));
+            string merged_path = "tmp/bigraph/" + to_string(i) + "_" + to_string(j) + ".png";
+            cv::imwrite(merged_path, merged_img);
+#endif
 
         }
+
+        ocr->End();
 
     }
 
@@ -841,7 +905,8 @@ void StripesSolver::reassemble_GCOM() {
 
     vector< vector<int> > && fragments = reassemble_greedy();
 
-    pair_merge_frags(fragments);
+    compute_bigraph_weights(fragments);
+    exit(0);
     finetune_sols(fragments);
 
 }

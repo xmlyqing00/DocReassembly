@@ -129,7 +129,7 @@ private:
                             const vector<int> & seq,
                             vector<int> & seq_x, 
                             tesseract::TessBaseAPI * ocr);
-    void pair_merge_frags(vector< vector<int> > & fragments);
+    void compute_bigraph_weights(vector< vector<int> > & fragments);
     void finetune_sols(const vector< vector<int> > & fragments);
 
 };
