@@ -1,46 +1,46 @@
 #include <path_manager.h>
 
-PathManager::PathManager(int _nodes_n, int _sols_n) :
+PathManager::PathManager(int _nodes_n, int _seqs_n) :
     nodes_n(_nodes_n),
-    sols_n(_sols_n) {
+    seqs_n(_seqs_n) {
     
 }
 
 PathManager::~PathManager() {
 }
 
-void PathManager::add_sol_words(const map< vector<int>, int > & sol_words) {
+void PathManager::add_seq_words(const map< vector<int>, int > & seq_words) {
 
-    for (const auto & iter: sol_words) {
+    for (const auto & iter: seq_words) {
 
-        const vector<int> sol_path = iter.first;
+        const vector<int> seq_path = iter.first;
         int word_cnt = iter.second;
 
-        if (sol_paths.find(sol_path) != sol_paths.end()) {
-            auto val = sol_paths[sol_path];
+        if (seq_paths.find(seq_path) != seq_paths.end()) {
+            auto val = seq_paths[seq_path];
             val.first += word_cnt;
             val.second++;
         } else {
-            sol_paths[sol_path] = make_pair(word_cnt, 1);
+            seq_paths[seq_path] = make_pair(word_cnt, 1);
         }
 
     }                            
     
 }
 
-void PathManager::print_sol_paths() {
+void PathManager::print_seq_paths() {
 
-    for (const auto & iter: sol_paths) {
+    for (const auto & iter: seq_paths) {
         
-        const vector<int> sol_path = iter.first;
+        const vector<int> seq_path = iter.first;
         const auto val = iter.second;
         
         cout << "Path: ";
-        for (int vertex_idx: sol_path) {
+        for (int vertex_idx: seq_path) {
             cout << vertex_idx << " ";
         }
 
-        cout << endl << "Word cnt: " << val.first << " Sol cnt: " << val.second << endl;
+        cout << endl << "Word cnt: " << val.first << " seq cnt: " << val.second << endl;
         
     }
 
@@ -50,18 +50,18 @@ void PathManager::build_path_graph() {
 
     path_graph = vector< vector< pair<int, double> > >(nodes_n);
 
-    for (const auto & iter: sol_paths) {
+    for (const auto & iter: seq_paths) {
         
-        const vector<int> sol_path = iter.first;
+        const vector<int> seq_path = iter.first;
         const auto val = iter.second;
 
-        double score = (double)val.first * sol_path.size() / val.second;
+        double score = (double)val.first * seq_path.size() / val.second;
         
-        for (int i = 1; i < sol_path.size(); i++) {
+        for (int i = 1; i < seq_path.size(); i++) {
 
             bool found_flag = false;
-            int cur_node = sol_path[i - 1];
-            int next_node = sol_path[i];
+            int cur_node = seq_path[i - 1];
+            int next_node = seq_path[i];
 
             for (auto & edge: path_graph[cur_node]) {
                 if (edge.first == next_node) {

@@ -15,14 +15,14 @@ class PathManager {
 
 public:
     int nodes_n {0};
-    int sols_n {0};
-    map< vector<int>, pair<int,int> > sol_paths; // sol; word_cnt, sol_cnt;
+    int seqs_n {0};
+    map< vector<int>, pair<int,int> > seq_paths; // seq; word_cnt, seq_cnt;
 
-    PathManager(int _vertices_n, int _sols_n);
+    PathManager(int _vertices_n, int _seqs_n);
     ~PathManager();
     
-    void add_sol_words( const map< vector<int>, int > & sol_words);
-    void print_sol_paths();
+    void add_seq_words( const map< vector<int>, int > & seq_words);
+    void print_seq_paths();
 
     void build_path_graph();
     void print_path_graph();
