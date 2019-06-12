@@ -174,7 +174,7 @@ double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piec
 
     const int max_m_width = min(piece0.cols, piece1.cols);
     const int bias = real_flag ? 2 : 1;
-    const double conf_thres {80};
+    const double char_conf_thres {80};
 
     ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
     ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, piece0.rows);
@@ -188,7 +188,7 @@ double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piec
         do {
 
             const float conf = ocr_iter->Confidence(tesseract::RIL_SYMBOL);
-            if (conf < conf_thres) continue;
+            if (conf < char_conf_thres) continue;
 
             // Boundary cross constraint
             int x0, y0, x1, y1;
@@ -363,7 +363,7 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
         do {
             const float conf = ocr_iter->Confidence(tesseract_level);
             const string word = ocr_iter->GetUTF8Text(tesseract_level);
-            if (word.length() < 3 || conf < conf_thres || !ocr_iter->WordIsFromDictionary()) continue;
+            if (word.length() < 3 || conf < word_conf_thres || !ocr_iter->WordIsFromDictionary()) continue;
 
             // Boundary cross constraint
             int x0, y0, x1, y1;
@@ -754,8 +754,8 @@ void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
         frag_imgs.push_back(frag_img);
 
 #ifdef DEBUG
-        cv::imshow("frag", frag_img);
-        cv::waitKey();
+        // cv::imshow("frag", frag_img);
+        // cv::waitKey();
 #endif
     }
 
@@ -778,15 +778,13 @@ void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
 
             if (i == j) continue;
 
-            int seam_x = frag_imgs[j].cols;
+            const int bias = real_flag ? 3 : 1;
+
+            int seam_x = frag_imgs[i].cols;
             int margin_piece1;
             cv::Mat merged_img = merge_imgs(frag_imgs[i], frag_imgs[j], seam_x, margin_piece1, real_flag);
 
-            const int max_m_width = min(frag_imgs[i].cols, frag_imgs[j].cols);
-            const int bias = real_flag ? 3 : 1;
-
             ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
-            ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, frag_imgs[0].rows);
             ocr->Recognize(0);
     
             tesseract::ResultIterator * ocr_iter = ocr->GetIterator();
@@ -796,7 +794,7 @@ void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
                 do {
                     const float conf = ocr_iter->Confidence(tesseract::RIL_WORD);
                     const string word = ocr_iter->GetUTF8Text(tesseract::RIL_WORD);
-                    if (word.length() < 3 || conf < conf_thres || !ocr_iter->WordIsFromDictionary()) continue;
+                    if (word.length() < 3 || conf < word_conf_thres || !ocr_iter->WordIsFromDictionary()) continue;
 
                     // Boundary cross constraint
                     int x0, y0, x1, y1;
@@ -807,7 +805,7 @@ void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
                     word_path_score += conf;
 
 #ifdef DEBUG
-                    const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_SYMBOL);
+                    const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_WORD);
 
                     cv::rectangle(merged_img, bbox, cv::Scalar(0, 0, 255));
                     printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d; Seam: %d\n",
