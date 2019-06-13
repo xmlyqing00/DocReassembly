@@ -37,7 +37,7 @@ StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int 
     }
 
     if (real_flag) {
-        lambda_ = 0.7;
+        lambda0 = 0.7;
         filter_rate = 0.9;
     }
 
@@ -620,7 +620,7 @@ void StripesSolver::m_metric() {
                     if (m_score_p > 1) {
                         m_score = m_score_p;
                     } else {
-                        m_score = lambda_ * m_score_c + (1 - lambda_) * m_score_p;
+                        m_score = lambda0 * m_score_c + (1 - lambda0) * m_score_p;
                     }
 #ifdef DEBUG
                     // printf("Idx: %d, metric (%d, %d)\tc: %.3lf, p: %.3lf, low: %.3lf\n", i*stripes_n + j, i, j, m_score_c, m_score_p, m_score);
@@ -735,7 +735,7 @@ vector< vector<int> > StripesSolver::reassemble_greedy() {
 
 ****************** */
 
-void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
+void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector< vector<double> > & bigraph_w) {
 
     cout << "[INFO] Pair merge fragments." << endl;
 #ifdef DEBUG
@@ -759,7 +759,11 @@ void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
 #endif
     }
 
-    // #pragma omp parallel for
+    int nodes_n = fragments.size();
+    bigraph_w = vector< vector<double> >(nodes_n, vector<double>(nodes_n, 0));
+
+
+    #pragma omp parallel for
     for (int i = 0; i < fragments.size(); i++) {
 
         tesseract::TessBaseAPI * ocr = new tesseract::TessBaseAPI();
@@ -773,6 +777,8 @@ void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
 
         ocr->SetVariable("language_model_penalty_non_freq_dict_word", "5");
         ocr->SetVariable("language_model_penalty_non_dict_word", "1");
+
+        int right_end = fragments[i].back();
 
         for (int j = 0; j < fragments.size(); j++) {
 
@@ -823,6 +829,10 @@ void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
             cv::imwrite(merged_path, merged_img);
 #endif
 
+            
+            int left_end = fragments[j].front();
+            bigraph_w[i][j] = lambda1 * word_path_score + (1 - lambda1) * low_level_graph[right_end][left_end];
+            
         }
 
         ocr->End();
@@ -833,7 +843,6 @@ void StripesSolver::compute_bigraph_weights(vector< vector<int> > & fragments) {
 
 void StripesSolver::finetune_sols(const vector< vector<int> > & fragments) {
 
-    cout << "[INFO] Finetune composition orders." << endl;
 
     cout << "Fragments:" << endl;
     for (int i = 0; i < fragments.size(); i++) {
@@ -903,7 +912,9 @@ void StripesSolver::reassemble_GCOM() {
 
     vector< vector<int> > && fragments = reassemble_greedy();
 
-    compute_bigraph_weights(fragments);
+    vector< vector<double> > bigraph_w;
+    compute_bigraph_w(fragments, bigraph_w);
+    optimal_match(bigraph_w);
     // exit(0);
     // finetune_sols(fragments);
 

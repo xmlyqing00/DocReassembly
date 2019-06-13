@@ -92,7 +92,8 @@ private:
     const string tesseract_model_path {"data/tesseract_model/"};
     // tesseract::TessBaseAPI * ocr;
     const double word_conf_thres {70};
-    double lambda_ = 0.3;
+    double lambda0 = 0.3;
+    double lambda1 = 0.5;
     double filter_rate = 0.3;
 
     // Compatibility 
@@ -117,19 +118,21 @@ private:
     double m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1, tesseract::TessBaseAPI * ocr, int idx=0);
     // double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     void m_metric_word();
-    
+
     vector< vector<int> > reassemble_greedy();
     void reassemble_GCOM();
 
+    // For word-path
     void compute_mutual_graph(vector< vector<double> > & mutual_graph);
     void stochastic_search( vector<int> & seq, const vector< vector<StripePair> > & compose_next);
     void compute_word_scores(const vector< vector<int> > & candidate_seqs);
-
     cv::Mat word_detection( const cv::Mat & img, 
                             const vector<int> & seq,
                             vector<int> & seq_x, 
                             tesseract::TessBaseAPI * ocr);
-    void compute_bigraph_weights(vector< vector<int> > & fragments);
+
+    // For bigraph
+    void compute_bigraph_w(vector< vector<int> > & fragments, vector< vector<double> > & bigraph_w);
     void finetune_sols(const vector< vector<int> > & fragments);
 
 };
