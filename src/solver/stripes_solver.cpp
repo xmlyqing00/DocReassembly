@@ -36,6 +36,11 @@ StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int 
         stripes.push_back(move(stripe_img));
     }
 
+    if (real_flag) {
+        lambda_ = 0.7;
+        filter_rate = 0.9;
+    }
+
     omp_init_lock(&omp_lock);
 
 }
@@ -170,14 +175,12 @@ double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piec
 
     int seam_x = piece0.cols;
     int margin_piece1;
-    cv::Mat && merged_img = merge_imgs(piece0, piece1, seam_x, margin_piece1, real_flag);
+    cv::Mat merged_img = merge_imgs(piece0, piece1, seam_x, margin_piece1, real_flag);
 
     const int max_m_width = min(piece0.cols, piece1.cols);
     const int bias = real_flag ? 2 : 1;
     const double char_conf_thres {80};
-
     ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
-    ocr->SetRectangle(seam_x - max_m_width, 0, max_m_width << 1, piece0.rows);
     ocr->Recognize(0);
     
     tesseract::ResultIterator * ocr_iter = ocr->GetIterator();
@@ -199,20 +202,20 @@ double StripesSolver::m_metric_char(const cv::Mat & piece0, const cv::Mat & piec
             m_metric_score += conf;
 
 #ifdef DEBUG
-            const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_SYMBOL);
+            // const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_SYMBOL);
 
-            cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 255));
-            printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d; Seam: %d\n",
-                    ocr_char.c_str(), conf, x0, y0, x1, y1, seam_x);
+            // cv::rectangle(merged_img, o_bbox, cv::Scalar(0, 0, 255));
+            // printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d; Seam: %d\n",
+            //         ocr_char.c_str(), conf, x0, y0, x1, y1, seam_x);
 #endif
 
         } while (ocr_iter->Next(tesseract::RIL_SYMBOL));
     }
 
 #ifdef DEBUG
-    cv::line(merged_img, cv::Point(seam_x, 0), cv::Point(seam_x, merged_img.rows-1), cv::Scalar(255, 0, 0));
-    string merged_path = "tmp/merged/" + to_string(idx) + ".png";
-    cv::imwrite(merged_path, merged_img);
+    // cv::line(merged_img, cv::Point(seam_x, 0), cv::Point(seam_x, merged_img.rows-1), cv::Scalar(255, 0, 0));
+    // string merged_path = "tmp/merged/" + to_string(idx) + ".png";
+    // cv::imwrite(merged_path, merged_img);
 #endif
 
     m_metric_score = 1 - exp(-m_metric_score / 200);
@@ -377,10 +380,10 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
                 seq_words[vector<int>(seq.begin()+seq_path_st, seq.begin()+seq_path_ed)]++;
             }
 #ifdef DEBUG
-                cv::rectangle(img_bbox, bbox, color_blue);
-                printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
-                        word.c_str(), conf, ocr_iter->WordIsFromDictionary(), x0, y0, x1, y1);
-                cout << endl;
+                // cv::rectangle(img_bbox, bbox, color_blue);
+                // printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
+                //         word.c_str(), conf, ocr_iter->WordIsFromDictionary(), x0, y0, x1, y1);
+                // cout << endl;
 #endif
             
 
@@ -427,10 +430,10 @@ void StripesSolver::compute_word_scores(const vector< vector<int> > & candidate_
             cv::Mat tmp_img = word_detection(composition_img, seq, seq_x, ocr);
 
 #ifdef DEBUG
-            cout << seq_idx << endl;
-            tmp_img = add_seams(tmp_img, seq, false, &seq_x);
-            ++seq_idx;
-            cv::imwrite("tmp/seq_" + to_string(seq_idx) + ".png", tmp_img);
+            // cout << seq_idx << endl;
+            // tmp_img = add_seams(tmp_img, seq, false, &seq_x);
+            // ++seq_idx;
+            // cv::imwrite("tmp/seq_" + to_string(seq_idx) + ".png", tmp_img);
 #else
             ++seq_idx;
             if (seq_idx % 100 == 0) {
@@ -452,7 +455,7 @@ void StripesSolver::m_metric_word() {
 
     // Compute stripe_pairs
     double U_a = 1;
-    if (real_flag) U_a = 1.5;
+    // if (real_flag) U_a = 1.5;
 
     int filters_n = min(int(stripes_n * filter_rate), stripes_n - 1);
     cout << "Preserve stripes:    \t" << filters_n << endl;
@@ -483,9 +486,7 @@ void StripesSolver::m_metric_word() {
             continue;
         }
 
-        if (!real_flag) {
-            next_pairs.erase(next_pairs.begin() + filters_n, next_pairs.end());
-        }
+        next_pairs.erase(next_pairs.begin() + filters_n, next_pairs.end());
 
 #ifdef DEBUG
         int gt_next_idx = -1;
@@ -564,13 +565,12 @@ void StripesSolver::m_metric_word() {
     path_manager.build_path_graph();
 
 #ifdef DEBUG
-    path_manager.print_seq_paths();
-    path_manager.print_path_graph();
+    // path_manager.print_seq_paths();
+    // path_manager.print_path_graph();
 #endif
 
     stripe_pairs_pixel = stripe_pairs;
     stripe_pairs = path_manager.build_stripe_pairs();
-
 
 }
 
@@ -623,7 +623,7 @@ void StripesSolver::m_metric() {
                         m_score = lambda_ * m_score_c + (1 - lambda_) * m_score_p;
                     }
 #ifdef DEBUG
-                    printf("Idx: %d, metric (%d, %d)\tc: %.3lf, p: %.3lf, low: %.3lf\n", i*stripes_n + j, i, j, m_score_c, m_score_p, m_score);
+                    // printf("Idx: %d, metric (%d, %d)\tc: %.3lf, p: %.3lf, low: %.3lf\n", i*stripes_n + j, i, j, m_score_c, m_score_p, m_score);
 #endif
                     break;
                 default:
@@ -677,7 +677,7 @@ vector< vector<int> > StripesSolver::reassemble_greedy() {
 
     for (const StripePair & sp: stripe_pairs) {
 
-        if (composition_mode == Composition::GREEDY && sp.m_score > 2) continue;
+        if (metric_mode != Metric::WORD && sp.m_score > 2) continue;
 
         if (stripe_right[sp.stripe_idx0] != -1) continue;
         if (stripe_left[sp.stripe_idx1] != -1) continue;
@@ -904,8 +904,8 @@ void StripesSolver::reassemble_GCOM() {
     vector< vector<int> > && fragments = reassemble_greedy();
 
     compute_bigraph_weights(fragments);
-    exit(0);
-    finetune_sols(fragments);
+    // exit(0);
+    // finetune_sols(fragments);
 
 }
 

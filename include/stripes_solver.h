@@ -91,9 +91,9 @@ private:
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
     // tesseract::TessBaseAPI * ocr;
-    const double word_conf_thres {75};
-    const double lambda_ = 0.3;
-    const double filter_rate = 0.3;
+    const double word_conf_thres {70};
+    double lambda_ = 0.3;
+    double filter_rate = 0.3;
 
     // Compatibility 
     // const int symbols_n = 64;

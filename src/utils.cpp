@@ -56,6 +56,7 @@ double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift
     if (abs(check_pure(avg_pixel_color0) + check_pure(avg_pixel_color1)) >= 1) {
         return 3;
     } else {
+        
 #ifdef DEBUG
     // cout << "pixel metric: " << m_score << endl;
 #endif
