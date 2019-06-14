@@ -13,9 +13,6 @@ void solve_stripes( const string & stripes_folder,
     stripes_solver.reassemble(metric_mode, composition_mode, case_name, benchmark_flag);
 
 #ifdef DEBUG
-    for (int idx: stripes_solver.composition_order) {
-        cout << idx << endl;
-    }
 
     cv::imshow("Composition Image", stripes_solver.composition_img);
     if (!stripes_solver.composition_img_seams.empty()) {

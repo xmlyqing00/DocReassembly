@@ -127,7 +127,7 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             save_result(case_name, benchmark_flag);
 
             // GCOM Part
-            cout << "[INFO] Composition: Greedy + GCOM: GCOM." << endl;
+            cout << "\n\n[INFO] Composition: Greedy + GCOM: GCOM." << endl;
 
             composition_mode = Composition::GCOM;
             reassemble_GCOM();
@@ -807,12 +807,11 @@ void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector<
                     word_path_score += conf;
 
 #ifdef DEBUG
-                    const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_WORD);
+                    // const string ocr_char = ocr_iter->GetUTF8Text(tesseract::RIL_WORD);
 
-                    cv::rectangle(merged_img, bbox, cv::Scalar(0, 0, 255));
-                    printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d; Seam: %d\n",
-                            ocr_char.c_str(), conf, x0, y0, x1, y1, seam_x);
-
+                    // cv::rectangle(merged_img, bbox, cv::Scalar(0, 0, 255));
+                    // printf("word: '%s';  \tconf: %.2f; \t\tBoundingBox: %d,%d,%d,%d; Seam: %d\n",
+                    //         ocr_char.c_str(), conf, x0, y0, x1, y1, seam_x);
 #endif
                 } while (ocr_iter->Next(tesseract::RIL_WORD));
             }
@@ -826,13 +825,13 @@ void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector<
             bigraph_w[i][j] = lambda1 * word_path_score + (1 - lambda1) * low_level_score;
 
 #ifdef DEBUG
-            printf("word-path score: (%d, %d), %.3lf\n", i, j, word_path_score);
+            // printf("word-path score: (%d, %d), %.3lf\n", i, j, word_path_score);
 
-            cv::line(merged_img, cv::Point(seam_x, 0), cv::Point(seam_x, merged_img.rows-1), cv::Scalar(255, 0, 0));
-            string merged_path = "tmp/bigraph/" + to_string(i) + "_" + to_string(j) + ".png";
-            cv::imwrite(merged_path, merged_img);
+            // cv::line(merged_img, cv::Point(seam_x, 0), cv::Point(seam_x, merged_img.rows-1), cv::Scalar(255, 0, 0));
+            // string merged_path = "tmp/bigraph/" + to_string(i) + "_" + to_string(j) + ".png";
+            // cv::imwrite(merged_path, merged_img);
 
-            printf("right %d, left: %d, low: %.3lf\n", fragments[i].back(), fragments[j].front(), low_level_graph[right_end][left_end]);
+            // printf("right %d, left: %d, low: %.3lf\n", fragments[i].back(), fragments[j].front(), low_level_graph[right_end][left_end]);
 #endif
             
         }
@@ -845,7 +844,7 @@ void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector<
 
 void StripesSolver::optimal_match(vector< vector<int> > & fragments) {
 
-    cout << "Fragments after greedy composition:" << endl;
+    cout << "Fragments before greedy composition:" << endl;
     for (int i = 0; i < fragments.size(); i++) {
         cout << "[" << i << "]\t";
         for (const int & x: fragments[i]) cout << x << " ";
@@ -865,33 +864,22 @@ void StripesSolver::optimal_match(vector< vector<int> > & fragments) {
     KM_solver.solve();
     vector<int> arr = KM_solver.cut_loops();
 
-    #ifdef DEBUG
+#ifdef DEBUG
     KM_solver.print_edges();
     KM_solver.print_matches();
 #endif 
 
-    vector<int> final_sol;
+    composition_order.clear();
     for (int frag_idx: arr) {
-        final_sol.insert(
-            final_sol.end(), 
+        composition_order.insert(
+            composition_order.end(), 
             fragments[frag_idx].begin(),
             fragments[frag_idx].end()
         );
     }
 
-#ifdef DEBUG
-    cout << "Final sol metric scores:" << endl;
-    for (int i = 1; i < stripes_n; i++) {
-        cout << final_sol[i-1] << "\t->\t" << final_sol[i] << "\t" << low_level_graph[final_sol[i-1]][final_sol[i]] << endl;
-    }
-    cout << endl;
-#endif
-
-    composition_order = final_sol;
-
-
-
 }
+
 void StripesSolver::reassemble_GCOM() {
 
     vector< vector<int> > && fragments = reassemble_greedy();
@@ -1038,6 +1026,9 @@ void StripesSolver::save_result(const string & case_name, bool benchmark_flag) {
         cv::imwrite(output_path + "_bar.png", composition_img_bar);
     }
     
+    printf("Composed order: ");
+    for (int i = 0; i < stripes_n; i++) printf("%d ", composition_order[i]);
+    printf("\n");
 
     if (benchmark_flag) {
         ofstream fout("data/scores/" + case_name + ".txt", ios::app);

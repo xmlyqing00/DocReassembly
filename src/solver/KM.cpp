@@ -57,6 +57,7 @@ vector<int> KM::cut_loops() {
     
     vector<int> arr;
     vector<bool> visited(nodes_n, false);
+    vector< vector<int> > groups;
 
     for (int i = 0; i < nodes_n; i++) {
 
@@ -74,13 +75,23 @@ vector<int> KM::cut_loops() {
             p = match_x[p];
         } while (p != st_idx);
 
+        vector<int> group;
         p = match_x[st_idx];
         do {
-            arr.push_back(p);
+            group.push_back(p);
             visited[p] = true;
             p = match_x[p];
         } while (p != match_x[st_idx]);
 
+        groups.push_back(group);
+    }
+
+    for (int i = 0; i < groups.size(); i++) {
+        
+        for (int j = 0; j < groups.size(); j++) {
+            if (i == j) continue;
+            
+        }
     }
 
     reverse(arr.begin(), arr.end());
