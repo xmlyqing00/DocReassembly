@@ -1,13 +1,12 @@
 #!/bin/bash
 
-generator_n=3
-generator_nums=(20 30 40 60)
-
-test_n=4
+test_n=3
 nums=(20 30 40 60)
-samples=(100 300 1000 8000)
-metrics=(0 2)
-compositions=(2)
+samples=(100 300 1000 5000)
+
+method_n=2
+metrics=(0 1 2)
+comps=(0 0 2)
 
 if [ $# == 0 ]; then
     echo "Enter a test case name."
@@ -30,22 +29,21 @@ if [ "$1" == "GA" ]; then
 fi
 
 echo "Test case: "$1
-# for i in $(seq 0 ${generator_n}); do
-    # ./bin/release/generator -t $1 -n ${generator_nums[i]}
-    # echo " "
-# done
+for i in $(seq 0 ${test_n}); do
+    ./bin/release/generator -t $1 -n ${nums[i]}
+    echo " "
+done
 
-for metric in ${metrics[@]}; do
-    for comp in ${compositions[@]}; do
-        for i in $(seq 0 ${test_n}); do
-            ./bin/release/solver \
-                -t $1 \
-                -n ${nums[i]} \
-                -m ${metric} \
-                -c ${comp} \
-                -s ${samples[i]} \
-                -b
-            echo "  "
-        done
+for i in $(seq 0 ${method_n}); do
+    for j in $(seq 0 ${test_n}); do
+        echo "Test args:" ${i} ${j}
+        ./bin/release/solver \
+            -t $1 \
+            -n ${nums[j]} \
+            -m ${metrics[i]} \
+            -c ${comps[i]} \
+            -s ${samples[j]} \
+            -b
+        echo "  "
     done
 done

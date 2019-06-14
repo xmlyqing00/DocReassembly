@@ -1,5 +1,10 @@
 #include <utils.h>
 
+int fsign(double d) {
+    if (fabs(d) < eps) return 0;
+    return d > eps;
+}
+
 double avg_vec3b(const cv::Vec3b &v) {
     double avg = 0;
     for (int i = 0; i < 3; i++) {
@@ -9,8 +14,8 @@ double avg_vec3b(const cv::Vec3b &v) {
 }
 
 int check_pure(double c) {
-    if (c < 5) return -1;
-    if (c > 250) return 1;
+    if (c < 3) return -1;
+    if (c > 253) return 1;
     return 0;
 }
 
@@ -56,7 +61,7 @@ double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift
     if (abs(check_pure(avg_pixel_color0) + check_pure(avg_pixel_color1)) >= 1) {
         return 3;
     } else {
-        
+
 #ifdef DEBUG
     // cout << "pixel metric: " << m_score << endl;
 #endif

@@ -18,6 +18,8 @@ const double eps = 1e-8;
 const cv::Scalar seam_color_red(100, 100, 200);
 const cv::Scalar seam_color_green(100, 200, 100);
 
+int fsign(double d);
+
 double avg_vec3b(const cv::Vec3b &v);
 
 int check_pure(double c);

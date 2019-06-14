@@ -118,16 +118,25 @@ int main(int argc, char ** argv) {
 
     const string metric_mode_str = 
         metric_mode == StripesSolver::Metric::PIXEL ? "Pixel" :
-        metric_mode == StripesSolver::Metric::WORD ? "Word" :
-        "Compability Evaluator";
+        metric_mode == StripesSolver::Metric::CHAR ? "Char" :
+        "Word";
+    const string comp_mode_str = 
+        composition_mode == StripesSolver::Composition::GREEDY ? "Greedy":
+        composition_mode == StripesSolver::Composition::GCOM ? "GCOM":
+        composition_mode == StripesSolver::Composition::GREEDY_GCOM ? "Greedy + GCOM (for test)":
+        composition_mode == StripesSolver::Composition::GT ? "Groundtruth":
+        "User";
+
 
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Vertical cut num:    \t" << vertical_n << endl;
     cout << "Puzzle type:         \t" << (puzzle_type == PuzzleType::SQUARES ? "Squares": "Stripes") << endl;
     cout << "Metric mode:         \t" << metric_mode_str << endl;
-    cout << "Samples times:       \t" << samples_n << endl;
-    cout << "Composition mode:    \t" << static_cast<int>(composition_mode) << endl;
+    cout << "Composition mode:    \t" << comp_mode_str << endl;
     cout << "Real-world case:     \t" << real_flag << endl;
+    if (composition_mode == StripesSolver::Composition::GCOM || composition_mode == StripesSolver::Composition::GREEDY_GCOM) {
+        cout << "Samples times:       \t" << samples_n << endl;
+    }
 
     time_t start_time = time(0);
 

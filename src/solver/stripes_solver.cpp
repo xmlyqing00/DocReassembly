@@ -86,6 +86,9 @@ bool StripesSolver::reassemble( Metric _metric_mode,
         
         // 1
         case Composition::GCOM:
+            
+            assert(metric_mode == Metric::WORD);
+            
             cout << "[INFO] Composition: GCOM." << endl;
 
             reassemble_GCOM();
@@ -98,6 +101,8 @@ bool StripesSolver::reassemble( Metric _metric_mode,
         
         // 2
         case Composition::GREEDY_GCOM:
+
+            assert(metric_mode == Metric::WORD);
 
             // Greedy part
             cout << "[INFO] Composition: Greedy + GCOM: Greedy" << endl;
@@ -488,7 +493,7 @@ void StripesSolver::m_metric_word() {
 
         next_pairs.erase(next_pairs.begin() + filters_n, next_pairs.end());
 
-#ifdef DEBUG
+// #ifdef DEBUG
         int gt_next_idx = -1;
         for (int j = 0; j < stripes_n - 1; j++) {
             if (gt_order[j] == i) {
@@ -496,19 +501,21 @@ void StripesSolver::m_metric_word() {
                 break;
             }
         }
-#endif
+// #endif
         
         for (auto & stripe_pair: next_pairs) {
             double alpha = U_a * (stripe_pair.m_score / worst_score - 1);
             double exp_alpha = exp(alpha);
             stripe_pair.ac_prob = (exp_alpha - 1) / (exp_alpha + 1);
 
-#ifdef DEBUG
+// #ifdef DEBUG
             if (gt_next_idx == stripe_pair.stripe_idx1) {
                 occur_cnt++;
+#ifdef DEBUG
                 cout << stripe_pair << endl;
-            }
 #endif
+            }
+// #endif
 
         }
 
@@ -516,9 +523,9 @@ void StripesSolver::m_metric_word() {
             
     }
 
-#ifdef DEBUG
+// #ifdef DEBUG
     printf("Stripe pairs in searching space: %d / %d\n", occur_cnt, stripes_n-1);
-#endif
+// #endif
 
     map< vector<int>, bool > seq_visited;
     vector< vector<int> > candidate_seqs;
@@ -543,12 +550,13 @@ void StripesSolver::m_metric_word() {
         }
     }
 
-#ifdef DEBUG
     occur_cnt = 0;
     for (int i = 0; i < stripes_n; i++) {
         for (int j = 0; j < stripes_n - 1; j++) {
             if (gt_order[j] == i) {
+#ifdef DEBUG
                 cout << "Occurence cnt " << i << " " << gt_order[j+1] << " " << composition_cnt[i][gt_order[j+1]] << endl;
+#endif
                 if (composition_cnt[i][gt_order[j+1]] > 0) occur_cnt++;
                 break;
             }
@@ -556,7 +564,6 @@ void StripesSolver::m_metric_word() {
     }
 
     printf("Candidate sequence in word detection: %d / %d\n", occur_cnt, stripes_n-1);
-#endif
 
     compute_word_scores(candidate_seqs);
 
@@ -569,7 +576,6 @@ void StripesSolver::m_metric_word() {
     // path_manager.print_path_graph();
 #endif
 
-    stripe_pairs_pixel = stripe_pairs;
     stripe_pairs = path_manager.build_stripe_pairs();
 
 }
@@ -632,11 +638,12 @@ void StripesSolver::m_metric() {
 
             low_level_graph[i][j] = m_score;
 
-            omp_set_lock(&omp_lock);
-            if (m_score < 1) {
+            if (metric_mode == Metric::PIXEL || metric_mode == Metric::CHAR) {
+                omp_set_lock(&omp_lock);
                 stripe_pairs.push_back(StripePair(i, j, m_score, 1.0, false));
+                omp_unset_lock(&omp_lock);
             }
-            omp_unset_lock(&omp_lock);
+            
 
         }
 
@@ -737,17 +744,6 @@ vector< vector<int> > StripesSolver::reassemble_greedy() {
 
 void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector< vector<double> > & bigraph_w) {
 
-    cout << "[INFO] Pair merge fragments." << endl;
-#ifdef DEBUG
-    cout << "Fragments before:" << endl;
-    for (int i = 0; i < fragments.size(); i++) {
-        cout << "[" << i << "]\t";
-        for (const int & x: fragments[i]) cout << x << " ";
-        cout << endl;
-    }
-    cout << endl;
-#endif
-
     vector<cv::Mat> frag_imgs;
     for (const auto & fragment: fragments) {
         cv::Mat frag_img = compose_img(fragment, real_flag);
@@ -821,17 +817,23 @@ void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector<
                 } while (ocr_iter->Next(tesseract::RIL_WORD));
             }
 
+            int left_end = fragments[j].front();
+
+            word_path_score = 1 - exp(-word_path_score / 100);
+            double low_level_score = low_level_graph[right_end][left_end];
+            if (fsign(low_level_score - 3) == 0) low_level_score = 1;
+
+            bigraph_w[i][j] = lambda1 * word_path_score + (1 - lambda1) * low_level_score;
+
 #ifdef DEBUG
             printf("word-path score: (%d, %d), %.3lf\n", i, j, word_path_score);
 
             cv::line(merged_img, cv::Point(seam_x, 0), cv::Point(seam_x, merged_img.rows-1), cv::Scalar(255, 0, 0));
             string merged_path = "tmp/bigraph/" + to_string(i) + "_" + to_string(j) + ".png";
             cv::imwrite(merged_path, merged_img);
-#endif
 
-            
-            int left_end = fragments[j].front();
-            bigraph_w[i][j] = lambda1 * word_path_score + (1 - lambda1) * low_level_graph[right_end][left_end];
+            printf("right %d, left: %d, low: %.3lf\n", fragments[i].back(), fragments[j].front(), low_level_graph[right_end][left_end]);
+#endif
             
         }
 
@@ -841,10 +843,9 @@ void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector<
 
 }
 
-void StripesSolver::finetune_sols(const vector< vector<int> > & fragments) {
+void StripesSolver::optimal_match(vector< vector<int> > & fragments) {
 
-
-    cout << "Fragments:" << endl;
+    cout << "Fragments after greedy composition:" << endl;
     for (int i = 0; i < fragments.size(); i++) {
         cout << "[" << i << "]\t";
         for (const int & x: fragments[i]) cout << x << " ";
@@ -857,32 +858,14 @@ void StripesSolver::finetune_sols(const vector< vector<int> > & fragments) {
         return;
     }
 
-    vector<int> in_nodes, out_nodes;
-    for (const auto & sol: fragments) {
-        in_nodes.push_back(sol.front());
-        out_nodes.push_back(sol.back());
-    }
+    vector< vector<double> > bigraph_w;
+    compute_bigraph_w(fragments, bigraph_w);
 
-    int nodes_n = in_nodes.size();
-    vector< vector<double> > edges(nodes_n, vector<double>(nodes_n));
-
-    for (int i = 0; i < out_nodes.size(); i++) {
-        for (int j = 0; j < in_nodes.size(); j++) {
-            if (i == j) continue;
-            if (low_level_graph[out_nodes[i]][in_nodes[j]] < -eps) {
-                edges[i][j] = -100;
-            } else {
-                edges[i][j] = -low_level_graph[out_nodes[i]][in_nodes[j]];
-            }
-            
-        }
-    }
-
-    KM KM_solver(edges);
+    KM KM_solver(bigraph_w);
     KM_solver.solve();
     vector<int> arr = KM_solver.cut_loops();
 
-#ifdef DEBUG
+    #ifdef DEBUG
     KM_solver.print_edges();
     KM_solver.print_matches();
 #endif 
@@ -906,17 +889,14 @@ void StripesSolver::finetune_sols(const vector< vector<int> > & fragments) {
 
     composition_order = final_sol;
 
-}
 
+
+}
 void StripesSolver::reassemble_GCOM() {
 
     vector< vector<int> > && fragments = reassemble_greedy();
 
-    vector< vector<double> > bigraph_w;
-    compute_bigraph_w(fragments, bigraph_w);
-    optimal_match(bigraph_w);
-    // exit(0);
-    // finetune_sols(fragments);
+    optimal_match(fragments);
 
 }
 
@@ -1060,9 +1040,9 @@ void StripesSolver::save_result(const string & case_name, bool benchmark_flag) {
     
 
     if (benchmark_flag) {
-        ofstream fout("data/scores_ori/" + case_name + ".txt", ios::app);
+        ofstream fout("data/scores/" + case_name + ".txt", ios::app);
         fout << composition_score << " ";
-        if ((stripes_n == 40 || stripes_n == 60) && composition_mode == Composition::GCOM) {
+        if (stripes_n == 60) {
             fout << endl;
         }
         fout.close();

@@ -84,7 +84,6 @@ private:
     bool real_flag;
 
     vector<StripePair> stripe_pairs;
-    vector<StripePair> stripe_pairs_pixel;
 
     void save_result(const string & case_name, bool benchmark_flag);
 
@@ -133,7 +132,7 @@ private:
 
     // For bigraph
     void compute_bigraph_w(vector< vector<int> > & fragments, vector< vector<double> > & bigraph_w);
-    void finetune_sols(const vector< vector<int> > & fragments);
+    void optimal_match(vector< vector<int> > & fragments);
 
 };
 
