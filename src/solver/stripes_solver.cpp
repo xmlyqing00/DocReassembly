@@ -872,7 +872,7 @@ void StripesSolver::optimal_match(vector< vector<int> > & fragments) {
     // KM return groups. We find the maximum dissimilarity groups.
     int groups_n = groups.size();
     int st_group_idx = 0;
-    int score_min = INFINITY;
+    int score_min = INF_INT;
 
     for (int i = 0; i < groups_n; i++) {
         int right_end = groups[i].back();
