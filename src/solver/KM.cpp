@@ -9,7 +9,6 @@ KM::KM(const vector< vector<double> > & _edges) :
     match_x = vector<int>(nodes_n, -1);
     slack = vector<double>(nodes_n, numeric_limits<double>::max());
 
-
     for (int i = 0; i < nodes_n; i++) {
         lx[i] = numeric_limits<double>::min();
         for (int j = 0; j < nodes_n; j++) {

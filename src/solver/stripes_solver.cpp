@@ -869,21 +869,64 @@ void StripesSolver::optimal_match(vector< vector<int> > & fragments) {
     KM_solver.print_matches();
 #endif 
 
+    // KM return groups. We find the maximum dissimilarity groups.
     int groups_n = groups.size();
+    int st_group_idx = 0;
+    int score_min = INFINITY;
+
     for (int i = 0; i < groups_n; i++) {
+        int right_end = groups[i].back();
         for (int j = 0; j < groups_n; j++) {
             if (i == j) continue;
-            if (bigraph_w[i][j])
-            group_pairs.push_back(StripePair(i, j, bigraph_w[i][j]));
+            int left_end = groups[j].front();
+
+            if (score_min > bigraph_w[right_end][left_end]) {
+                score_min = bigraph_w[right_end][left_end];
+                st_group_idx = left_end;
+            }
         }
     }
 
-    sort(group_pairs.begin(), group_pairs.end());
+    vector<int> frag_order;
+    frag_order.insert(
+        frag_order.end(), 
+        groups[st_group_idx].begin(),
+        groups[st_group_idx].end()
+    );
 
+    int cur_group_idx = st_group_idx;
+    vector<bool> frag_visited(groups_n, false);
 
+    for (int i = 1; i < groups_n; i++) {
+
+        frag_visited[cur_group_idx] = true;
+
+        int next_group_idx = 0;
+        double score_max = 0;
+        int right_end = groups[st_group_idx].back();
+
+        for (int j = 0; j < groups_n; j++) {
+            if (frag_visited[j]) continue;
+
+            int left_end = groups[j].front();
+            if (score_max < bigraph_w[right_end][left_end]) {
+                score_max = bigraph_w[right_end][left_end];
+                next_group_idx = j;
+            }
+        }    
+
+        frag_order.insert(
+            frag_order.end(), 
+            groups[next_group_idx].begin(),
+            groups[next_group_idx].end()
+        );
+
+        cur_group_idx = next_group_idx;
+
+    }
 
     composition_order.clear();
-    for (int frag_idx: arr) {
+    for (int frag_idx: frag_order) {
         composition_order.insert(
             composition_order.end(), 
             fragments[frag_idx].begin(),
