@@ -14,7 +14,7 @@ class KM {
 public:
     KM(const vector< vector<double> > & _edges);
     vector<int> solve();
-    vector<int> cut_loops();
+    vector< vector<int> > cut_loops();
     
     void print_edges();
     void print_matches();

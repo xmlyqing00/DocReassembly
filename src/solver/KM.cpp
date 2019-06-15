@@ -53,7 +53,7 @@ vector<int> KM::solve() {
 
 }
 
-vector<int> KM::cut_loops() {
+vector< vector<int> > KM::cut_loops() {
     
     vector<int> arr;
     vector<bool> visited(nodes_n, false);
@@ -83,19 +83,12 @@ vector<int> KM::cut_loops() {
             p = match_x[p];
         } while (p != match_x[st_idx]);
 
+        reverse(group.begin(), group.end());
         groups.push_back(group);
+
     }
 
-    for (int i = 0; i < groups.size(); i++) {
-        
-        for (int j = 0; j < groups.size(); j++) {
-            if (i == j) continue;
-            
-        }
-    }
-
-    reverse(arr.begin(), arr.end());
-    return arr;
+    return groups;
 
 }
 

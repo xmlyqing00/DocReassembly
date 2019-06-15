@@ -673,9 +673,9 @@ void StripesSolver::m_metric() {
 
 vector< vector<int> > StripesSolver::reassemble_greedy() {
 
-    random_device rand_device;
-    default_random_engine rand_engine(rand_device());
-    uniform_real_distribution<double> uniform_unit_dist(0, 1);
+    // random_device rand_device;
+    // default_random_engine rand_engine(rand_device());
+    // uniform_real_distribution<double> uniform_unit_dist(0, 1);
 
     vector<int> stripe_left(stripes_n, -1);
     vector<int> stripe_right(stripes_n, -1);
@@ -862,12 +862,25 @@ void StripesSolver::optimal_match(vector< vector<int> > & fragments) {
 
     KM KM_solver(bigraph_w);
     KM_solver.solve();
-    vector<int> arr = KM_solver.cut_loops();
+    vector< vector<int> > groups = KM_solver.cut_loops();
 
 #ifdef DEBUG
     KM_solver.print_edges();
     KM_solver.print_matches();
 #endif 
+
+    int groups_n = groups.size();
+    for (int i = 0; i < groups_n; i++) {
+        for (int j = 0; j < groups_n; j++) {
+            if (i == j) continue;
+            if (bigraph_w[i][j])
+            group_pairs.push_back(StripePair(i, j, bigraph_w[i][j]));
+        }
+    }
+
+    sort(group_pairs.begin(), group_pairs.end());
+
+
 
     composition_order.clear();
     for (int frag_idx: arr) {
