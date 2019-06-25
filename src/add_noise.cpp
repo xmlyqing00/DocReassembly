@@ -4,7 +4,7 @@ int main(int argc, char ** argv) {
 
     // Default parameters
     string case_name = "doc0";
-    int noise_level = 5;
+    int noise_level = 100;
     int dense_level = 20;
 
     // Parse command line parameters
@@ -27,7 +27,7 @@ int main(int argc, char ** argv) {
         opt = getopt(argc, argv, opt_str.c_str());
     }
 
-    string out_name = case_name + "_noise_" + to_string(dense_level);
+    string out_name = case_name + "_noise" + to_string(dense_level);
 
     cout << "Test case name:      \t" << case_name << endl;
     cout << "Saved name:          \t" << out_name << endl;
@@ -45,21 +45,24 @@ int main(int argc, char ** argv) {
     uniform_real_distribution<double> uni_dist(1 - (double)noise_level / 100, 1);
     uniform_int_distribution<int> uni_dense(0, 1000);
 
-    for (int y = 0; y < in_img.rows; y++) {
-        for (int x = 0; x < in_img.cols; x++) {
+    int m = dense_level / 100.0 * in_img.rows * in_img.cols;
+    printf("Partical nums: \t%d\n", m);
 
-            int dense_test = rand_engine() % 1000;
-            // dense_test = int(abs(sin(x * y)) * dense_test);
-            if (dense_test > dense_level) continue;
+    for (int i = 0; i < m; i++) {
 
-            cv::Vec3b color = in_img.at<cv::Vec3b>(y, x);
-            double noise_alpha = uni_dist(rand_engine);
+        int x = rand_engine() % in_img.cols;
+        int y = rand_engine() % in_img.rows;
+
+        // cout << x << " " << y << endl;
+
+        cv::Vec3b color = in_img.at<cv::Vec3b>(y, x);
+        double noise_alpha = uni_dist(rand_engine);
             
-            for (int k = 0; k < 3; k++) {
-                color[k] = (uchar)(color[k] * noise_alpha);
-            }
-            in_img.at<cv::Vec3b>(y, x) = color;
+        for (int k = 0; k < 3; k++) {
+            color[k] = (uchar)(color[k] * noise_alpha);
         }
+        in_img.at<cv::Vec3b>(y, x) = color;
+
     }
 
     cv::imwrite(out_img_path, in_img);

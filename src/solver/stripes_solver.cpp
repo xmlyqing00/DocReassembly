@@ -882,7 +882,7 @@ void StripesSolver::optimal_match(vector< vector<int> > & fragments) {
 
             if (score_min > bigraph_w[right_end][left_end]) {
                 score_min = bigraph_w[right_end][left_end];
-                st_group_idx = left_end;
+                st_group_idx = j;
             }
         }
     }
