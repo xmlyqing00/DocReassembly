@@ -370,8 +370,9 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
     if (ocr_iter != 0) {
         do {
             const float conf = ocr_iter->Confidence(tesseract_level);
+            if (conf < word_conf_thres) continue;
             const string word = ocr_iter->GetUTF8Text(tesseract_level);
-            if (word.length() < 3 || conf < word_conf_thres || !ocr_iter->WordIsFromDictionary()) continue;
+            if (word.length() < 3 || !ocr_iter->WordIsFromDictionary()) continue;
 
             // Boundary cross constraint
             int x0, y0, x1, y1;
@@ -385,10 +386,10 @@ cv::Mat StripesSolver::word_detection(  const cv::Mat & img,
                 seq_words[vector<int>(seq.begin()+seq_path_st, seq.begin()+seq_path_ed)]++;
             }
 #ifdef DEBUG
-                // cv::rectangle(img_bbox, bbox, color_blue);
-                // printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
-                //         word.c_str(), conf, ocr_iter->WordIsFromDictionary(), x0, y0, x1, y1);
-                // cout << endl;
+            // cv::rectangle(img_bbox, bbox, color_blue);
+            printf("word: '%s';  \tconf: %.2f; \tDict: %d; \tBoundingBox: %d,%d,%d,%d;\n",
+                    word.c_str(), conf, ocr_iter->WordIsFromDictionary(), x0, y0, x1, y1);
+            cout << endl;
 #endif
             
 
@@ -779,7 +780,6 @@ void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector<
         for (int j = 0; j < fragments.size(); j++) {
 
             if (i == j) continue;
-
             const int bias = real_flag ? 3 : 1;
 
             int seam_x = frag_imgs[i].cols;
@@ -795,8 +795,9 @@ void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector<
             if (ocr_iter != 0) {
                 do {
                     const float conf = ocr_iter->Confidence(tesseract::RIL_WORD);
+                    if (conf < word_conf_thres) continue;
                     const string word = ocr_iter->GetUTF8Text(tesseract::RIL_WORD);
-                    if (word.length() < 3 || conf < word_conf_thres || !ocr_iter->WordIsFromDictionary()) continue;
+                    if (word.length() < 3 || !ocr_iter->WordIsFromDictionary()) continue;
 
                     // Boundary cross constraint
                     int x0, y0, x1, y1;

@@ -2,7 +2,7 @@
 
 test_n=3
 nums=(20 30 40 60)
-samples=(100 300 1000 5000)
+samples=(200 600 2000 8000)
 
 method_n=1
 metrics=(0 2)
@@ -36,7 +36,7 @@ fi
 
 if [ "$1" == "noise" ]; then
     echo "Run noise dataset."
-    test_files=("doc19_noise5")
+    test_files=("doc16_noise20" "doc18_noise20")
 fi
 
 if [ "$1" == "doc" ] || [ "$1" == "noise" ]; then
@@ -81,7 +81,7 @@ done
 
 for i in $(seq 0 ${method_n}); do
     for j in $(seq 0 ${test_n}); do
-        echo "Test args:" ${i} ${j}
+        echo "Test args:" ${test_name} ${nums[j]} ${metrics[i]} ${comps[i]} ${samples[j]}
         ./bin/release/solver \
             -t $1 \
             -n ${nums[j]} \
