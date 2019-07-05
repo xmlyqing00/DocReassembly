@@ -91,9 +91,9 @@ private:
     const string tesseract_model_path {"data/tesseract_model/"};
     // tesseract::TessBaseAPI * ocr;
     const double word_conf_thres {70}; // 70
-    double lambda0 = 0.7; // 0.3
-    double lambda1 = 0.5;
-    double filter_rate = 0.7; // 0.3
+    double lambda0 = 0.2; // 0.3, weight for character-level
+    double lambda1 = 0.5; // 0.5, weight for concat word detection
+    double filter_rate = 0.7; // 0.7, ratio for discarding stripe
 
     // Compatibility 
     // const int symbols_n = 64;
@@ -123,7 +123,7 @@ private:
 
     // For word-path
     void compute_mutual_graph(vector< vector<double> > & mutual_graph);
-    void stochastic_search( vector<int> & seq, const vector< vector<StripePair> > & compose_next);
+    void stochastic_search( vector<int> & seq, const vector< vector<StripePair> > & compose_next, double norm_dist_sigma);
     void compute_word_scores(const vector< vector<int> > & candidate_seqs);
     cv::Mat word_detection( const cv::Mat & img, 
                             const vector<int> & seq,
