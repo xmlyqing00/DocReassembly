@@ -70,7 +70,7 @@ for i in range(method_n):
     if i > 0:
         for j in range(test_n):
             x[j] += width
-    plt.bar(x, data[order_idx * test_n: (order_idx+1) * test_n], width=width, label=method_names[order_idx], facecolor=method_colors[order_idx])
+    plt.boxplot(x, data[order_idx * test_n: (order_idx+1) * test_n], label=method_names[order_idx], facecolor=method_colors[order_idx])
 
 ticks = [str(x) for x in nums]
 plt.xticks(np.arange(test_n), ticks)

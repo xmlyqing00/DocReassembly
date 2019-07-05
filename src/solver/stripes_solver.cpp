@@ -460,10 +460,10 @@ void StripesSolver::m_metric_word() {
     compute_mutual_graph(mutual_graph);
 
     // Compute stripe_pairs
-    double U_a = 1;
+    double U_a = 0.1;
     // if (real_flag) U_a = 1.5;
 
-    int filters_n = min(int(stripes_n * filter_rate), stripes_n - 1);
+    int filters_n = min(int(stripes_n * filter_rate), stripes_n - 1); // 1- filter_rate
     cout << "Preserve stripes:    \t" << filters_n << endl;
 
     vector< vector<StripePair> > compose_next;
