@@ -93,7 +93,6 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
 
     if (shift_flag) {
 
-        const double white_thres = 0.8;
         const int color_thres = 200;
         
         splice_x0 = 0;
@@ -105,7 +104,7 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
         int block_cnt = 0;
         int out_width = 0;
 
-        for (int y = 0; y < in_img1.rows; y += block_h) {
+        for (int y = block_h; y < in_img1.rows - block_h; y += block_h) {
             
             if (in_img0.cols > 0) {
                 
@@ -116,10 +115,10 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
                 }
                 x0++;
 
-                if (y > 0) {
-                    shift_x0 = int(round(0.8 * shift_x0 + 0.2 * x0));
-                } else {
+                if (y == block_h) {
                     shift_x0 = x0;
+                } else {
+                    shift_x0 = int(round(0.8 * shift_x0 + 0.2 * x0));
                 }
                     
             }
@@ -132,10 +131,10 @@ cv::Mat merge_imgs( const cv::Mat & in_img0,
                     if (color[0] > color_thres && color[1] > color_thres && color[2] > color_thres) break;
                 }
 
-                if (y > 0) {
-                    shift_x1 = int(round(0.8 * shift_x1 + 0.2 * x1));
-                } else {
+                if (y == block_h) {
                     shift_x1 = x1;
+                } else {
+                    shift_x1 = int(round(0.8 * shift_x1 + 0.2 * x1));
                 }
             }
 

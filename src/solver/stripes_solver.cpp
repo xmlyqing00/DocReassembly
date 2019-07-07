@@ -59,7 +59,11 @@ bool StripesSolver::reassemble( Metric _metric_mode,
     metric_mode = _metric_mode;
     composition_mode = _composition_mode;
 
-    m_metric();
+    if (composition_mode == Composition::GREEDY || 
+        composition_mode == Composition::GCOM || 
+        composition_mode == Composition::GREEDY_GCOM) {
+        m_metric();
+    }
 
     vector< vector<int> > fragments;
     vector<int> seq_x;
@@ -144,7 +148,7 @@ bool StripesSolver::reassemble( Metric _metric_mode,
 
         // 3
         case Composition::GT:
-
+            composition_order = gt_order;
             composition_img = compose_img(gt_order, real_flag, &seq_x);
             composition_img_seams = add_seams(composition_img, gt_order, false, &seq_x);
             save_result(case_name, false);
@@ -312,6 +316,7 @@ void StripesSolver::stochastic_search(vector<int> & seq, const vector< vector<St
     default_random_engine rand_engine(rand_device());
     uniform_int_distribution<int> uniform_st_dist(0, stripes_n-1);
     normal_distribution<double> norm_dist(0, norm_dist_sigma);
+    uniform_real_distribution<double> uniform_unit_dist(0, 1);
     vector<bool> stripe_visited(stripes_n, false);
     
     int cur_p = uniform_st_dist(rand_engine);
@@ -323,39 +328,39 @@ void StripesSolver::stochastic_search(vector<int> & seq, const vector< vector<St
         
         if (compose_next[cur_p].size() == 0) break;
         
-        int next_p = -1;
-        int cnt = 0;
+        // int next_p = -1;
+        // int cnt = 0;
 
-        while (cnt < searchs_n) {
-            int next_p_idx = -1;
-            do {
-                next_p_idx = round(abs(norm_dist(rand_engine)));
-            } while (next_p_idx >= compose_next[cur_p].size());
+        // while (cnt < searchs_n) {
+        //     int next_p_idx = -1;
+        //     do {
+        //         next_p_idx = round(abs(norm_dist(rand_engine)));
+        //     } while (next_p_idx >= compose_next[cur_p].size());
 
-            next_p = compose_next[cur_p][next_p_idx].stripe_idx1;
-            if (!stripe_visited[next_p]) break;
-            cnt++;
-        }
-
-        if (cnt == 10) break;
-
-        seq.push_back(next_p);
-        stripe_visited[next_p] = true;
-        cur_p = next_p;
-
-        // for (const StripePair & sp: compose_next[cur_p]) {
-
-        //     if (stripe_visited[sp.stripe_idx1]) continue;
-        //     double rand_p = uniform_unit_dist(rand_engine);
-        //     if (rand_p > sp.ac_prob) continue;
-
-        //     cur_p = sp.stripe_idx1;
-        //     seq.push_back(cur_p);
-        //     stripe_visited[cur_p] = true;
-        //     break;
+        //     next_p = compose_next[cur_p][next_p_idx].stripe_idx1;
+        //     if (!stripe_visited[next_p]) break;
+        //     cnt++;
         // }
 
-        // if (seq.size() == i) break;
+        // if (cnt == 10) break;
+
+        // seq.push_back(next_p);
+        // stripe_visited[next_p] = true;
+        // cur_p = next_p;
+
+        for (const StripePair & sp: compose_next[cur_p]) {
+
+            if (stripe_visited[sp.stripe_idx1]) continue;
+            double rand_p = uniform_unit_dist(rand_engine);
+            if (rand_p > sp.ac_prob) continue;
+
+            cur_p = sp.stripe_idx1;
+            seq.push_back(cur_p);
+            stripe_visited[cur_p] = true;
+            break;
+        }
+
+        if (seq.size() == i) break;
 
     }
 
@@ -481,7 +486,7 @@ void StripesSolver::m_metric_word() {
     compute_mutual_graph(mutual_graph);
 
     // Compute stripe_pairs
-    // double U_a = 1;
+    double U_a = 1;
     // if (real_flag) U_a = 1.5;
 
     int preserve_n = min(int(stripes_n * (1 - filter_rate)), stripes_n - 1); // 1- filter_rate
@@ -500,18 +505,18 @@ void StripesSolver::m_metric_word() {
 
         sort(next_pairs.begin(), next_pairs.end());
         
-        // double worst_score = next_pairs[preserve_n].m_score;
-        // for (int j = preserve_n; j >= 0; j--) {
-        //     if (next_pairs[j].m_score > eps) {
-        //         worst_score = next_pairs[j].m_score;
-        //         break; 
-        //     }
-        // }
+        double worst_score = next_pairs[preserve_n].m_score;
+        for (int j = preserve_n; j >= 0; j--) {
+            if (next_pairs[j].m_score > eps) {
+                worst_score = next_pairs[j].m_score;
+                break; 
+            }
+        }
 
-        // if (abs(worst_score) < eps) {
-        //     compose_next.push_back(vector<StripePair>());
-        //     continue;
-        // }
+        if (abs(worst_score) < eps) {
+            compose_next.push_back(vector<StripePair>());
+            continue;
+        }
 
         next_pairs.erase(next_pairs.begin() + preserve_n, next_pairs.end());
 
@@ -526,9 +531,9 @@ void StripesSolver::m_metric_word() {
 // #endif
         
         for (auto & stripe_pair: next_pairs) {
-            // double alpha = U_a * (stripe_pair.m_score / worst_score - 1);
-            // double exp_alpha = exp(alpha);
-            // stripe_pair.ac_prob = (exp_alpha - 1) / (exp_alpha + 1);
+            double alpha = U_a * (stripe_pair.m_score / worst_score - 1);
+            double exp_alpha = exp(alpha);
+            stripe_pair.ac_prob = (exp_alpha - 1) / (exp_alpha + 1);
 
 // #ifdef DEBUG
             if (gt_next_idx == stripe_pair.stripe_idx1) {
@@ -564,7 +569,7 @@ void StripesSolver::m_metric_word() {
     while (candidate_seqs.size() < candidate_seqs_n) {
 
         vector<int> seq;
-        stochastic_search(seq, compose_next, 1);
+        stochastic_search(seq, compose_next, prob_sigma);
         
         if (seq.size() > min_seq_len && seq_visited[seq] == false) {
             seq_visited[seq] = true;
@@ -778,8 +783,10 @@ vector< vector<int> > StripesSolver::reassemble_greedy() {
 void StripesSolver::compute_bigraph_w(vector< vector<int> > & fragments, vector< vector<double> > & bigraph_w) {
 
     vector<cv::Mat> frag_imgs;
+    vector<int> seq_x;
     for (const auto & fragment: fragments) {
-        cv::Mat frag_img = compose_img(fragment, real_flag);
+        
+        cv::Mat frag_img = compose_img(fragment, real_flag, &seq_x);
         frag_imgs.push_back(frag_img);
 
 #ifdef DEBUG
@@ -988,7 +995,7 @@ cv::Mat StripesSolver::compose_img( const vector<int> & composition_order,
                                     vector<int> * seq_x) {
     
     cv::Mat composition_img;
-    int x0, x1;
+    int x0 = 0, x1;
     for (int i = 0; i < composition_order.size(); i++) {
         // if (i == 8) {
             // cv::imshow("comp", composition_img);
