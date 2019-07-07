@@ -1,8 +1,11 @@
 #include <utils.h>
 
 int fsign(double d) {
-    if (fabs(d) < eps) return 0;
-    return d > eps;
+    if (fabs(d) < eps) {
+        return 0;
+    } else if (d > eps) {
+        return 1;
+    } else return -1;
 }
 
 double avg_vec3b(const cv::Vec3b &v) {
@@ -29,8 +32,7 @@ double diff_vec3b(const cv::Vec3b & v0, const cv::Vec3b & v1) {
 
 }
 
-double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift_flag, int idx)
- {
+double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift_flag, int idx) {
 
     assert(piece0.rows == piece1.rows);
 
@@ -63,9 +65,9 @@ double m_metric_pixel(const cv::Mat & piece0, const cv::Mat & piece1, bool shift
     } else {
 
 #ifdef DEBUG
-    // cout << "pixel metric: " << m_score << endl;
+    cout << "pixel metric: " << m_score << endl;
 #endif
-        return exp(-max(0.0, m_score / 20 - 1.5));
+        return exp(-max(0.0, m_score / 20 - metric_bias_pixel));
     }
 
 }

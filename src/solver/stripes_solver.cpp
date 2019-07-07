@@ -317,20 +317,27 @@ void StripesSolver::stochastic_search(vector<int> & seq, const vector< vector<St
     int cur_p = uniform_st_dist(rand_engine);
     seq.push_back(cur_p);
     stripe_visited[cur_p] = true;
+    const int searchs_n = 20;
 
     for (int i = 1; i < candidate_seq_len; i++) {
         
         if (compose_next[cur_p].size() == 0) break;
-
+        
         int next_p = -1;
-        for (int j = 0; j < compose_next[cur_p].size(); j++) {
+        int cnt = 0;
+
+        while (cnt < searchs_n) {
+            int next_p_idx = -1;
             do {
-                next_p = round(abs(norm_dist(rand_engine)));
-            } while (next_p >= stripes_n);
+                next_p_idx = round(abs(norm_dist(rand_engine)));
+            } while (next_p_idx >= compose_next[cur_p].size());
+
+            next_p = compose_next[cur_p][next_p_idx].stripe_idx1;
             if (!stripe_visited[next_p]) break;
+            cnt++;
         }
 
-        if (next_p == -1) break;
+        if (cnt == 10) break;
 
         seq.push_back(next_p);
         stripe_visited[next_p] = true;
@@ -474,7 +481,7 @@ void StripesSolver::m_metric_word() {
     compute_mutual_graph(mutual_graph);
 
     // Compute stripe_pairs
-    double U_a = 0.1;
+    // double U_a = 1;
     // if (real_flag) U_a = 1.5;
 
     int preserve_n = min(int(stripes_n * (1 - filter_rate)), stripes_n - 1); // 1- filter_rate
@@ -546,24 +553,32 @@ void StripesSolver::m_metric_word() {
     vector< vector<int> > candidate_seqs;
 
     candidate_seq_len = stripes_n / candidate_factor;
+    int min_seq_len = candidate_seq_len / 2;
+
     cout << "Candidate length:   \t" << candidate_seq_len << endl;
     cout << "[INFO] Search candidate seqs." << endl;
     
     vector< vector<int> > composition_cnt(stripes_n, vector<int>(stripes_n, 0));
 
+    int research_cnt = 0;
     while (candidate_seqs.size() < candidate_seqs_n) {
 
         vector<int> seq;
-        stochastic_search(seq, compose_next, preserve_n / 2);
+        stochastic_search(seq, compose_next, 1);
         
-        if (seq.size() > candidate_seq_len / 2 && seq_visited[seq] == false) {
+        if (seq.size() > min_seq_len && seq_visited[seq] == false) {
             seq_visited[seq] = true;
             candidate_seqs.push_back(seq);
             for (int i = 1; i < seq.size(); i++) {
                 composition_cnt[seq[i-1]][seq[i]]++;
             }
+        } else {
+            research_cnt++;
+            if (research_cnt == 100) break;
         }
     }
+
+    cout << "Candidate seqs: " << candidate_seqs.size() << endl;
 
     occur_cnt = 0;
     for (int i = 0; i < stripes_n; i++) {
@@ -637,7 +652,10 @@ void StripesSolver::m_metric() {
                     m_score = m_metric_char(stripes[i], stripes[j], ocr);
                 case Metric::WORD:
                     m_score_p = m_metric_pixel(stripes[i], stripes[j], real_flag, i * stripes_n + j);
-                    m_score_c = m_metric_char(stripes[i], stripes[j], ocr, i * stripes_n + j);
+                    if (fsign(lambda0) > 0) {
+                        m_score_c = m_metric_char(stripes[i], stripes[j], ocr, i * stripes_n + j);
+                    }
+                    
                     if (m_score_p > 1) {
                         m_score = m_score_p;
                     } else {

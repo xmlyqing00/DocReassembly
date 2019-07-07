@@ -90,8 +90,8 @@ private:
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
     // tesseract::TessBaseAPI * ocr;
-    const double word_conf_thres {70}; // 70
-    double lambda0 = 0.2; // 0.3, weight for character-level
+    const double word_conf_thres {50}; // 70
+    double lambda0 = 0; // 0.3, weight for character-level
     double lambda1 = 0.5; // 0.5, weight for concat word detection
     double filter_rate = 0.7; // 0.7, ratio for discarding stripe
 

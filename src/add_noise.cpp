@@ -4,7 +4,7 @@ int main(int argc, char ** argv) {
 
     // Default parameters
     string case_name = "doc0";
-    int noise_level = 100;
+    int noise_level = 10;
     int dense_level = 20;
 
     // Parse command line parameters
@@ -42,8 +42,7 @@ int main(int argc, char ** argv) {
 
     random_device rand_device;
     default_random_engine rand_engine(rand_device());
-    uniform_real_distribution<double> uni_dist(1 - (double)noise_level / 100, 1);
-    uniform_int_distribution<int> uni_dense(0, 1000);
+    uniform_int_distribution<int> uni_dense(-noise_level, noise_level);
 
     int m = dense_level / 100.0 * in_img.rows * in_img.cols;
     printf("Partical nums: \t%d\n", m);
@@ -56,10 +55,12 @@ int main(int argc, char ** argv) {
         // cout << x << " " << y << endl;
 
         cv::Vec3b color = in_img.at<cv::Vec3b>(y, x);
-        double noise_alpha = uni_dist(rand_engine);
+        int noise_bias = uni_dense(rand_engine);
             
         for (int k = 0; k < 3; k++) {
-            color[k] = (uchar)(color[k] * noise_alpha);
+            int tmp = max(0, min(255, (int)(color[k]) + noise_bias));
+            cout << (int)color[k] << " " << tmp << " " << noise_bias << endl;
+            color[k] = (uchar)tmp;
         }
         in_img.at<cv::Vec3b>(y, x) = color;
 

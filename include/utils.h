@@ -18,6 +18,8 @@ const int INF_INT = 100000000;
 const double eps = 1e-8;
 const cv::Scalar seam_color_red(100, 100, 200);
 const cv::Scalar seam_color_green(100, 200, 100);
+const double metric_bias_pixel = 1.5; // 4: noise 20, 1.5: noise 10
+const double metric_bias_char = 1;
 
 int fsign(double d);
 

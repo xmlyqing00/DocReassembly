@@ -62,6 +62,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # utils
 add_library(utils ${SRC_ROOT_PATH}/utils.cpp)
+target_compile_definitions(utils PUBLIC ${DEBUG_FLAG})
 target_link_libraries(utils ${OpenCV_LIBRARIES})
 
 # evaluator
