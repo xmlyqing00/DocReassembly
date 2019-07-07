@@ -300,6 +300,7 @@ void find_counter_example_ocr_char_metric(  const string & puzzle_folder,
 void add_seams(const string & puzzle_name) {
 
     cv::Mat sol_img = cv::imread("data/results/" + puzzle_name + "_GA_sol.png");
+    cv::Mat puzzle_img = cv::imread("data/stripes/" + puzzle_name + "/puzzle_img.png");
 
     const string puzzle_folder = "data/stripes/" + puzzle_name + "/";
     ifstream fin(puzzle_folder + "/order.txt");
@@ -313,17 +314,28 @@ void add_seams(const string & puzzle_name) {
     while (fin >> x) gt_order.push_back(x);
     fin.close();
 
+    cout << "puzzle image size: " << puzzle_img.size() << endl;
+    cout << "sol image size: " << sol_img.size() << endl;
+
     int n = gt_order.size();
     vector<int> sol_order(n);
-    cv::Size stripe_size(sol_img.cols / n, sol_img.rows);
+    cv::Size stripe_size(puzzle_img.cols / n, sol_img.rows);
+    cout << "stripe size: " << stripe_size << endl;
 
     for (int i = 0; i < n; i++) {
-
+        
+        // printf("%d\n", i);
         cv::Mat stripe_img = cv::imread(puzzle_folder + to_string(i) + ".png");
         int best_pos = 0;
         int best_diff = static_cast<int>(INFINITY);
 
+        if (stripe_img.size() != stripe_size) {
+            cout << "Resize stripe: " << stripe_img.size() << endl;
+            stripe_img = stripe_img(cv::Rect(0, 0, stripe_size.width, stripe_size.height));
+        }
+
         for (int j = 0; j < n; j++) {
+            // printf("i: %d, j: %d\n", i, j);
             cv::Rect roi_rect(j * stripe_size.width, 0, stripe_size.width, stripe_size.height);
             cv::Mat diff_img;
             cv::absdiff(sol_img(roi_rect), stripe_img, diff_img);

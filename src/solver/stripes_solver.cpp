@@ -486,7 +486,7 @@ void StripesSolver::m_metric_word() {
     compute_mutual_graph(mutual_graph);
 
     // Compute stripe_pairs
-    double U_a = 1;
+    double U_a = 3;
     // if (real_flag) U_a = 1.5;
 
     int preserve_n = min(int(stripes_n * (1 - filter_rate)), stripes_n - 1); // 1- filter_rate
@@ -577,6 +577,7 @@ void StripesSolver::m_metric_word() {
             for (int i = 1; i < seq.size(); i++) {
                 composition_cnt[seq[i-1]][seq[i]]++;
             }
+            research_cnt = 0;
         } else {
             research_cnt++;
             if (research_cnt == 100) break;
@@ -589,9 +590,9 @@ void StripesSolver::m_metric_word() {
     for (int i = 0; i < stripes_n; i++) {
         for (int j = 0; j < stripes_n - 1; j++) {
             if (gt_order[j] == i) {
-#ifdef DEBUG
+// #ifdef DEBUG
                 cout << "Occurence cnt " << i << " " << gt_order[j+1] << " " << composition_cnt[i][gt_order[j+1]] << endl;
-#endif
+// #endif
                 if (composition_cnt[i][gt_order[j+1]] > 0) occur_cnt++;
                 break;
             }
