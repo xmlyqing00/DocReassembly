@@ -157,12 +157,12 @@ bool StripesSolver::reassemble( Metric _metric_mode,
         // 4
         case Composition::USER:
         
-            // composition_order = vector<int>({19,21,24,26,11,14,2,6,8,1,22,23,15,12,4,17,10,13,16,9,0,7,25,18,3,5});
-            composition_order = vector<int>({19, 20, 23, 22, 21, 17, 10, 13, 9, 12, 3, 26, 18, 16, 15, 8, 5, 7, 25, 24, 6, 11, 14, 0, 1, 2, 4});
+            composition_order = vector<int>({1, 22, 8, 21, 7, 5, 18, 24, 17, 9, 2, 23, 19, 15, 3, 13, 26, 25, 0, 11, 10, 6, 14, 12, 4, 16, 20});
+            // composition_order = vector<int>({18, 6, 12, 37, 56, 0, 22, 7, 5, 27, 31, 21, 10, 48, 29, 50, 15, 52, 8, 44, 46, 35, 45, 51, 41, 39, 58, 4, 34, 17, 14, 38, 47, 36, 20, 49, 43, 30, 57, 3, 16, 1, 19, 32, 33, 13, 40, 54, 53, 25, 9, 2, 59, 55, 26, 28, 23, 24, 11, 42});
             
-            composition_img = compose_img(composition_order, true, &seq_x);
-            // composition_img_seams = add_seams(composition_img, composition_order, false, &seq_x);
-            composition_img_bar = add_colorbar(composition_img, composition_order, true, &seq_x);
+            composition_img = compose_img(composition_order, real_flag, &seq_x);
+            composition_img_seams = add_seams(composition_img, composition_order, real_flag, &seq_x);
+            // composition_img_bar = add_colorbar(composition_img, composition_order, real_flag, &seq_x);
             save_result(case_name, false);
             break;
 
@@ -486,7 +486,7 @@ void StripesSolver::m_metric_word() {
     compute_mutual_graph(mutual_graph);
 
     // Compute stripe_pairs
-    double U_a = 3;
+    double U_a = 2;
     // if (real_flag) U_a = 1.5;
 
     int preserve_n = min(int(stripes_n * (1 - filter_rate)), stripes_n - 1); // 1- filter_rate

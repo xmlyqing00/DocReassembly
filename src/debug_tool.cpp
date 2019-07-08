@@ -146,11 +146,7 @@ void find_counter_example_pixel_metric( const string & puzzle_folder,
 
             if (found) {
                 printf("Root: %d,\t Best: %d,\t Test: %d\n", root_id, best_id, i);
-                const string img_path = output_folder + "pixel_" +
-                                        case_name + "_" + 
-                                        to_string(root_id) + "_" + 
-                                        to_string(best_id) + "_" +
-                                        to_string(i) + ".png";
+                string img_path = output_folder + "pixel_" + case_name + "_" + to_string(root_id) + "_" + to_string(best_id) + "_" + to_string(i) + ".png";
                 cv::imwrite(img_path, canvas);
                 cv::imshow("canvas", canvas);
                 cv::waitKey(0);
@@ -161,10 +157,11 @@ void find_counter_example_pixel_metric( const string & puzzle_folder,
     }
 }
 
-bool show_counter_example_ocr_char_metric(  const cv::Mat & root_img,
-                                            const cv::Mat & test_img,
-                                            tesseract::TessBaseAPI * ocr,
-                                            vector<cv::Mat> & out_imgs) {
+bool ocr_char(  const cv::Mat & root_img, 
+                const cv::Mat & test_img,
+                tesseract::TessBaseAPI * ocr,
+                vector<cv::Mat> & out_imgs,
+                bool detect_flag=true) {
 
     const int seam_x = root_img.cols;
     const tesseract::PageIteratorLevel tesseract_level {tesseract::RIL_SYMBOL};
@@ -172,6 +169,9 @@ bool show_counter_example_ocr_char_metric(  const cv::Mat & root_img,
 
     int x0, x1;
     cv::Mat && merged_img = merge_imgs(root_img, test_img, x0, x1);
+
+    // ocr->SetVariable("language_model_penalty_non_freq_dict_word", "5");
+    // ocr->SetVariable("language_model_penalty_non_dict_word", "1");
 
     ocr->SetImage(merged_img.data, merged_img.cols, merged_img.rows, 3, merged_img.step);
     ocr->Recognize(0);
@@ -197,6 +197,9 @@ bool show_counter_example_ocr_char_metric(  const cv::Mat & root_img,
     roi_rect = cv::Rect(root_img.cols + 1, 0, root_img.cols, root_img.rows);
     test_img.copyTo(canvas(roi_rect));
 
+    out_imgs.push_back(canvas.clone());
+    if (!detect_flag) return 0;
+
     if (iter != 0) {
         do {
 
@@ -204,21 +207,23 @@ bool show_counter_example_ocr_char_metric(  const cv::Mat & root_img,
             int x0, y0, x1, y1;
             iter->BoundingBox(tesseract_level, &x0, &y0, &x1, &y1);
             const cv::Rect o_bbox(x0, y0, x1 - x0, y1 - y0);
-            if (!cross_seam(o_bbox, seam_x)) continue;
-            const int w = 3;
+            
+            const int w = 1;
             cv::Rect e_bbox(o_bbox.x - w, o_bbox.y - w, o_bbox.width + w * 2, o_bbox.height + w * 2);
+            if (!cross_seam(e_bbox, seam_x)) continue;
 
             const string symbol = iter->GetUTF8Text(tesseract_level);
             const float conf = iter->Confidence(tesseract_level);
             printf("%s\t%.1lf\t", symbol.c_str(), conf);
             cout << e_bbox << endl;
 
-            cv::Mat tmp_img = canvas.clone();
-            cv::rectangle(tmp_img, e_bbox, cv::Scalar(200, 0, 0), 1);
-            out_imgs.push_back(tmp_img.clone());
+            // cv::Mat tmp_img = canvas.clone();
+            cv::rectangle(canvas, e_bbox, cv::Scalar(200, 0, 0), 1);
             
         } while (iter->Next(tesseract_level));
     }
+
+    out_imgs.push_back(canvas.clone());
 
     return out_imgs.size();
 
@@ -239,7 +244,7 @@ void find_counter_example_ocr_char_metric(  const string & puzzle_folder,
     fin.close();
 
     tesseract::TessBaseAPI * ocr = new tesseract::TessBaseAPI();
-    if (ocr->Init(nullptr, "eng", tesseract::OEM_LSTM_ONLY)) {
+    if (ocr->Init("data/tesseract_model/", "eng", tesseract::OEM_LSTM_ONLY)) {
         cerr << "Could not initialize tesseract." << endl;
         exit(-1);
     }
@@ -267,10 +272,7 @@ void find_counter_example_ocr_char_metric(  const string & puzzle_folder,
 
             cv::Mat test_img = cv::imread(puzzle_folder + to_string(i) + ".png");
             
-            bool found = show_counter_example_ocr_char_metric(  root_img, 
-                                                                test_img,
-                                                                ocr,
-                                                                out_imgs);
+            bool found = ocr_char(root_img, test_img, ocr, out_imgs, false);
 
             if (found) {
                 printf("Root: %d,\t Test: %d\n", root_id, i);
@@ -286,12 +288,108 @@ void find_counter_example_ocr_char_metric(  const string & puzzle_folder,
                     cv::waitKey(0);
                 }
                 
-                
             }
 
         }
 
     }
+
+    ocr->End();
+
+}
+
+
+void show_OCR_Example(  const string & puzzle_folder,
+                        const string & case_name,
+                        int vertical_n) {
+    
+    cout << "Show OCR Example" << endl;
+
+    ifstream fin(puzzle_folder + "order.txt", ios::in);
+    if (!fin.is_open()) {
+        cerr << "[ERRO] " << puzzle_folder + "order.txt" << " does not exist." << endl;
+        exit(-1);
+    }
+
+    vector<int> order(vertical_n);
+    for (int i = 0; i < vertical_n; i++) fin >> order[i];
+    fin.close();
+
+    tesseract::TessBaseAPI * ocr = new tesseract::TessBaseAPI();
+    if (ocr->Init("data/tesseract_model/", "eng", tesseract::OEM_LSTM_ONLY)) {
+        cerr << "Could not initialize tesseract." << endl;
+        exit(-1);
+    }
+
+    // for (int root_id = 0; root_id < vertical_n; root_id++) {
+
+        int root_id = 0;
+        cout << endl << "Input piece root id: \t" << root_id << endl;
+
+        cv::Mat root_img = cv::imread(puzzle_folder + to_string(root_id) + ".png");
+
+        int best_id = -1;
+        for (int i = 0; i < vertical_n - 1; i++) {
+            if (order[i] == root_id) {
+                best_id = order[i + 1];
+                break;
+            }
+        }
+
+        vector<cv::Mat> out_imgs;
+
+        cv::Mat best_img = cv::imread(puzzle_folder + to_string(best_id) + ".png");
+
+        bool found = ocr_char(root_img, best_img, ocr, out_imgs);
+
+        string img_path_prefix =  output_folder + "ocr_" + case_name + "_" + to_string(root_id) + "_gt_";
+
+        for (int j = 0; j < (int)out_imgs.size(); j++) {
+            string img_path = img_path_prefix + to_string(j) + ".png";
+            cv::imwrite(img_path, out_imgs[j]);
+            cv::imshow("canvas_best", out_imgs[j]);
+            cv::waitKey(0);
+        }
+
+        found = ocr_char(best_img, root_img, ocr, out_imgs, false);
+        img_path_prefix = output_folder + "ocr_" + case_name + "_" + to_string(root_id) + "_gt_op_";
+
+        for (int j = 0; j < (int)out_imgs.size(); j++) {
+            string img_path = img_path_prefix + to_string(j) + ".png";
+            cv::imwrite(img_path, out_imgs[j]);
+            cv::imshow("canvas_best", out_imgs[j]);
+            cv::waitKey(0);
+        }
+
+        // for (int i = 0; i < vertical_n; i++) {
+        int i = 18;
+
+            // if (i == root_id) continue;
+            // if (i == best_id) continue;
+
+            cv::Mat test_img = cv::imread(puzzle_folder + to_string(i) + ".png");
+            
+            found = ocr_char(root_img, test_img, ocr, out_imgs, false);
+
+            // if (found) {
+                
+                printf("Root: %d,\t Best: %d,\t Test: %d\n", root_id, best_id, i);
+                
+                img_path_prefix = output_folder + "ocr_" + case_name + "_" + to_string(root_id) + "_" + to_string(i) + "_";
+
+                for (int j = 0; j < (int)out_imgs.size(); j++) {
+                    string img_path = img_path_prefix + to_string(j) + ".png";
+                    cv::imwrite(img_path, out_imgs[j]);
+                    cv::imshow("canvas_test", out_imgs[j]);
+                    cv::waitKey(0);
+                }
+                
+                
+            // }
+
+        // }
+
+    // }
 
     ocr->End();
 
@@ -452,6 +550,10 @@ int main(int argc, char ** argv) {
         case DebugType::AddSeam:
             cout << "Add Seams" << endl;
             add_seams(operation);
+            break;
+        case DebugType::OCREx:
+            cout << "OCR Example" << endl;
+            show_OCR_Example(puzzle_folder, case_name, vertical_n);
             break;
         default:
             cout << "Unknown" << endl;

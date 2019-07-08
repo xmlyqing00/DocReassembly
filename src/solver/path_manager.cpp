@@ -93,7 +93,7 @@ void PathManager::print_path_graph() {
 
 vector<StripePair> PathManager::build_stripe_pairs() {
 
-    int small_w = 2;
+    int small_w = 3;
 
     for (int i = 0; i < nodes_n; i++) {
         for (const auto & edge: path_graph[i]) {
