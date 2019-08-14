@@ -112,7 +112,7 @@ for file_name in scores_list:
 
 for j in range(test_n):
     x = np.array(our_data[:,j]).astype(np.float)
-    print(x.min(), x.max(), x.mean(), x.std())
+    print(x.min(), x.max(), x.mean(), x.std(), np.median(x))
     # print(np.min(x), np.max(x))
 
 label_name = []
