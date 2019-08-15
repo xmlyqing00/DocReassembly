@@ -6,11 +6,13 @@ def mark_bg(img):
     
     color_thres = 200
     block_h = 20
-    shift_x = 0
+    left_x = 0
     block_cnt = 0
     out_width = 0
 
     height, width, channels = img.shape
+
+    mask = np.ones(img.shape[:2]) * 255
 
     for y in range(block_h, height - block_h, block_h):
 
@@ -22,12 +24,29 @@ def mark_bg(img):
             x += 1
         
         if y == block_h:
-            shift_x = x
+            left_x = x
         else:
-            shift_x = int(round(0.8 * shift_x + 0.2 * x))
+            left_x = int(round(0.8 * left_x + 0.2 * x))
 
+        x = width - 1
+        while x >= 0:
+            c = img[y][x]
+            if c[0] > color_thres and c[1] > color_thres and c[2] > color_thres:
+                break
+            x -= 1
+        
+        if y == block_h:
+            right_x = x
+        else:
+            right_x = int(round(0.8 * right_x + 0.2 * x))
+        
         for y_ in range(y - block_h, y):
-            
+            for x_ in range(0, left_x):
+                mask[y_][x_] = 0
+            for x_ in range(right_x + 1, width):
+                mask[y_][x_] = 0
+    
+    return mask
 
 if __name__ == '__main__':
 
