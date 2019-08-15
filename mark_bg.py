@@ -12,7 +12,7 @@ def mark_bg(img):
 
     height, width, channels = img.shape
 
-    mask = np.ones(img.shape[:2]) * 255
+    mask = np.ones(img.shape[:2], dtype=np.uint8) * 255
 
     for y in range(block_h, height - block_h, block_h):
 
@@ -45,16 +45,36 @@ def mark_bg(img):
                 mask[y_][x_] = 0
             for x_ in range(right_x + 1, width):
                 mask[y_][x_] = 0
-    
+
+    # For last block
+    for y_ in range(y - block_h, height):
+        for x_ in range(0, left_x):
+            mask[y_][x_] = 0
+        for x_ in range(right_x + 1, width):
+            mask[y_][x_] = 0
+
     return mask
+
+def vis_mask(mask):
+
+    cv2.imshow('img', img)
+    cv2.imshow('mask', mask)
+    cv2.waitKey()
+
 
 if __name__ == '__main__':
 
-    dataset_folder = 'data/stripes/real1_27'
+    dataset_folder = 'data/stripes/real3_39'
     stripe_list = os.listdir(dataset_folder)
     stripe_list.sort(key = lambda x: (len(x), x))
 
     print(stripe_list)
+
+    mask_folder = os.path.join(dataset_folder, 'bg_mask')
+    mask_vis_folder = os.path.join(dataset_folder, 'bg_mask_vis')
+
+    if not os.path.exists(mask_folder):
+        os.makedirs(mask_folder)
 
     for file_name in stripe_list:
         if file_name[-4:] != '.png':
@@ -63,11 +83,16 @@ if __name__ == '__main__':
         print('Processing', file_name)
         stripe_path = os.path.join(dataset_folder, file_name)
         img = cv2.imread(stripe_path)
-        mark_bg(img)
+        mask = mark_bg(img)
+        
+        # vis_mask(img, mask)
 
-        # cv2.imshow('dd', img)
-        # cv2.waitKey()
+        mask_vis_path = os.path.join(mask_vis_folder, file_name[:-4] + '.png')
+        cv2.imwrite(mask_vis_path, mask)
 
+        mask_path = os.path.join(mask_folder, file_name[:-4] + '.npy')
+        np.save(mask_path, mask)
+        
 
 
     # x = np.load('/Ship01/Downloads/D00201.npy')
