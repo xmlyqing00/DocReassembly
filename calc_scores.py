@@ -73,6 +73,9 @@ for i in range(test_n):
 
 print('dnn time', dnn_time)
 
+for i in range(nums):
+    print('median', i, np.median(data[i][0]))
+
 #######################
 our_data = None
 for file_name in scores_list:
