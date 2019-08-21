@@ -73,8 +73,11 @@ for i in range(test_n):
 
 print('dnn time', dnn_time)
 
-for i in range(nums):
+print(len(data))
+for i in range(len(nums)):
+    print(data[i])
     print('median', i, np.median(data[i][0]))
+    print('mean', i, np.mean(data[i][0]))
 
 #######################
 our_data = None

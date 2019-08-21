@@ -36,11 +36,6 @@ StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int 
         stripes.push_back(move(stripe_img));
     }
 
-    if (real_flag) {
-        lambda0 = 0.7;
-        filter_rate = 0.9;
-    }
-
     omp_init_lock(&omp_lock);
 
 }
@@ -486,11 +481,10 @@ void StripesSolver::m_metric_word() {
     compute_mutual_graph(mutual_graph);
 
     // Compute stripe_pairs
-    double U_a = 2;
     // if (real_flag) U_a = 1.5;
 
     int preserve_n = min(int(stripes_n * (1 - filter_rate)), stripes_n - 1); // 1- filter_rate
-    cout << "Preserve stripes:    \t" << preserve_n << endl;
+    cout << stripes_n - 1 << " " << stripes_n * (1 - filter_rate) << " " << "Preserve stripes:    \t" << preserve_n << endl;
 
     vector< vector<StripePair> > compose_next;
     int occur_cnt = 0;
