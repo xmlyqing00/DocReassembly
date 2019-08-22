@@ -89,13 +89,23 @@ private:
 
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
-    // tesseract::TessBaseAPI * ocr;
-    const double word_conf_thres {60}; // 70
+
+    // Parameter sets:
+    // -- Real Case 2:
+    // const double word_conf_thres {60};
+    // const double prob_sigma = 2;
+    // double lambda0 = 0.5;
+    // double lambda1 = 0.7; // 0.5, weight for concat word detection
+    // double filter_rate = 0.5; // 0.7, ratio for discarding stripe
+    // double U_a = 0.5; // 2, weights for ac prob.
+
+    // -- For normal cases
+    const double word_conf_thres {70};
     const double prob_sigma = 2;
-    double lambda0 = 0.5; // 0.3, weight for character-level
-    double lambda1 = 0.7; // 0.5, weight for concat word detection
-    double filter_rate = 0.5; // 0.7, ratio for discarding stripe
-    double U_a = 0.5; // 2, weights for ac prob.
+    double lambda0 = 0.3;
+    double lambda1 = 0.5;
+    double filter_rate = 0.7;
+    double U_a = 2;
 
     // Compatibility 
     // const int symbols_n = 64;
