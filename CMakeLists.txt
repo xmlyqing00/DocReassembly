@@ -19,11 +19,6 @@ include_directories(${DOC_REASSEMBLY_SOURCE_DIR}/include)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-# get_filename_component(CMAKE_PREFIX_PATH "${Libtorch_REL_PATH}" 
-    # ABSOLUTE BASE_DIR "${DOC_REASSEMBLY_SOURCE_DIR}")
-# message("-- Liborch package search path: " ${CMAKE_PREFIX_PATH})
-#find_package(Torch REQUIRED)
-
 if (APPLE)
     # Add tesseract lib directory
     link_directories(/usr/local/lib)
@@ -51,11 +46,8 @@ endif()
 
 find_package(OpenMP REQUIRED)
 include_directories(${OpenMP_INCLUDE_DIRS})
-# if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-# endif()
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 # Debug cmake
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -64,27 +56,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 add_library(utils ${SRC_ROOT_PATH}/utils.cpp)
 target_compile_definitions(utils PUBLIC ${DEBUG_FLAG})
 target_link_libraries(utils ${OpenCV_LIBRARIES})
-
-# evaluator
-# set(EVALUATOR_PATH ${SRC_ROOT_PATH}/evaluator)
-# add_library(compatibility-net ${EVALUATOR_PATH}/compatibility_net.cpp)
-# target_link_libraries(compatibility-net ${TORCH_LIBRARIES})
-
-# add_library(compatibility-dataset ${EVALUATOR_PATH}/compatibility_dataset.cpp)
-# target_link_libraries(compatibility-dataset ${TORCH_LIBRARIES} ${OpenCV_LIBRARIES})
-
-# add_executable(build-dataset ${EVALUATOR_PATH}/build_dataset.cpp)
-# target_link_libraries(build-dataset ${OpenCV_LIBRARIES} utils)
-
-# add_executable(train-evaluator ${EVALUATOR_PATH}/train_evaluator.cpp)
-# target_link_libraries(train-evaluator ${TORCH_LIBRARIES} compatibility-net compatibility-dataset utils)
-
-# add_executable(test-realdata ${EVALUATOR_PATH}/test_realdata.cpp)
-# target_link_libraries(test-realdata ${TORCH_LIBRARIES} ${OpenCV_LIBRARIES} compatibility-net)
-
-# ocr-extractor
-# add_library(ocr-extractor ${SRC_ROOT_PATH}/ocr_extractor.cpp)
-# target_link_libraries(ocr-extractor ${OpenCV_LIBRARIES})
 
 # add-noise
 add_executable(add-noise ${SRC_ROOT_PATH}/add_noise.cpp)

@@ -6,6 +6,10 @@ StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int 
     candidate_seqs_n(_samples_n),
     path_manager(_stripes_n, _samples_n),
     real_flag(_real_flag) {
+    
+    // Timestamp array
+    ts_arr.clear();
+    ts_arr.push_back(time(0));
 
     white_chars = "";
     for (int i = 0; i < 10; i++) white_chars += to_string(i);
@@ -58,6 +62,7 @@ bool StripesSolver::reassemble( Metric _metric_mode,
         composition_mode == Composition::GCOM || 
         composition_mode == Composition::GREEDY_GCOM) {
         m_metric();
+        ts_arr.push_back(time(0));
     }
 
     vector< vector<int> > fragments;
@@ -81,6 +86,8 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             composition_img_seams = add_seams(composition_img, composition_order, true, &seq_x);
 
             save_result(case_name, benchmark_flag);
+            
+            ts_arr.push_back(time(0));
             break;
         
         // 1
@@ -96,6 +103,8 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             composition_img_seams = add_seams(composition_img, composition_order, true, &seq_x);
             
             save_result(case_name, benchmark_flag);
+
+            ts_arr.push_back(time(0));
             break;
         
         // 2
@@ -125,6 +134,8 @@ bool StripesSolver::reassemble( Metric _metric_mode,
 
             save_result(case_name, benchmark_flag);
 
+            ts_arr.push_back(time(0));
+
             // GCOM Part
             cout << "\n\n[INFO] Composition: Greedy + GCOM: GCOM." << endl;
 
@@ -139,6 +150,8 @@ bool StripesSolver::reassemble( Metric _metric_mode,
             }
             
             save_result(case_name, benchmark_flag);
+            
+            ts_arr.push_back(time(0));
             break;
 
         // 3
@@ -163,6 +176,20 @@ bool StripesSolver::reassemble( Metric _metric_mode,
 
         default:
             return false;
+    }
+
+    // Computation time
+    switch (ts_arr.size()) {
+        case 3:
+            printf("Computation time: %ds\n", int(ts_arr[2] - ts_arr[0]));
+            break;
+        case 4:
+            printf("Computation time for Greedy: %ds\n", int(ts_arr[2] - ts_arr[0]));
+            printf("Computation time for GCOM: %ds\n", int(ts_arr[3] - ts_arr[2] + ts_arr[1] - ts_arr[0]));
+            break;
+        default:
+            printf("Computation time is not recorded.\n");
+            break;
     }
 
     return true;
@@ -305,12 +332,11 @@ void StripesSolver::compute_mutual_graph(vector< vector<double> > & mutual_graph
 
 }
 
-void StripesSolver::stochastic_search(vector<int> & seq, const vector< vector<StripePair> > & compose_next, double norm_dist_sigma) {
+void StripesSolver::stochastic_search(vector<int> & seq, const vector< vector<StripePair> > & compose_next) {
 
     random_device rand_device;
     default_random_engine rand_engine(rand_device());
     uniform_int_distribution<int> uniform_st_dist(0, stripes_n-1);
-    normal_distribution<double> norm_dist(0, norm_dist_sigma);
     uniform_real_distribution<double> uniform_unit_dist(0, 1);
     vector<bool> stripe_visited(stripes_n, false);
     
@@ -322,26 +348,6 @@ void StripesSolver::stochastic_search(vector<int> & seq, const vector< vector<St
     for (int i = 1; i < candidate_seq_len; i++) {
         
         if (compose_next[cur_p].size() == 0) break;
-        
-        // int next_p = -1;
-        // int cnt = 0;
-
-        // while (cnt < searchs_n) {
-        //     int next_p_idx = -1;
-        //     do {
-        //         next_p_idx = round(abs(norm_dist(rand_engine)));
-        //     } while (next_p_idx >= compose_next[cur_p].size());
-
-        //     next_p = compose_next[cur_p][next_p_idx].stripe_idx1;
-        //     if (!stripe_visited[next_p]) break;
-        //     cnt++;
-        // }
-
-        // if (cnt == 10) break;
-
-        // seq.push_back(next_p);
-        // stripe_visited[next_p] = true;
-        // cur_p = next_p;
 
         for (const StripePair & sp: compose_next[cur_p]) {
 
@@ -431,8 +437,6 @@ void StripesSolver::compute_word_scores(const vector< vector<int> > & candidate_
     int seq_idx = 0;
     int group = 24;
 
-    cout << "Detect words on solution: ";
-
     #pragma omp parallel for
     for (int i = 0; i < group; i++) {
 
@@ -464,7 +468,7 @@ void StripesSolver::compute_word_scores(const vector< vector<int> > & candidate_
 #else
             ++seq_idx;
             if (seq_idx % 100 == 0) {
-                cout << seq_idx << " " << flush;
+                cout << "Detect words on solution: " << seq_idx << " / " << candidate_seqs.size() << "\r" << flush;
             }
 #endif
         }
@@ -481,8 +485,6 @@ void StripesSolver::m_metric_word() {
     compute_mutual_graph(mutual_graph);
 
     // Compute stripe_pairs
-    // if (real_flag) U_a = 1.5;
-
     int preserve_n = min(int(stripes_n * (1 - filter_rate)), stripes_n - 1); // 1- filter_rate
     cout << stripes_n - 1 << " " << stripes_n * (1 - filter_rate) << " " << "Preserve stripes:    \t" << preserve_n << endl;
 
@@ -563,7 +565,7 @@ void StripesSolver::m_metric_word() {
     while (candidate_seqs.size() < candidate_seqs_n) {
 
         vector<int> seq;
-        stochastic_search(seq, compose_next, prob_sigma);
+        stochastic_search(seq, compose_next);
         
         if (seq.size() > min_seq_len && seq_visited[seq] == false) {
             seq_visited[seq] = true;

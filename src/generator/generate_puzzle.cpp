@@ -9,19 +9,16 @@ int main(int argc, char ** argv) {
     bool updown_flag = false;
 
     // Parse command line parameters
-    const string opt_str = "t:T:n:N:gGsSU";
+    const string opt_str = "t:n:U";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
         switch (opt) {
-            case 't': case 'T':
+            case 't':
                 case_name = string(optarg);
                 break;
-            case 'n': case 'N':
+            case 'n':
                 vertical_n = atoi(optarg);
-                break;
-            case 's': case 'S':
-                puzzle_type = PuzzleType::SQUARES;
                 break;
             case 'U':
                 updown_flag = true;
@@ -66,9 +63,6 @@ int main(int argc, char ** argv) {
     if (puzzle_type == PuzzleType::STRIPES) {
         StripesGenerator stripes_generator(gt_img_path, vertical_n, updown_flag);
         stripes_generator.save_puzzle(puzzle_folder);
-    } else {
-        SquaresGenerator squares_generator(gt_img_path, vertical_n);
-        squares_generator.save_puzzle(puzzle_folder);
     }
         
     return 0;

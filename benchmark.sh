@@ -1,12 +1,20 @@
 #!/bin/bash
 
-test_n=3
-nums=(20 30 40 60)
-samples=(200 600 2000 10000)
+# test_n=3
+# nums=(20 30 40 60)
+# samples=(150 300 1000 8000)
 
-method_n=3
-metrics=(0 1 2)
-comps=(0 0 2)
+test_n=0
+nums=(20)
+samples=(150)
+
+# method_n=1
+# metrics=(0 1)
+# comps=(0 0)
+
+method_n=0
+metrics=(2)
+comps=(2)
 
 if [ $# == 0 ]; then
     echo "Enter a test case name."
@@ -30,8 +38,8 @@ fi
 
 if [ "$1" == "doc" ]; then
     echo "Run doc dataset."
-    test_files=("doc0" "doc3" "doc7" "doc10" "doc12" "doc13" "doc14" "doc15" "doc16" "doc17" "doc18" "doc20" "doc21" "doc23" "doc24")
-    
+    test_files=("doc0" "doc3" "doc7" "doc10" "doc12" "doc13" "doc14" "doc15" "doc16" "doc17" "doc18" "doc20" "doc21" "doc23" "doc24")    
+
 fi
 
 if [ "$1" == "noise" ]; then

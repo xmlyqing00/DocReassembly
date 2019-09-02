@@ -8,15 +8,16 @@ scores_list = os.listdir(folder_name)
 scores_list.sort(key = lambda x: (len(x), x))
 nums = [20, 30, 40, 60]
 method_names = ['DNN', 'GA', 'P-Greedy', 'C-Greedy', 'W-Greedy', 'W-GCOM']
-# method_colors = ['teal', 'olive', 'aqua', 'orchid', 'orange']
+# method_names = ['DNN', 'P-Greedy', 'C-Greedy', 'W-Greedy', 'W-GCOM']
 method_colors = ['lightsalmon', 'pink', 'lightblue', 'lightgreen', 'dodgerblue', 'slateblue']
 score_files = ['doc0', 'doc3', 'doc7', 'doc10', 'doc12', 'doc13', 'doc14', 'doc15', 'doc16', 'doc17', 'doc18', 'doc20', 'doc21', 'doc23', 'doc24']
 order = [1, 0, 2, 3, 4, 5]
+# order = [0, 1, 2, 3, 4]
 
 test_cnt = 0
 test_n = len(nums)
 method_n = len(method_names)
-regular_method_n = 4
+regular_method_n = method_n - 2
 data = []
 
 for i in range(test_n):
@@ -26,18 +27,18 @@ for i in range(test_n):
     data.append(method_data)
 
 ######################
-CNN_result_file = open(os.path.join(folder_name, 'CNN_result.json'), 'r')
+CNN_result_file = open(os.path.join(folder_name, 'DNN_result_synthetic.json'), 'r')
 CNN_result = json.load(CNN_result_file)
 CNN_result_file.close()
 
 dnn_time = [0,0,0,0]
 for name, result in CNN_result.items():
     
-    print(name)
+    # print(name)
     arr = name.split('/')[2].split('_')
     puzzle_name, stripes_n = arr[0], int(arr[1])
 
-    print(result['solution'])
+    # print(result['solution'])
     if puzzle_name == 'doc60' or stripes_n == 36 or puzzle_name == 'real1':
         continue
 
@@ -64,20 +65,15 @@ for name, result in CNN_result.items():
             break
 
     acc = float(correct_cnt) / (stripes_n - 1)
-    print('Acc:', acc)
+    print('Name:', name, 'Acc:', acc)
 
     data[num_idx][0].append(acc)
 
 for i in range(test_n):
     dnn_time[i] /= len(scores_list)
 
-print('dnn time', dnn_time)
+# print('dnn time', dnn_time)
 
-print(len(data))
-for i in range(len(nums)):
-    print(data[i])
-    print('median', i, np.median(data[i][0]))
-    print('mean', i, np.mean(data[i][0]))
 
 #######################
 our_data = None
@@ -131,6 +127,11 @@ for i in range(test_n):
         new_data_item.append(data[i][order[j]])
     data[i] = new_data_item
 
+for i in range(len(nums)):
+    for j in range(method_n):
+        # print('median', i, j, np.median(data[i][order[j]]))
+        print('mean', i, j, label_name[j], np.mean(data[i][j]))
+
 for i in range(test_n):
 
     plt.figure(figsize=(9,6))
@@ -144,3 +145,4 @@ for i in range(test_n):
         patch.set_facecolor(color)
 
 plt.show()
+

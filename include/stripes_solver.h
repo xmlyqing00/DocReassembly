@@ -79,6 +79,8 @@ public:
 
 private:
     
+    vector<time_t> ts_arr;
+
     Metric metric_mode;
     Composition composition_mode;
     bool real_flag;
@@ -90,44 +92,48 @@ private:
     // Tesseract
     const string tesseract_model_path {"data/tesseract_model/"};
 
+    // -- For synthetic cases
+    // const double word_conf_thres {70};
+    // double lambda0 = 0.3;
+    // double lambda1 = 0.5;
+    // double filter_rate = 0.7;
+    // double U_a = 2;
+    // const int candidate_factor {4};
+    // -- ------------------
+
+    // -- For physically cases: 
+    // -- -- #samples = 10000
+    const double word_conf_thres {60};
+    double lambda0 = 0.5;
+    double lambda1 = 0.7;
+    double U_a = 1;
+    // const int candidate_factor {5};
+    // double filter_rate = 0.2;
+    
+    // -- ------------------
+
     // Parameter sets:
-    // -- Real Case 2:
+    // -- For physically cases: #samples = 10000 Case 2
     // const double word_conf_thres {60};
-    // const double prob_sigma = 2;
     // double lambda0 = 0.5;
-    // double lambda1 = 0.7; // 0.5, weight for concat word detection
-    // double filter_rate = 0.5; // 0.7, ratio for discarding stripe
-    // double U_a = 0.5; // 2, weights for ac prob.
+    // double lambda1 = 0.7;
+    // double filter_rate = 0.5;
+    // double U_a = 1;
+    // const int candidate_factor {3};
+    // -- ------------------
 
-    // -- For normal cases
-    const double word_conf_thres {70};
-    const double prob_sigma = 2;
-    double lambda0 = 0.3;
-    double lambda1 = 0.5;
-    double filter_rate = 0.7;
-    double U_a = 2;
-
-    // Compatibility 
-    // const int symbols_n = 64;
-    // const cv::Size cp_net_img_size {64, 64};
-    // const string saved_model_folder = "data/saved_models/";
-    vector<char> symbols;
-
-    // OcrExtractor ocr_ectractor;
-    // CompatibilityNet cp_net;
-    // Device device {kCPU};
+    double filter_rate = 0.5;
+    const int candidate_factor {4};
 
     // Metric word-path
     string white_chars, black_chars;
 
-    int candidate_seqs_n {10};
-    int candidate_seq_len {10};
-    const int candidate_factor {3}; // 5
+    int candidate_seqs_n {10}; // Placeholder
+    int candidate_seq_len {10}; // Placeholder
     vector< vector<double> > low_level_graph;
 
 
     double m_metric_char(const cv::Mat & piece0, const cv::Mat & piece1, tesseract::TessBaseAPI * ocr, int idx=0);
-    // double m_metric_comp_eva(const cv::Mat & piece0, const cv::Mat & piece1);
     void m_metric_word();
 
     vector< vector<int> > reassemble_greedy();
@@ -135,7 +141,7 @@ private:
 
     // For word-path
     void compute_mutual_graph(vector< vector<double> > & mutual_graph);
-    void stochastic_search( vector<int> & seq, const vector< vector<StripePair> > & compose_next, double norm_dist_sigma);
+    void stochastic_search( vector<int> & seq, const vector< vector<StripePair> > & compose_next);
     void compute_word_scores(const vector< vector<int> > & candidate_seqs);
     cv::Mat word_detection( const cv::Mat & img, 
                             const vector<int> & seq,

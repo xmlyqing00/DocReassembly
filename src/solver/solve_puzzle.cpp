@@ -26,43 +26,6 @@ void solve_stripes( const string & stripes_folder,
 #endif
 }
 
-void solve_squares (const string & squares_folder, 
-                    const string & case_name,
-                    int vertical_n) {
-
-    const string puzzle_size_file_path = squares_folder + "puzzle_size.txt";
-    cv::Size puzzle_size;
-    ifstream fin(puzzle_size_file_path, ios::in);
-    if (!fin.is_open()) {
-        cerr << "[ERRO] " << puzzle_size_file_path << " does not exist." << endl;
-        exit(-1);
-    }
-    fin >> puzzle_size.width;
-    fin >> puzzle_size.height;
-    fin.close();
-    int squares_n = puzzle_size.width * puzzle_size.height;
-    cout << "Squares number:      \t" << squares_n << endl;
-    cout << endl;
-
-    SquaresSolver squares_solver(puzzle_size);
-
-    cout << "[INFO] Import squares." << endl;
-
-    for (int i = 0; i < squares_n; i++) {
-        const string square_img_path = squares_folder + to_string(i) + ".png";
-        cv::Mat square_img = cv::imread(square_img_path);
-        if (square_img.empty()) {
-            cerr << "[ERR] Square img does not exist." << endl;
-            exit(-1); 
-        }
-        squares_solver.push(square_img);
-    }
-
-    squares_solver.reassemble();
-
-
-}
-
 int main(int argc, char ** argv) {
 
     // Default parameters
@@ -76,7 +39,7 @@ int main(int argc, char ** argv) {
     bool real_flag = false;
 
     // Parse command line parameters
-    const string opt_str = "t:n:Sc:m:s:br";
+    const string opt_str = "t:n:c:m:s:br";
     int opt = getopt(argc, argv, opt_str.c_str());
 
     while (opt != -1) {
@@ -89,9 +52,6 @@ int main(int argc, char ** argv) {
                 break;
             case 'c': 
                 composition_mode = static_cast<StripesSolver::Composition>(atoi(optarg));
-                break;
-            case 'S': 
-                puzzle_type = PuzzleType::SQUARES;
                 break;
             case 'm':
                 metric_mode = static_cast<StripesSolver::Metric>(atoi(optarg));
@@ -135,25 +95,13 @@ int main(int argc, char ** argv) {
         cout << "Samples times:       \t" << samples_n << endl;
     }
 
-    time_t start_time = time(0);
-
     // Import stripes
     if (puzzle_type == PuzzleType::STRIPES) {
 
         const string puzzle_folder = "data/stripes/" + case_name + "_" + to_string(vertical_n) + "/";
         solve_stripes(puzzle_folder, case_name, vertical_n, samples_n, metric_mode, composition_mode, benchmark_flag, real_flag);
 
-    } else {
-
-        const string puzzle_folder = "data/squares/" + case_name + "_" + to_string(vertical_n) + "/";
-        solve_squares(puzzle_folder, case_name, vertical_n);
-
     }
-
-    time_t end_time = time(0);
-    double total_time = difftime(end_time, start_time);
-
-    cout << "Time used: " << total_time << " s" << endl << endl;
 
     return 0;
 }

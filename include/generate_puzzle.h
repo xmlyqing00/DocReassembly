@@ -8,7 +8,6 @@
 #include <opencv2/opencv.hpp>
 
 #include <stripes_generator.h>
-#include <squares_generator.h>
 #include <utils.h>
 
 using namespace std;
