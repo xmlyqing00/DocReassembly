@@ -14,12 +14,10 @@
 #include <tesseract/baseapi.h>
 #include <opencv2/opencv.hpp>
 
-// #include <ocr_extractor.h>
 #include <fragment.h>
 #include <path_manager.h>
 #include <utils.h>
 #include <KM.h>
-// #include <compatibility_net.h>
 #include <stripe_pair.h>
 
 using namespace std;
@@ -93,37 +91,35 @@ private:
     const string tesseract_model_path {"data/tesseract_model/"};
 
     // -- For synthetic cases
-    // const double word_conf_thres {70};
-    // double lambda0 = 0.3;
-    // double lambda1 = 0.5;
-    // double filter_rate = 0.7;
-    // double U_a = 2;
-    // const int candidate_factor {4};
-    // -- ------------------
-
-    // -- For physically cases: 
-    // -- -- #samples = 10000
-    const double word_conf_thres {60};
-    double lambda0 = 0.5;
-    double lambda1 = 0.7;
-    double U_a = 1;
-    // const int candidate_factor {5};
-    // double filter_rate = 0.2;
-    
-    // -- ------------------
-
-    // Parameter sets:
-    // -- For physically cases: #samples = 10000 Case 2
-    // const double word_conf_thres {60};
-    // double lambda0 = 0.5;
-    // double lambda1 = 0.7;
-    // double filter_rate = 0.5;
-    // double U_a = 1;
-    // const int candidate_factor {3};
-    // -- ------------------
-
-    double filter_rate = 0.5;
+    const double word_conf_thres {70};
+    const double lambda0 = 0.3;
+    const double lambda1 = 0.5;
+    const double U_a = 2;
+    const double filter_rate = 0.7;
     const int candidate_factor {4};
+    // ---------------------
+
+
+    // -- For physically cases: --
+    // Common parameters, #samples = 10000
+
+    // const double word_conf_thres {70};// 60
+    // const double lambda0 = 0.5;
+    // const double lambda1 = 0.7;
+    // const double U_a = 1;
+
+    // For Real Case 1
+    // const double filter_rate = 0.2;
+    // const int candidate_factor {5};
+
+    // For Real Case 2
+    // const double filter_rate = 0.5;
+    // const int candidate_factor {3};
+
+    // For Real Case 3
+    // const double filter_rate = 0.6;
+    // const int candidate_factor {5};
+    // ---------------------
 
     // Metric word-path
     string white_chars, black_chars;

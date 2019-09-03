@@ -93,8 +93,4 @@ if __name__ == '__main__':
         mask_path = os.path.join(mask_folder, file_name[:-4] + '.npy')
         np.save(mask_path, mask)
         
-
-
-    # x = np.load('/Ship01/Downloads/D00201.npy')
-    # print(x.shape)
     
