@@ -1,20 +1,12 @@
 #!/bin/bash
 
-# test_n=3
-# nums=(20 30 40 60)
-# samples=(150 300 1000 8000)
+test_n=3
+nums=(20 30 40 60)
+samples=(150 300 1000 8000)
 
-test_n=0
-nums=(20)
-samples=(150)
-
-# method_n=1
-# metrics=(0 1)
-# comps=(0 0)
-
-method_n=0
-metrics=(2)
-comps=(2)
+method_n=2
+metrics=(0 1 2)
+comps=(0 0 2)
 
 if [ $# == 0 ]; then
     echo "Enter a test case name."

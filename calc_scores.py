@@ -129,7 +129,7 @@ for i in range(test_n):
 
 for i in range(len(nums)):
     for j in range(method_n):
-        # print('median', i, j, np.median(data[i][order[j]]))
+        print('median', i, j, label_name[j], np.median(data[i][order[j]]))
         print('mean', i, j, label_name[j], np.mean(data[i][j]))
 
 for i in range(test_n):
