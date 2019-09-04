@@ -14,19 +14,6 @@ if [ $# == 0 ]; then
     exit
 fi  
 
-if [ "$1" == "GA" ]; then
-    echo "Add seams on GA solutions."
-
-    # test=("doc0" "doc3" "doc7" "doc10" "doc11" "doc12" "doc13" "doc14" "doc15" "doc16" "doc17" "doc18" "doc19" "doc20" "doc21" "doc23" "doc24")
-    test=("doc7")
-    for var in ${test[@]}; do
-        for i in $(seq 0 ${test_n}); do
-            ./bin/release/debug-tool -d 2 -o ${var}_${nums[i]}
-        done
-    done
-
-    exit
-fi
 
 if [ "$1" == "doc" ]; then
     echo "Run doc dataset."
@@ -34,12 +21,8 @@ if [ "$1" == "doc" ]; then
 
 fi
 
-if [ "$1" == "noise" ]; then
-    echo "Run noise dataset."
-    test_files=("doc16_noise20" "doc18_noise20")
-fi
 
-if [ "$1" == "doc" ] || [ "$1" == "noise" ]; then
+if [ "$1" == "doc" ]; then
     for test_name in ${test_files[@]}; do
 
         echo "Test case:" ${test_name} "==========="
