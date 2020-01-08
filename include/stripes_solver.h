@@ -54,7 +54,7 @@ public:
     // Path
     PathManager path_manager;
 
-    StripesSolver(const string & _puzzle_foler, int _stripes_n, int _samples_n, bool _real_flag);
+    StripesSolver(const string & _puzzle_folder, int _stripes_n, int _samples_n, bool _real_flag, double _word_conf_thres, double _lambda0, double _lambda1, double _U_a, double _filter_rate, int _candidate_factor);
     ~StripesSolver();
 
     void m_metric();
@@ -91,12 +91,12 @@ private:
     const string tesseract_model_path {"data/tesseract_model/"};
 
     // -- For synthetic cases
-    const double word_conf_thres {70};
+    const double word_conf_thres = 70;
     const double lambda0 = 0.3;
     const double lambda1 = 0.5;
     const double U_a = 2;
     const double filter_rate = 0.7;
-    const int candidate_factor {4};
+    const int candidate_factor = 4;
     // ---------------------
 
 

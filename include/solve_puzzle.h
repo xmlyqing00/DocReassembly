@@ -2,6 +2,7 @@
 #define SOLVE_PUZZLE
 
 #include <unistd.h>
+#include <getopt.h>
 #include <string>
 #include <fstream>
 #include <ctime>

@@ -1,11 +1,17 @@
 #include <stripes_solver.h>
 
-StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int _samples_n, bool _real_flag) :
+StripesSolver::StripesSolver(const string & _puzzle_folder, int _stripes_n, int _samples_n, bool _real_flag, double _word_conf_thres, double _lambda0, double _lambda1, double _U_a, double _filter_rate, int _candidate_factor) :
     puzzle_folder(_puzzle_folder),
     stripes_n(_stripes_n),
     candidate_seqs_n(_samples_n),
     path_manager(_stripes_n, _samples_n),
-    real_flag(_real_flag) {
+    real_flag(_real_flag),
+    word_conf_thres(_word_conf_thres),
+    lambda0(_lambda0),
+    lambda1(_lambda1),
+    U_a(_U_a),
+    filter_rate(_filter_rate),
+    candidate_factor(_candidate_factor) {
     
     // Timestamp array
     ts_arr.clear();
