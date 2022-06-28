@@ -1,7 +1,9 @@
-# StripeReassembly
+# Reassembling Shredded Document Stripes Using Word-path Metric and Greedy Composition Optimal Matching Solver
 
 This repository is a C++ implementation for TMM 19 paper
 > Liang, Yongqing, and Xin Li. "Reassembling Shredded Document Stripes Using Word-path Metric and Greedy Composition Optimal Matching Solver." IEEE Transactions on Multimedia (2019).
+
+![](screenshot.png)
 
 If you use these codes in your research, please cite the paper.
 
