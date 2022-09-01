@@ -21,7 +21,7 @@ We build and evaluate our codes under Ubuntu 18.04 and Mac OS X 10.14.5. The fol
 
 ## 2. DocDataset description
 
-Click [here](people.tamu.edu/~xinli/DocReassembly/data/DocDataset.zip) to download the `DocDataset`. Unzip the package and copy the `gt` and `stripes` into the `/data/` folder of the repository.
+Click [here](https://people.tamu.edu/~xinli/DocReassembly/data/DocDataset.zip) to download the `DocDataset`. Unzip the package and copy the `gt` and `stripes` into the `/data/` folder of the repository.
 
 `DocDataset` contains:
 1. 60 striped document puzzles with four types of complexities of 20, 30, 40, and 60 stripes. They are named as `doc*_*`.
